@@ -3,4 +3,4 @@ project(discrete_math_MM_2025_2026)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(discrete_math_MM_2025_2026 src/1857.cpp)
+add_executable(discrete_math_MM_2025_2026 src/1591.cpp)
