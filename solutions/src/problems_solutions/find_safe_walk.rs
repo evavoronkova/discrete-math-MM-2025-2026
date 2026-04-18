@@ -29,9 +29,7 @@ impl Solution {
                     && new_y < grid[0].len() as i32
                 {
                     let new_health = health - grid[new_x as usize][new_y as usize];
-                    if new_health > 0
-                        && new_health > best_health[new_x as usize][new_y as usize]
-                    {
+                    if new_health > 0 && new_health > best_health[new_x as usize][new_y as usize] {
                         best_health[new_x as usize][new_y as usize] = new_health;
                         queue.push_back((new_x, new_y, new_health));
                     }
