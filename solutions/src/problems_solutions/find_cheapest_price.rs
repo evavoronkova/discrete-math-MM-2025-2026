@@ -1,24 +1,14 @@
+use super::Solution;
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
-use super::Solution;
 impl Solution {
-    pub fn find_cheapest_price(
-        n: i32,
-        flights: Vec<Vec<i32>>,
-        src: i32,
-        dst: i32,
-        k: i32,
-    ) -> i32 {
+    pub fn find_cheapest_price(n: i32, flights: Vec<Vec<i32>>, src: i32, dst: i32, k: i32) -> i32 {
         let n = n as usize;
         let max_stops = k + 1;
 
         let mut graph: Vec<Vec<(usize, i32)>> = vec![vec![]; n];
         for flight in &flights {
-            let (from, to, price) = (
-                flight[0] as usize,
-                flight[1] as usize,
-                flight[2],
-            );
+            let (from, to, price) = (flight[0] as usize, flight[1] as usize, flight[2]);
             graph[from].push((to, price));
         }
 
@@ -72,9 +62,10 @@ impl Solution {
                     cost[neighbor].retain(|s, c| {
                         let s_val = *s;
                         let c_val = *c;
-                    
-                        !(s_val >= new_stops && c_val >= new_cost &&
-                          !(s_val == new_stops && c_val == new_cost))
+
+                        !(s_val >= new_stops
+                            && c_val >= new_cost
+                            && !(s_val == new_stops && c_val == new_cost))
                     });
 
                     heap.push((Reverse(new_cost), neighbor, new_stops));
