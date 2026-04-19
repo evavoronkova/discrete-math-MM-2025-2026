@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashMap, VecDeque, HashSet};
 
 mod graph;
 mod parser;
@@ -61,6 +61,11 @@ fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet
         }
     }
 }
+
+fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, Vec<u32>> {
+    let mut visited = HashMap::new();
+}
+
 fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
     let mut undirected: HashMap<u32, Vec<u32>> = HashMap::new();
 
