@@ -6,6 +6,8 @@ use std::{
     vec,
 };
 
+use crate::parser::directed_or_undirected::DirectedOrUndirected;
+
 mod graph;
 mod parser;
 
@@ -148,7 +150,10 @@ fn dfs_for_comps(
     }
 }
 
-fn find_weak_components(graph: &graph::Graph) -> Vec<Vec<u32>> {
+fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) -> Vec<Vec<u32>> {
+    if let DirectedOrUndirected::Directed = graph_type {
+        let graph = build_undirected(graph);
+    }
     let mut visited = HashSet::new();
     let mut components = Vec::new();
 
