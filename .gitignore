@@ -4,7 +4,6 @@ target/
 *.sublime-project
 *.sublime-workspace
 *.log
-.codex
 .codex/
 .env
 .env.*
