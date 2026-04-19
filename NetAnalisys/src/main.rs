@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 mod graph;
 mod parser;
@@ -62,7 +62,7 @@ fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet
     }
 }
 fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
-    let mut undirected = HashMap::new();
+    let mut undirected: HashMap<u32, Vec<u32>> = HashMap::new();
 
     for (&u, neighbors) in &graph.adjacency_list {
         for &v in neighbors {
@@ -73,4 +73,34 @@ fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
 
     undirected
 }
+
+
+fn dfs_for_comps(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>, comp: &mut Vec<u32>) {
+    if !visited.insert(start) {
+        return;
+    }
+
+    comp.push(start);
+    if let Some(neighbors) = graph.adjacency_list.get(&start) {
+        for &neighbor in neighbors {
+            dfs_for_comps(graph, neighbor, visited, comp);
+        }
+    }
+}
+
+fn find_weak_components(graph: &graph::Graph) -> Vec<Vec<u32>> {
+    let mut visited = HashSet::new();
+    let mut components = Vec::new();
+
+    for &vertex in graph.adjacency_list.keys() {
+        if !visited.contains(&vertex) {
+            let mut comp = Vec::new();
+            dfs_for_comps(graph, vertex, &mut visited, &mut comp);
+            components.push(comp);
+        }
+    }
+
+    components
+}
+
 fn main() {}
