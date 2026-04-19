@@ -3,7 +3,7 @@ use std::error::Error;
 use std::fs::read_to_string;
 
 use super::directed_or_undirected::DirectedOrUndirected;
-
+#[allow(dead_code)]
 pub fn mtx_parser(
     path: &str,
     graph_type: DirectedOrUndirected,

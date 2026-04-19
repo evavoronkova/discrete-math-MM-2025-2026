@@ -2,6 +2,7 @@ use super::directed_or_undirected::DirectedOrUndirected;
 use std::collections::HashMap;
 use std::error::Error;
 
+#[allow(dead_code)]
 pub fn csv_parser(
     path: &str,
     graph_type: DirectedOrUndirected,
