@@ -186,6 +186,16 @@ fn tarjan_scc(graph: &graph::Graph) -> Vec<HashSet<u32>> {
     sccs
 }
 
+
+fn get_number_of_comps(comps: &mut Vec<HashSet<u32>>) -> u32 {
+    comps.len() as u32
+}
+
+fn fraction_in_largest_component(comps: &mut Vec<HashSet<u32>>, num_vertices: usize) -> f64 {
+    let max_len = comps.iter().map(|comp| comp.len()).max().unwrap();
+    max_len as f64 / num_vertices as f64
+}
+
 fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>) {
     if !visited.insert(start) {
         return;
