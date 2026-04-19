@@ -136,13 +136,13 @@ fn dfs_for_comps(
     graph: &graph::Graph,
     start: u32,
     visited: &mut std::collections::HashSet<u32>,
-    comp: &mut Vec<u32>,
+    comp: &mut HashSet<u32>,
 ) {
     if !visited.insert(start) {
         return;
     }
 
-    comp.push(start);
+    comp.insert(start);
     if let Some(neighbors) = graph.adjacency_list.get(&start) {
         for &neighbor in neighbors {
             dfs_for_comps(graph, neighbor, visited, comp);
@@ -150,7 +150,7 @@ fn dfs_for_comps(
     }
 }
 
-fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) -> Vec<Vec<u32>> {
+fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) -> Vec<HashSet<u32>> {
     if let DirectedOrUndirected::Directed = graph_type {
         let graph = build_undirected(graph);
     }
@@ -159,7 +159,7 @@ fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) 
 
     for &vertex in graph.adjacency_list.keys() {
         if !visited.contains(&vertex) {
-            let mut comp = Vec::new();
+            let mut comp = HashSet::new();
             dfs_for_comps(graph, vertex, &mut visited, &mut comp);
             components.push(comp);
         }
