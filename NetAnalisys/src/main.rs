@@ -59,17 +59,20 @@ fn calculate_density(graph: &graph::Graph) -> f64 {
     }
 }
 
-fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
-    let mut undirected: HashMap<u32, Vec<u32>> = HashMap::new();
+fn build_undirected(graph: &graph::Graph) -> graph::Graph {
+    let mut undirected_adj = std::collections::HashMap::new();
 
     for (&u, neighbors) in &graph.adjacency_list {
         for &v in neighbors {
-            undirected.entry(u).or_default().push(v);
-            undirected.entry(v).or_default().push(u);
+            undirected_adj.entry(u).or_insert_with(Vec::new).push(v);
+            undirected_adj.entry(v).or_insert_with(Vec::new).push(u);
         }
     }
 
-    undirected
+    graph::Graph {
+        adjacency_list: undirected_adj,
+        graph_type: DirectedOrUndirected::Undirected,
+    }
 }
 
 fn dfs_for_comps(
@@ -92,18 +95,22 @@ fn dfs_for_comps(
 
 fn find_weak_components(
     graph: &graph::Graph,
-    graph_type: DirectedOrUndirected,
 ) -> Vec<HashSet<u32>> {
-    if let DirectedOrUndirected::Directed = graph_type {
-        let graph = build_undirected(graph);
-    }
+    let owned_graph: graph::Graph;
+    let graph_ref = match graph.graph_type {
+        DirectedOrUndirected::Undirected => graph,
+        DirectedOrUndirected::Directed => {
+            owned_graph = build_undirected(graph);
+            &owned_graph
+        }
+    };
     let mut visited = HashSet::new();
     let mut components = Vec::new();
 
-    for &vertex in graph.adjacency_list.keys() {
+    for &vertex in graph_ref.adjacency_list.keys() {
         if !visited.contains(&vertex) {
             let mut comp = HashSet::new();
-            dfs_for_comps(graph, vertex, &mut visited, &mut comp);
+            dfs_for_comps(graph_ref, vertex, &mut visited, &mut comp);
             components.push(comp);
         }
     }
