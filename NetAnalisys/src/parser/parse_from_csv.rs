@@ -7,7 +7,6 @@ pub fn csv_parser(
     path: &str,
     graph_type: DirectedOrUndirected,
 ) -> Result<HashMap<u32, Vec<u32>>, Box<dyn Error>> {
-
     let mut reader = csv::Reader::from_path(path)?;
     let mut adjacency_list: HashMap<u32, Vec<u32>> = HashMap::new();
 
@@ -19,7 +18,11 @@ pub fn csv_parser(
         }
 
         if record.len() != 2 {
-            eprintln!("Skipped line {}: expected 2 columns, got {}", i + 1, record.len());
+            eprintln!(
+                "Skipped line {}: expected 2 columns, got {}",
+                i + 1,
+                record.len()
+            );
             continue;
         }
 

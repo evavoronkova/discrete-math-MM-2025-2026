@@ -5,6 +5,7 @@ use std::collections::HashMap;
 use std::error::Error;
 use std::path::Path;
 
+#[allow(dead_code)]
 fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<dyn Error>> {
     let path = path.trim();
 
@@ -29,7 +30,9 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
                 .into());
             }
             None => {
-                return Err("The file must be inside the 'directed' or 'undirected' folder.".into());
+                return Err(
+                    "The file must be inside the 'directed' or 'undirected' folder.".into(),
+                );
             }
         };
 
@@ -47,6 +50,7 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
     }
 }
 
+#[allow(dead_code)]
 fn parse(path: &str) -> HashMap<u32, Vec<u32>> {
     let (file_type, graph_type) = match parse_type_file(path) {
         Ok(ext) => ext,
