@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque, HashSet};
+use std::{collections::{HashMap, HashSet, VecDeque}, vec};
 
 mod graph;
 mod parser;
@@ -62,8 +62,37 @@ fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet
     }
 }
 
-fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, Vec<u32>> {
-    let mut visited = HashMap::new();
+fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, usize> {
+    let mut visited = HashSet::new();
+    let mut dist = HashMap::new();
+    let mut queue = VecDeque::new();
+
+    visited.insert(start);
+    dist.insert(start, 0);
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let current_dist = dist[&node];
+
+        if let Some(neighbors) = graph.adjacency_list.get(&node) {
+            for &neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    visited.insert(neighbor);
+                    dist.insert(neighbor, current_dist + 1);
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    dist
+}
+fn approximate_diameter(graph: &graph::Graph) -> usize {
+    let &start = graph.adjacency_list.keys().next().unwrap();
+    let dist = bfs(graph, start);
+    let (farthest_node, _) = dist.iter().max_by_key(|&(_, &d)| d).unwrap();
+    let dist_from_farthest = bfs(graph, *farthest_node);
+    *dist_from_farthest.values().max().unwrap()
 }
 
 fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
