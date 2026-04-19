@@ -1,8 +1,7 @@
 use std::collections::HashMap;
 
-mod parser;
 mod graph;
-
+mod parser;
 
 #[allow(dead_code)]
 fn calculate_main_graph_information(graph: &graph::Graph) {
@@ -17,6 +16,7 @@ fn calculate_main_graph_information(graph: &graph::Graph) {
         num_edges /= 2;
     }
     let density = calculate_density(graph);
+
     let mut visited = std::collections::HashSet::new();
     let mut components = 0;
     for &vertex in graph.adjacency_list.keys() {
@@ -25,9 +25,6 @@ fn calculate_main_graph_information(graph: &graph::Graph) {
             components += 1;
         }
     }
-
-
-
 }
 fn calculate_density(graph: &graph::Graph) -> f64 {
     let n = graph.adjacency_list.len();
@@ -49,9 +46,7 @@ fn calculate_density(graph: &graph::Graph) -> f64 {
             edges /= 2;
             (2.0 * edges as f64) / ((n * (n - 1)) as f64)
         }
-        DirectedOrUndirected::Directed => {
-            (edges as f64) / ((n * (n - 1)) as f64)
-        }
+        DirectedOrUndirected::Directed => (edges as f64) / ((n * (n - 1)) as f64),
     }
 }
 
@@ -78,7 +73,4 @@ fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
 
     undirected
 }
-fn main() {
-
-
-}
+fn main() {}
