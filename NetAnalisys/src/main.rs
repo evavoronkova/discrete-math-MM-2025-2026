@@ -89,7 +89,10 @@ fn dfs_for_comps(
     }
 }
 
-fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) -> Vec<HashSet<u32>> {
+fn find_weak_components(
+    graph: &graph::Graph,
+    graph_type: DirectedOrUndirected,
+) -> Vec<HashSet<u32>> {
     if let DirectedOrUndirected::Directed = graph_type {
         let graph = build_undirected(graph);
     }
@@ -105,6 +108,81 @@ fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) 
     }
 
     components
+}
+
+fn strong_connect(
+    v: u32,
+    adj: &HashMap<u32, Vec<u32>>,
+    index_counter: &mut u32,
+    indexes: &mut HashMap<u32, u32>,
+    lowlinks: &mut HashMap<u32, u32>,
+    stack: &mut Vec<u32>,
+    on_stack: &mut HashMap<u32, bool>,
+    sccs: &mut Vec<HashSet<u32>>,
+) {
+    *index_counter += 1;
+    indexes.insert(v, *index_counter);
+    lowlinks.insert(v, *index_counter);
+    stack.push(v);
+    on_stack.insert(v, true);
+
+    if let Some(neighbors) = adj.get(&v) {
+        for &w in neighbors {
+            if !indexes.contains_key(&w) {
+                strong_connect(
+                    w,
+                    adj,
+                    index_counter,
+                    indexes,
+                    lowlinks,
+                    stack,
+                    on_stack,
+                    sccs,
+                );
+                lowlinks.insert(v, lowlinks[&v].min(lowlinks[&w]));
+            } else if *on_stack.get(&w).unwrap_or(&false) {
+                lowlinks.insert(v, lowlinks[&v].min(indexes[&w]));
+            }
+        }
+    }
+
+    if lowlinks[&v] == indexes[&v] {
+        let mut scc = HashSet::new();
+        loop {
+            let w = stack.pop().unwrap();
+            on_stack.insert(w, false);
+            scc.insert(w);
+            if w == v {
+                break;
+            }
+        }
+        sccs.push(scc);
+    }
+}
+
+fn tarjan_scc(graph: &graph::Graph) -> Vec<HashSet<u32>> {
+    let mut index_counter = 0;
+    let mut indexes = HashMap::new();
+    let mut lowlinks = HashMap::new();
+    let mut stack = Vec::new();
+    let mut on_stack = HashMap::new();
+    let mut sccs = Vec::new();
+
+    for &v in graph.adjacency_list.keys() {
+        if !indexes.contains_key(&v) {
+            strong_connect(
+                v,
+                &graph.adjacency_list,
+                &mut index_counter,
+                &mut indexes,
+                &mut lowlinks,
+                &mut stack,
+                &mut on_stack,
+                &mut sccs,
+            );
+        }
+    }
+    sccs
 }
 
 fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>) {
