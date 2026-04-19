@@ -39,6 +39,7 @@ pub fn csv_parser(
             .map_err(|e| format!("Line {}: invalid neighbour: {}", i + 1, e))?;
 
         adjacency_list.entry(node).or_default().push(neighbour);
+        adjacency_list.entry(neighbour).or_default();
 
         if let DirectedOrUndirected::Undirected = graph_type {
             adjacency_list.entry(neighbour).or_default().push(node);

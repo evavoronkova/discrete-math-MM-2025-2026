@@ -28,6 +28,7 @@ pub fn mtx_parser(
         let v: u32 = parts[1].parse()?;
 
         adjacency_list.entry(u).or_default().push(v);
+        adjacency_list.entry(v).or_default();
 
         if let DirectedOrUndirected::Undirected = graph_type {
             adjacency_list.entry(v).or_default().push(u);
