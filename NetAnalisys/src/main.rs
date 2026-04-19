@@ -1,6 +1,7 @@
 #![allow(unused)]
 
 use rand::Rng;
+use rand::seq::SliceRandom;
 use std::{
     collections::{HashMap, HashSet, VecDeque},
     vec,
@@ -300,5 +301,63 @@ fn random_like_diameter_calculate(
 
     max_distance
 }
+
+fn snowball_sampling(
+    graph: &graph::Graph,
+    component: Option<&HashSet<u32>>,
+    sample_size: usize,
+) -> u32 {
+    let mut rng = rand::thread_rng();
+    let vertices: Vec<u32> = match component {
+        Some(comp) => comp.iter().cloned().collect(),
+        None => graph.adjacency_list.keys().cloned().collect(),
+    };
+
+    if vertices.is_empty() {
+        return 0u32;
+    }
+
+    let start1 = *vertices.choose(&mut rng).unwrap();
+    let start2 = *vertices.choose(&mut rng).unwrap();
+
+    let mut queue = VecDeque::new();
+    let mut sample = HashSet::new();
+
+    queue.push_back(start1);
+    sample.insert(start1);
+
+    if start2 != start1 {
+        queue.push_back(start2);
+        sample.insert(start2);
+    }
+
+    while let Some(node) = queue.pop_front() {
+        if sample.len() >= sample_size {
+            break;
+        }
+
+        if let Some(neighbors) = graph.adjacency_list.get(&node) {
+            for &neighbor in neighbors {
+                if sample.len() >= sample_size {
+                    break;
+                }
+
+                let allowed = match component {
+                    Some(comp) => comp.contains(&neighbor),
+                    None => true,
+                };
+
+                if allowed && !sample.contains(&neighbor) {
+                    sample.insert(neighbor);
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    approximate_diameter(graph, Some(&sample)) as u32
+}
+
+
 
 fn main() {}
