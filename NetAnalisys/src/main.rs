@@ -234,7 +234,7 @@ fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, usize> {
     dist
 }
 
-//обработка компонент
+//work with component
 
 fn bfs_with_filter(
     graph: &graph::Graph,
@@ -312,11 +312,12 @@ fn random_like_diameter_calculate(
     max_distance
 }
 
+// use approximate_diameter(graph, Some(snowball_sampling(....))) as u32 to calculate diameter using snowball method
 fn snowball_sampling(
     graph: &graph::Graph,
     component: Option<&HashSet<u32>>,
     sample_size: usize,
-) -> u32 {
+) -> HashSet<u32> {
     let mut rng = rand::thread_rng();
     let vertices: Vec<u32> = match component {
         Some(comp) => comp.iter().cloned().collect(),
@@ -324,7 +325,7 @@ fn snowball_sampling(
     };
 
     if vertices.is_empty() {
-        return 0u32;
+        return HashSet::new();
     }
 
     let start1 = *vertices.choose(&mut rng).unwrap();
@@ -364,10 +365,7 @@ fn snowball_sampling(
             }
         }
     }
-
-    approximate_diameter(graph, Some(&sample)) as u32
+    sample
 }
-
-
 
 fn main() {}
