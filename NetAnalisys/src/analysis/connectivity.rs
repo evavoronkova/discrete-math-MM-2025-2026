@@ -42,6 +42,7 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
     components
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn strong_connect(
     v: u32,
     adj: &HashMap<u32, Vec<u32>>,
@@ -117,11 +118,13 @@ pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
     sccs
 }
 
-pub fn get_number_of_comps(comps: &mut Vec<HashSet<u32>>) -> u32 {
+#[allow(clippy::ptr_arg)]
+pub fn get_number_of_comps(comps: &mut [HashSet<u32>]) -> u32 {
     comps.len() as u32
 }
 
-pub fn fraction_in_largest_component(comps: &mut Vec<HashSet<u32>>, num_vertices: usize) -> f64 {
+#[allow(clippy::ptr_arg)]
+pub fn fraction_in_largest_component(comps: &mut [HashSet<u32>], num_vertices: usize) -> f64 {
     let max_len = comps.iter().map(|comp| comp.len()).max().unwrap();
     max_len as f64 / num_vertices as f64
 }
