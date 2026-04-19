@@ -58,67 +58,6 @@ fn calculate_density(graph: &graph::Graph) -> f64 {
     }
 }
 
-fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>) {
-    if !visited.insert(start) {
-        return;
-    }
-
-    if let Some(neighbors) = graph.adjacency_list.get(&start) {
-        for &neighbor in neighbors {
-            dfs(graph, neighbor, visited);
-        }
-    }
-}
-
-fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, usize> {
-    let mut visited = HashSet::new();
-    let mut dist = HashMap::new();
-    let mut queue = VecDeque::new();
-
-    visited.insert(start);
-    dist.insert(start, 0);
-    queue.push_back(start);
-
-    while let Some(node) = queue.pop_front() {
-        let current_dist = dist[&node];
-
-        if let Some(neighbors) = graph.adjacency_list.get(&node) {
-            for &neighbor in neighbors {
-                if !visited.contains(&neighbor) {
-                    visited.insert(neighbor);
-                    dist.insert(neighbor, current_dist + 1);
-                    queue.push_back(neighbor);
-                }
-            }
-        }
-    }
-
-    dist
-}
-fn approximate_diameter(graph: &graph::Graph) -> usize {
-    let &start = graph.adjacency_list.keys().next().unwrap();
-    let dist = bfs(graph, start);
-    let (farthest_node, _) = dist.iter().max_by_key(|&(_, &d)| d).unwrap();
-    let dist_from_farthest = bfs(graph, *farthest_node);
-    *dist_from_farthest.values().max().unwrap()
-}
-
-fn random_like_diameter_calculate(graph: &graph::Graph, iterations: usize) -> usize {
-    let mut rng = rand::thread_rng();
-    let vertices: Vec<u32> = graph.adjacency_list.keys().cloned().collect();
-    let mut max_distance = 0;
-
-    for _ in 0..iterations {
-        let start = vertices[rng.gen_range(0..vertices.len())];
-        let dist = bfs(graph, start);
-        if let Some(&current_max) = dist.values().max() {
-            max_distance = max_distance.max(current_max);
-        }
-    }
-
-    max_distance
-}
-
 fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
     let mut undirected: HashMap<u32, Vec<u32>> = HashMap::new();
 
@@ -166,6 +105,122 @@ fn find_weak_components(graph: &graph::Graph, graph_type: DirectedOrUndirected) 
     }
 
     components
+}
+
+fn dfs(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>) {
+    if !visited.insert(start) {
+        return;
+    }
+
+    if let Some(neighbors) = graph.adjacency_list.get(&start) {
+        for &neighbor in neighbors {
+            dfs(graph, neighbor, visited);
+        }
+    }
+}
+
+fn bfs(graph: &graph::Graph, start: u32) -> HashMap<u32, usize> {
+    let mut visited = HashSet::new();
+    let mut dist = HashMap::new();
+    let mut queue = VecDeque::new();
+
+    visited.insert(start);
+    dist.insert(start, 0);
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let current_dist = dist[&node];
+
+        if let Some(neighbors) = graph.adjacency_list.get(&node) {
+            for &neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    visited.insert(neighbor);
+                    dist.insert(neighbor, current_dist + 1);
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    dist
+}
+
+//обработка компонент
+
+fn bfs_with_filter(
+    graph: &graph::Graph,
+    start: u32,
+    component: Option<&HashSet<u32>>,
+) -> HashMap<u32, usize> {
+    let mut visited = HashSet::new();
+    let mut dist = HashMap::new();
+    let mut queue = VecDeque::new();
+
+    visited.insert(start);
+    dist.insert(start, 0);
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let current_dist = dist[&node];
+
+        if let Some(neighbors) = graph.adjacency_list.get(&node) {
+            for &neighbor in neighbors {
+                let allowed = match component {
+                    Some(comp) => comp.contains(&neighbor),
+                    None => true,
+                };
+
+                if allowed && !visited.contains(&neighbor) {
+                    visited.insert(neighbor);
+                    dist.insert(neighbor, current_dist + 1);
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    dist
+}
+
+fn approximate_diameter(graph: &graph::Graph, component: Option<&HashSet<u32>>) -> usize {
+    let start = match component {
+        Some(comp) => *comp.iter().next().unwrap(),
+        None => *graph.adjacency_list.keys().next().unwrap(),
+    };
+
+    let dist = bfs_with_filter(graph, start, component);
+
+    let (&farthest_node, _) = dist.iter().max_by_key(|&(_, &d)| d).unwrap();
+
+    let dist_from_farthest = bfs_with_filter(graph, farthest_node, component);
+
+    *dist_from_farthest.values().max().unwrap()
+}
+
+fn random_like_diameter_calculate(
+    graph: &graph::Graph,
+    component: Option<&HashSet<u32>>,
+    iterations: usize,
+) -> usize {
+    let mut rng = rand::thread_rng();
+
+    let vertices: Vec<u32> = match component {
+        Some(comp) => comp.iter().cloned().collect(),
+        None => graph.adjacency_list.keys().cloned().collect(),
+    };
+
+    let mut max_distance = 0;
+
+    for _ in 0..iterations {
+        let start = vertices[rng.gen_range(0..vertices.len())];
+        let dist = bfs_with_filter(graph, start, component);
+
+        if let Some(&current_max) = dist.values().max() {
+            max_distance = max_distance.max(current_max);
+        }
+    }
+
+    max_distance
 }
 
 fn main() {}
