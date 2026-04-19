@@ -18,3 +18,4 @@ dist/
 build/
 *.egg
 *.whl
+.DS_Store
