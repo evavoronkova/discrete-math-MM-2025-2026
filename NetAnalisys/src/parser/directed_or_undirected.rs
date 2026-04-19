@@ -1,0 +1,4 @@
+enum DirectedOrUndirected {
+    Directed,
+    Undirected,
+}
