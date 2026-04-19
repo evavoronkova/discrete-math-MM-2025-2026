@@ -1,4 +1,10 @@
-use std::{collections::{HashMap, HashSet, VecDeque}, vec};
+#![allow(unused)]
+
+use rand::Rng;
+use std::{
+    collections::{HashMap, HashSet, VecDeque},
+    vec,
+};
 
 mod graph;
 mod parser;
@@ -95,6 +101,22 @@ fn approximate_diameter(graph: &graph::Graph) -> usize {
     *dist_from_farthest.values().max().unwrap()
 }
 
+fn random_like_diameter_calculate(graph: &graph::Graph, iterations: usize) -> usize {
+    let mut rng = rand::thread_rng();
+    let vertices: Vec<u32> = graph.adjacency_list.keys().cloned().collect();
+    let mut max_distance = 0;
+
+    for _ in 0..iterations {
+        let start = vertices[rng.gen_range(0..vertices.len())];
+        let dist = bfs(graph, start);
+        if let Some(&current_max) = dist.values().max() {
+            max_distance = max_distance.max(current_max);
+        }
+    }
+
+    max_distance
+}
+
 fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
     let mut undirected: HashMap<u32, Vec<u32>> = HashMap::new();
 
@@ -108,8 +130,12 @@ fn build_undirected(graph: &graph::Graph) -> HashMap<u32, Vec<u32>> {
     undirected
 }
 
-
-fn dfs_for_comps(graph: &graph::Graph, start: u32, visited: &mut std::collections::HashSet<u32>, comp: &mut Vec<u32>) {
+fn dfs_for_comps(
+    graph: &graph::Graph,
+    start: u32,
+    visited: &mut std::collections::HashSet<u32>,
+    comp: &mut Vec<u32>,
+) {
     if !visited.insert(start) {
         return;
     }
