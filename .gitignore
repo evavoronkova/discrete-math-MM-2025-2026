@@ -1,9 +1,10 @@
-/target/
+target/
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
 *.log
+.codex/
 .env
 .env.*
 *.exe
