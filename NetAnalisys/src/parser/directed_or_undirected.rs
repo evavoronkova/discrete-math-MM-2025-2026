@@ -1,4 +1,4 @@
-enum DirectedOrUndirected {
+pub enum DirectedOrUndirected {
     Directed,
     Undirected,
 }
