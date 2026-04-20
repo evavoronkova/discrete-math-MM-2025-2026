@@ -1,5 +1,11 @@
-use std::{cmp::max, collections::{HashMap, HashSet}};
-use crate::{analysis::connectivity::build_undirected, graph::Graph, parser::directed_or_undirected::DirectedOrUndirected};
+use crate::{
+    analysis::connectivity::build_undirected, graph::Graph,
+    parser::directed_or_undirected::DirectedOrUndirected,
+};
+use std::{
+    cmp::max,
+    collections::{HashMap, HashSet},
+};
 
 #[allow(dead_code)]
 fn calculate_mid_k(graph: Graph) -> f64 {

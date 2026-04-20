@@ -1,7 +1,7 @@
-use std::collections::HashSet;
 use crate::graph::Graph;
-use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use crate::graph::traversal::dfs;
+use crate::parser::directed_or_undirected::DirectedOrUndirected;
+use std::collections::HashSet;
 
 #[allow(dead_code)]
 pub fn calculate_main_graph_information(graph: &Graph) {

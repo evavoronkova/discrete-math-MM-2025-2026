@@ -31,9 +31,7 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
             .into());
         }
         None => {
-            return Err(
-                "The file must be inside the 'directed' or 'undirected' folder.".into(),
-            );
+            return Err("The file must be inside the 'directed' or 'undirected' folder.".into());
         }
     };
 

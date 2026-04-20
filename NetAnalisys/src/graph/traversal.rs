@@ -1,5 +1,5 @@
-use std::collections::{HashSet, HashMap, VecDeque};
 use crate::graph::Graph;
+use std::collections::{HashMap, HashSet, VecDeque};
 
 pub fn dfs(graph: &Graph, start: u32, visited: &mut HashSet<u32>) {
     if !visited.insert(start) {

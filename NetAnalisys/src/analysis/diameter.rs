@@ -1,8 +1,8 @@
-use std::collections::{HashSet, VecDeque};
-use rand::Rng;
-use rand::seq::SliceRandom;
 use crate::graph::Graph;
 use crate::graph::traversal::bfs_with_filter;
+use rand::Rng;
+use rand::seq::SliceRandom;
+use std::collections::{HashSet, VecDeque};
 
 pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
     let start = match component {

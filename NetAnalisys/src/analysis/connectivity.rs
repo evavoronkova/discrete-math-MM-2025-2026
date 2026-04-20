@@ -1,7 +1,7 @@
-use std::collections::{HashMap, HashSet};
 use crate::graph::Graph;
-use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use crate::graph::traversal::dfs_for_comps;
+use crate::parser::directed_or_undirected::DirectedOrUndirected;
+use std::collections::{HashMap, HashSet};
 
 pub fn build_undirected(graph: &Graph) -> Graph {
     let mut undirected_adj = HashMap::new();
