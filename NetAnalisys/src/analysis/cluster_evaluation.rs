@@ -1,4 +1,5 @@
-use crate::graph::Graph;
+use std::{cmp::max, collections::{HashMap, HashSet}};
+use crate::{analysis::connectivity::build_undirected, graph::Graph, parser::directed_or_undirected::DirectedOrUndirected};
 
 #[allow(dead_code)]
 fn calculate_mid_k(graph: Graph) -> f64 {
@@ -33,4 +34,52 @@ fn triplet_counter(graph: &Graph) -> u32 {
         triplets_count += (node_degree * (node_degree - 1) / 2) as u32;
     }
     triplets_count
+}
+
+fn calculate_mid_k_for_weak_component(graph: &Graph, comps: &Vec<HashSet<u32>>) -> f64 {
+    let max_comp = get_max_comp(comps);
+    let new_graph = create_graph_on_weak_component(graph, &max_comp);
+    calculate_mid_k(new_graph)
+}
+
+fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
+    let undirected_graph: Graph;
+    let working_graph = match graph.graph_type {
+        DirectedOrUndirected::Directed => {
+            undirected_graph = build_undirected(graph);
+            &undirected_graph
+        }
+        DirectedOrUndirected::Undirected => graph,
+    };
+
+    let mut adj_list: HashMap<u32, Vec<u32>> = HashMap::new();
+    for &v in comp {
+        if let Some(neighbors) = working_graph.adjacency_list.get(&v) {
+            let filtered: Vec<u32> = neighbors
+                .iter()
+                .filter(|&u| comp.contains(u))
+                .cloned()
+                .collect();
+            adj_list.insert(v, filtered);
+        } else {
+            adj_list.insert(v, Vec::new());
+        }
+    }
+
+    Graph {
+        adjacency_list: adj_list,
+        graph_type: DirectedOrUndirected::Undirected,
+    }
+}
+
+fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+    let mut max_comp: HashSet<u32> = HashSet::new();
+
+    for i in comps {
+        if max_comp.len() < i.len() {
+            max_comp = i.clone();
+        }
+    }
+
+    max_comp
 }
