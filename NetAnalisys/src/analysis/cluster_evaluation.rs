@@ -1,6 +1,7 @@
 use crate::{
     analysis::connectivity::build_undirected, graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
+    analysis::triangle_counter::find_triangles,
 };
 use std::{
     cmp::max,
@@ -8,7 +9,7 @@ use std::{
 };
 
 #[allow(dead_code)]
-fn calculate_mid_k(graph: Graph) -> f64 {
+fn calculate_mid_k(graph: &Graph) -> f64 {
     let mut local_k = Vec::new();
     for (node, neighbors) in &graph.adjacency_list {
         let neighbor_count = neighbors.len();
@@ -42,10 +43,19 @@ fn triplet_counter(graph: &Graph) -> u32 {
     triplets_count
 }
 
+fn calculate_global_k(graph: &Graph) -> f64 {
+    let triangles = find_triangles(graph);
+    let triplets = triplet_counter(graph);
+    if triplets == 0 {
+        return 0.0;
+    }
+    (3 * triangles) as f64 / triplets as f64
+}
+
 fn calculate_mid_k_for_weak_component(graph: &Graph, comps: &Vec<HashSet<u32>>) -> f64 {
     let max_comp = get_max_comp(comps);
     let new_graph = create_graph_on_weak_component(graph, &max_comp);
-    calculate_mid_k(new_graph)
+    calculate_mid_k(&new_graph)
 }
 
 fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
