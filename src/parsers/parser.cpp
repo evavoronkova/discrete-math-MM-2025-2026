@@ -1,7 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <stdexcept>
-#include <boost/algorithm/string.hpp>
+
 
 #include "parser.h"
 #include "../general.h"
@@ -27,19 +27,19 @@ graph parser::parse(const string &file_path) {
 
 void txt_parser::process(graph& graph, string& line){
     vector<string> strs;
-    boost::split(strs, line, boost::is_any_of("\t "));
+    boost::split(strs, line, separator);
     if (line[0] == '#') {
         is_first = false;
         if (boost::contains(line, "Nodes")) {
-            graph.vertexes = stoi(strs[2]);
-            graph.edges = stoi(strs[4]);
+            graph.amount_vertexes = stoi(strs[2]);
+            graph.amount_edges = stoi(strs[4]);
         }
     }
     else if (strs.size() == 2) {
         int first = stoi(strs[0]), second = stoi(strs[1]);
         if (is_first) {
-            graph.vertexes = first;
-            graph.edges = second;
+            graph.amount_vertexes = first;
+            graph.amount_edges = second;
             is_first = false;
         }
         else {
@@ -56,7 +56,7 @@ void csv_parser::process(graph& graph, string& line) {
         return;
     }
     vector<string> strs;
-    boost::split(strs, line, boost::is_any_of(","));
+    boost::split(strs, line, separator);
     if (strs.size() == 2) {
         graph.insert(stoi(strs[0]), stoi(strs[1]));
     }
@@ -67,11 +67,11 @@ void csv_parser::process(graph& graph, string& line) {
 void mtx_parser::process(graph& graph, string& line) {
     if (line[0] == '%') return;
     vector<string> strs;
-    boost::split(strs, line, boost::is_any_of(" "));
+    boost::split(strs, line, separator);
 
     if (is_first && strs.size() == 3) {
-        graph.vertexes = stoi(strs[0]);
-        graph.edges = stoi(strs[2]);
+        graph.amount_vertexes = stoi(strs[0]);
+        graph.amount_edges = stoi(strs[2]);
         is_first = false;
         return;
     }
@@ -104,11 +104,11 @@ graph uni_parser::parse(const string &file_path) {
         g.type = g_type::Directed;
     }
     else {
-        ERROR_PRINT("Cannot identify type of graph. You must install it manually!\n");
+        throw runtime_error("Cannot identify type of graph. You must install it manually!\n");
     }
 
-    if (g.vertexes == 0) g.calculate_vertexes();
-    if (g.edges == 0) g.calculate_edges();
+    if (g.amount_vertexes == 0) g.calculate_vertexes();
+    if (g.amount_edges == 0) g.calculate_edges();
 
     return g;
 }

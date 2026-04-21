@@ -1,6 +1,7 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -12,12 +13,14 @@ using namespace std;
 class graph : public unordered_map<int, vector<int>>{
 public:
     g_type type = Undefined;
-    size_t vertexes = 0;
-    size_t edges = 0;
+    size_t amount_vertexes = 0;
+    size_t amount_edges = 0;
 
-    void insert(int v, int w);
-    void remove(int v, int w);
+    void insert(int from, int to);
+    void remove(int from, int to);
 
+    set<int> get_vertexes() const;
+    graph get_reversed_graph();
     void calculate_vertexes();
     void calculate_edges();
 };
