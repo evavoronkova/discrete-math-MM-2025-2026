@@ -1,12 +1,8 @@
 use crate::{
-    analysis::connectivity::build_undirected, graph::Graph,
-    parser::directed_or_undirected::DirectedOrUndirected,
-    analysis::triangle_counter::find_triangles,
+    analysis::connectivity::build_undirected, analysis::triangle_counter::find_triangles,
+    graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
 };
-use std::{
-    cmp::max,
-    collections::{HashMap, HashSet},
-};
+use std::collections::{HashMap, HashSet};
 
 #[allow(dead_code)]
 fn calculate_mid_k(graph: &Graph) -> f64 {
