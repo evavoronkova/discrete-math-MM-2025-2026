@@ -15,14 +15,16 @@ public:
 
     double get_density() const;
 
-    set<set<int>> get_connected_components();
-    set<set<int>> get_strongly_connected_components();
+    // CC means Connected Components
+    // CSC means Strongly Connected Components
+    set<set<int>> get_CCs();
+    set<set<int>> get_SCCs();
 
-    size_t get_amount_of_connected_components();
-    double get_fraction_of_vertexes_in_max_connected_component();
+    size_t get_amount_of_CC();
+    size_t get_amount_of_SCC();
 
-    size_t get_amount_of_strongly_connected_components();
-    double get_fraction_of_vertexes_in_max_strongly_connected_component();
+    double get_fraction_of_vertexes_in_max_CC();
+    double get_fraction_of_vertexes_in_max_SCC();
 private:
     // For searching connected components
     unordered_map<int, int> CC_comp_id;
@@ -32,11 +34,11 @@ private:
     void CC_directed_dfs(int v);
 
     // For searching strongly connected components
-    unordered_map<int, bool> CSC_visited;
-    vector<int> CSC_order;
-    set<int> CSC_component;
-    void CSC_dfs1(int v);
-    void CSC_dfs2(int v);
+    unordered_map<int, bool> SCC_visited;
+    vector<int> SCC_order;
+    set<int> SCC_component;
+    void SCC_dfs1(int v);
+    void SCC_dfs2(int v);
 
 };
 

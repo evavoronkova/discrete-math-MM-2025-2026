@@ -5,15 +5,15 @@ double graph_analyzer::get_density() const {
     return (double)g.amount_edges / (double)max_edges;
 }
 
-size_t graph_analyzer::get_amount_of_connected_components() {
-    return get_connected_components().size();
+size_t graph_analyzer::get_amount_of_CC() {
+    return get_CCs().size();
 }
-size_t graph_analyzer::get_amount_of_strongly_connected_components() {
-    return get_strongly_connected_components().size();
+size_t graph_analyzer::get_amount_of_SCC() {
+    return get_SCCs().size();
 }
 
-double graph_analyzer::get_fraction_of_vertexes_in_max_connected_component() {
-    auto components = get_connected_components();
+double graph_analyzer::get_fraction_of_vertexes_in_max_CC() {
+    auto components = get_CCs();
     size_t mx = 0;
     for (auto &component : components) {
         mx = max(mx, component.size());
@@ -21,8 +21,8 @@ double graph_analyzer::get_fraction_of_vertexes_in_max_connected_component() {
     return (double)mx / (double)g.size();
 }
 
-double graph_analyzer::get_fraction_of_vertexes_in_max_strongly_connected_component() {
-    auto components = get_strongly_connected_components();
+double graph_analyzer::get_fraction_of_vertexes_in_max_SCC() {
+    auto components = get_SCCs();
     size_t mx = 0;
     for (auto &component : components) {
         mx = max(mx, component.size());
@@ -46,7 +46,7 @@ void graph_analyzer::CC_directed_dfs(int v) {
         CC_directed_dfs(o);
     }
 }
-set<set<int>> graph_analyzer::get_connected_components() {
+set<set<int>> graph_analyzer::get_CCs() {
     auto v_list = g.get_vertexes();
 
     g.calculate_vertexes();
@@ -87,41 +87,40 @@ set<set<int>> graph_analyzer::get_connected_components() {
 }
 
 // This is implementation of Kosaraju's algorithm
-// CSC means Connected Strong Components
-void graph_analyzer::CSC_dfs1(int v) {
-    CSC_visited[v] = true;
+void graph_analyzer::SCC_dfs1(int v) {
+    SCC_visited[v] = true;
     for (auto o : g[v])
-        if (!CSC_visited[o])
-            CSC_dfs1(o);
-    CSC_order.push_back(v);
+        if (!SCC_visited[o])
+            SCC_dfs1(o);
+    SCC_order.push_back(v);
 }
-void graph_analyzer::CSC_dfs2(int v) {
-    CSC_visited[v] = true;
-    CSC_component.insert(v);
+void graph_analyzer::SCC_dfs2(int v) {
+    SCC_visited[v] = true;
+    SCC_component.insert(v);
     for (auto o : rg[v])
-        if (!CSC_visited[o])
-            CSC_dfs2(o);
+        if (!SCC_visited[o])
+            SCC_dfs2(o);
 }
 
-set<set<int>> graph_analyzer::get_strongly_connected_components() {
+set<set<int>> graph_analyzer::get_SCCs() {
     auto v_list = g.get_vertexes();
     if (rg.empty()) rg = g.get_reversed_graph();
     for (auto v : v_list) {
-        if (!CSC_visited[v])
-            CSC_dfs1(v);
+        if (!SCC_visited[v])
+            SCC_dfs1(v);
     }
-    CSC_visited.clear();
+    SCC_visited.clear();
     auto components = set<set<int>>();
-    size_t n = CSC_order.size();
+    size_t n = SCC_order.size();
     for (int i = 0; i < n; i++) {
-        int v = CSC_order[n - i - 1];
-        if (!CSC_visited[v]) {
-            CSC_dfs2(v);
-            components.insert(CSC_component);
-            CSC_component.clear();
+        int v = SCC_order[n - i - 1];
+        if (!SCC_visited[v]) {
+            SCC_dfs2(v);
+            components.insert(SCC_component);
+            SCC_component.clear();
         }
     }
-    CSC_visited.clear();
-    CSC_order.clear();
+    SCC_visited.clear();
+    SCC_order.clear();
     return components;
 }

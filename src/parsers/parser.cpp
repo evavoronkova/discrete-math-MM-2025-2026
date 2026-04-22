@@ -108,7 +108,6 @@ graph uni_parser::parse(const string &file_path) {
     }
 
     if (g.amount_vertexes == 0) g.calculate_vertexes();
-    if (g.amount_edges == 0) g.calculate_edges();
 
     return g;
 }

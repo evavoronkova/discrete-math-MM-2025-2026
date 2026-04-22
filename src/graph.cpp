@@ -7,6 +7,7 @@ void graph::insert(const int from, const int to) {
     if (type == Undirected) {
         (*this)[to].push_back(from);
     }
+    ++amount_edges;
 }
 void graph::remove(const int from, const int to) {
     if (!contains(from)) return;
@@ -15,6 +16,7 @@ void graph::remove(const int from, const int to) {
     if (type == Undirected) {
         std::erase((*this)[to], from);
     }
+    --amount_edges;
 }
 
 set<int> graph::get_vertexes() const {
@@ -50,18 +52,26 @@ graph graph::get_reversed_graph() {
 }
 
 void graph::calculate_vertexes() {
-    amount_vertexes = size();
+    if (type == Undirected) {
+        amount_vertexes = size();
+    }
+    else if (type == Directed) {
+        amount_vertexes = get_vertexes().size();
+    }
+    else {
+        throw runtime_error("calculate_vertexes: Invalid graph type");
+    }
 }
 
-void graph::calculate_edges() {
-    if (type == Undefined) {
-        throw runtime_error("calculate_edges: Cannot count amount of edges, because graph type is Undefined");
-    }
-    amount_edges = 0;
-    for (auto &edges_list : *this) {
-        amount_edges += edges_list.second.size();
-    }
-    if (type == Undirected) {
-        amount_edges /= 2;
-    }
-}
+// void graph::calculate_edges() {
+//     if (type == Undefined) {
+//         throw runtime_error("calculate_edges: Cannot count amount of edges, because graph type is Undefined");
+//     }
+//     amount_edges = 0;
+//     for (auto &edges_list : *this) {
+//         amount_edges += edges_list.second.size();
+//     }
+//     if (type == Undirected) {
+//         amount_edges /= 2;
+//     }
+// }
