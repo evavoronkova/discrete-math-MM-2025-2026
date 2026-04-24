@@ -99,3 +99,35 @@ pub fn snowball_sampling(
     }
     sample
 }
+
+fn percentile_90_distance(
+    graph: &Graph,
+    component: Option<&HashSet<u32>>,
+    iterations: usize,
+) -> usize {
+    let mut rng = rand::thread_rng();
+
+    let vertices: Vec<u32> = match component {
+        Some(comp) => comp.iter().cloned().collect(),
+        None => graph.adjacency_list.keys().cloned().collect(),
+    };
+    if vertices.is_empty() || vertices.len() < 2 {
+        return 0;
+    }
+
+    let mut distances = Vec::with_capacity(iterations);
+    for _ in 0..iterations {
+        let u = vertices[rng.gen_range(0..vertices.len())];
+        let dist_map = bfs_with_filter(graph, u, component);
+        let v = vertices[rng.gen_range(0..vertices.len())];
+        if let Some(&dist) = dist_map.get(&v) {
+            distances.push(dist);
+        }
+        if distances.is_empty() {
+            return 0;
+        }
+        distances.sort_unstable();
+    }
+    let index = (0.9 * distances.len() as f64).ceil() as usize - 1;
+    distances[index]
+}
