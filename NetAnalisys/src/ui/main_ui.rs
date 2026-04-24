@@ -91,5 +91,6 @@ pub fn run_ui() {
     }
 
     disable_raw_mode().unwrap();
+    execute!(stdout, Show).unwrap();
     println!();
 }
