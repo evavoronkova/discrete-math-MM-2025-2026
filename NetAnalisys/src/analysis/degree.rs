@@ -41,3 +41,14 @@ fn mid_degree(graph: &Graph) -> f64 {
     let sum: u32 = degrees.values().sum();
     sum as f64 / total_vertices as f64
 }
+
+fn degree_probability(graph: &Graph) -> HashMap<u32, f32> {
+    let degrees = all_degrees(graph);
+    let total_vertices = graph.num_vertices();
+    let mut hashmap: HashMap<u32, f32> = HashMap::new();
+    for (k, v) in &degrees {
+        *hashmap.entry(*v).or_insert(0.0) += 1.0 / total_vertices as f32;
+    }
+
+    hashmap
+}
