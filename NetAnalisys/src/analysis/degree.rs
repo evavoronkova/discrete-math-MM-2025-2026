@@ -1,10 +1,7 @@
-use crate::{
-    analysis::connectivity::build_undirected, graph::Graph,
-    parser::directed_or_undirected::DirectedOrUndirected,
-};
+use crate::{graph::Graph, parser::directed_or_undirected::DirectedOrUndirected};
 use std::collections::HashMap;
 
-fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
+pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
     let mut degrees = HashMap::new();
     match graph.graph_type {
         DirectedOrUndirected::Directed => {

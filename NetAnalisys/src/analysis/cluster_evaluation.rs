@@ -84,7 +84,7 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
     }
 }
 
-fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+pub fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
     let mut max_comp: HashSet<u32> = HashSet::new();
 
     for i in comps {
