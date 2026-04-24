@@ -1,7 +1,9 @@
-use std::collections::HashMap;
 use plotters::prelude::*;
+use std::collections::HashMap;
 
-pub fn save_graph_plotters(degree_map: HashMap<u32, f32>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn save_graph_plotters(
+    degree_map: HashMap<u32, f32>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut data: Vec<(f32, f32)> = degree_map
         .into_iter()
         .map(|(degree, percent)| (degree as f32, percent))
@@ -13,7 +15,10 @@ pub fn save_graph_plotters(degree_map: HashMap<u32, f32>) -> Result<(), Box<dyn 
     let x_max = data.last().unwrap().0;
 
     let y_min = data.iter().map(|(_, y)| *y).fold(f32::INFINITY, f32::min);
-    let y_max = data.iter().map(|(_, y)| *y).fold(f32::NEG_INFINITY, f32::max);
+    let y_max = data
+        .iter()
+        .map(|(_, y)| *y)
+        .fold(f32::NEG_INFINITY, f32::max);
 
     let root = BitMapBackend::new("graph.png", (1280, 720)).into_drawing_area();
     root.fill(&WHITE)?;
@@ -31,13 +36,11 @@ pub fn save_graph_plotters(degree_map: HashMap<u32, f32>) -> Result<(), Box<dyn 
         .y_desc("Percent")
         .draw()?;
 
-    chart.draw_series(LineSeries::new(
-        data.clone(),
-        &BLUE,
-    ))?;
+    chart.draw_series(LineSeries::new(data.clone(), &BLUE))?;
 
     chart.draw_series(
-        data.iter().map(|(x, y)| Circle::new((*x, *y), 3, RED.filled()))
+        data.iter()
+            .map(|(x, y)| Circle::new((*x, *y), 3, RED.filled())),
     )?;
 
     root.present()?;

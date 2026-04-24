@@ -28,10 +28,7 @@ fn test_data() -> HashMap<u32, f32> {
 }
 fn main() {
     ui::main_ui::run_ui();
-    ui::degree_graphic_printing::print_graph(
-        test_data()
-    );
-    ui::degree_graphic_saving_in_png::save_graph_plotters(
-        test_data()
-    ).expect("Failed to save graph as PNG");
+    ui::degree_graphic_printing::print_graph(test_data());
+    ui::degree_graphic_saving_in_png::save_graph_plotters(test_data())
+        .expect("Failed to save graph as PNG");
 }
