@@ -2,6 +2,7 @@ use super::parser::directed_or_undirected::DirectedOrUndirected;
 use std::collections::HashMap;
 pub mod traversal;
 
+#[derive(Debug)]
 pub struct Graph {
     pub adjacency_list: HashMap<u32, Vec<u32>>,
     pub graph_type: DirectedOrUndirected,

@@ -1,5 +1,6 @@
 use super::directed_or_undirected::DirectedOrUndirected;
 use super::file_type::FileType;
+use crate::graph::Graph;
 use crate::parser::{parse_from_csv, parse_from_mtx, parse_from_txt};
 use std::collections::HashMap;
 use std::error::Error;
@@ -48,25 +49,17 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
     }
 }
 
-#[allow(dead_code)]
-fn parse(path: &str) -> HashMap<u32, Vec<u32>> {
-    let (file_type, graph_type) = match parse_type_file(path) {
-        Ok(ext) => ext,
-        Err(e) => panic!("{}", e),
+pub fn parse_file(path: &str) -> Result<Graph, Box<dyn Error>> {
+    let (file_type, graph_type) = parse_type_file(path)?;
+
+    let adjacency_list = match file_type {
+        FileType::Txt => parse_from_txt::txt_parser(path, &graph_type)?,
+        FileType::Csv => parse_from_csv::csv_parser(path, &graph_type)?,
+        FileType::Mtx => parse_from_mtx::mtx_parser(path, &graph_type)?,
     };
 
-    match file_type {
-        FileType::Txt => match parse_from_txt::txt_parser(path, graph_type) {
-            Ok(h) => h,
-            Err(e) => panic!("{}", e),
-        },
-        FileType::Csv => match parse_from_csv::csv_parser(path, graph_type) {
-            Ok(h) => h,
-            Err(e) => panic!("{}", e),
-        },
-        FileType::Mtx => match parse_from_mtx::mtx_parser(path, graph_type) {
-            Ok(h) => h,
-            Err(e) => panic!("{}", e),
-        },
-    }
+    Ok(Graph {
+        adjacency_list,
+        graph_type,
+    })
 }

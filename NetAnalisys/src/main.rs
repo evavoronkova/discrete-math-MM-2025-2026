@@ -27,8 +27,23 @@ fn test_data() -> HashMap<u32, f32> {
     map
 }
 fn main() {
-    ui::main_ui::run_ui();
-    ui::degree_graphic_printing::print_graph(test_data());
-    ui::degree_graphic_saving_in_png::save_graph_plotters(test_data())
-        .expect("Failed to save graph as PNG");
+    let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
+    let mut graph: graph::Graph = graph::Graph::new(DirectedOrUndirected::Undirected);
+    match file_name {
+        Some(path) => {
+            graph = parser::parse::parse_file(&path).expect("Failed to parse graph");
+            //let degree_map = analysis::degree::calculate_degree_distribution(&graph);
+            //ui::degree_graphic_printing::print_graph(degree_map.clone());
+            //ui::degree_graphic_saving_in_png::save_graph_plotters(degree_map)
+            //    .expect("Failed to save graph as PNG");
+        }
+        None => println!("No file selected. Exiting."),
+    }
+    println!("{:?}", graph);
+    ui::degree_graphic_printing::print_graph(
+        test_data()
+    );
+    ui::degree_graphic_saving_in_png::save_graph_plotters(
+        test_data()
+    ).expect("Failed to save graph as PNG");
 }

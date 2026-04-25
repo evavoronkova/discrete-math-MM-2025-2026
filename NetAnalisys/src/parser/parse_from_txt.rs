@@ -6,7 +6,7 @@ use super::directed_or_undirected::DirectedOrUndirected;
 #[allow(dead_code)]
 pub fn txt_parser(
     path: &str,
-    graph_type: DirectedOrUndirected,
+    graph_type: &DirectedOrUndirected,
 ) -> Result<HashMap<u32, Vec<u32>>, Box<dyn Error>> {
     let content = read_to_string(path)?;
     let mut adjacency_list: HashMap<u32, Vec<u32>> = HashMap::new();

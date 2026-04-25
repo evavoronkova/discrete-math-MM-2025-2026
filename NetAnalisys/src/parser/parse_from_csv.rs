@@ -5,7 +5,7 @@ use std::error::Error;
 #[allow(dead_code)]
 pub fn csv_parser(
     path: &str,
-    graph_type: DirectedOrUndirected,
+    graph_type: &DirectedOrUndirected,
 ) -> Result<HashMap<u32, Vec<u32>>, Box<dyn Error>> {
     let mut reader = csv::Reader::from_path(path)?;
     let mut adjacency_list: HashMap<u32, Vec<u32>> = HashMap::new();
