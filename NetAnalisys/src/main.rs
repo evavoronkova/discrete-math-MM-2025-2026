@@ -8,8 +8,7 @@ use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
 use rand::seq::SliceRandom;
 use std::{
-    collections::{HashMap, HashSet, VecDeque},
-    vec,
+    collections::{HashMap, HashSet, VecDeque}, iter, vec
 };
 
 fn test_data() -> HashMap<u32, f32> {
@@ -28,22 +27,21 @@ fn test_data() -> HashMap<u32, f32> {
 }
 fn main() {
     let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
-    let mut graph: graph::Graph = graph::Graph::new(DirectedOrUndirected::Undirected);
+    let mut graph: graph::Graph =
+        graph::Graph::new(parser::directed_or_undirected::DirectedOrUndirected::Undirected);
     match file_name {
         Some(path) => {
             graph = parser::parse::parse_file(&path).expect("Failed to parse graph");
-            //let degree_map = analysis::degree::calculate_degree_distribution(&graph);
-            //ui::degree_graphic_printing::print_graph(degree_map.clone());
-            //ui::degree_graphic_saving_in_png::save_graph_plotters(degree_map)
-            //    .expect("Failed to save graph as PNG");
+            let degree_data: Vec<(f32, f32)> = analysis::degree::degree_probability(&graph);
+            let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);
+
+            ui::degree_graphic_printing::print_graph(degree_data.clone());
+            ui::degree_graphic_saving_in_png::save_graph_plotters(degree_data, Some("degree_data1"))
+                .expect("Failed to save graph as PNG");
+            ui::degree_graphic_printing::print_graph(log_degree_data.clone());
+            ui::degree_graphic_saving_in_png::save_graph_plotters(log_degree_data, Some("log_degree_data"))
+                .expect("Failed to save graph as PNG");
         }
         None => println!("No file selected. Exiting."),
     }
-    println!("{:?}", graph);
-    ui::degree_graphic_printing::print_graph(
-        test_data()
-    );
-    ui::degree_graphic_saving_in_png::save_graph_plotters(
-        test_data()
-    ).expect("Failed to save graph as PNG");
 }

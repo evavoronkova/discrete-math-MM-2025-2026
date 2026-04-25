@@ -2,6 +2,23 @@ use crossterm::{cursor::*, event::*, execute, style::*, terminal::*};
 use std::fs;
 use std::io::{Write, stdout};
 
+struct TerminalGuard;
+
+impl TerminalGuard {
+    fn new() -> Self {
+        enable_raw_mode().unwrap();
+        execute!(stdout(), Hide).unwrap();
+        TerminalGuard
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        disable_raw_mode().unwrap();
+        let _ = execute!(stdout(), Show);
+    }
+}
+
 fn print_greeting(stdout: &mut std::io::Stdout) {
     execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
 
@@ -20,8 +37,7 @@ fn print_greeting(stdout: &mut std::io::Stdout) {
 }
 
 pub fn run_ui_and_file_parcing_menu() -> Option<String> {
-    enable_raw_mode().unwrap();
-    execute!(stdout(), Hide).unwrap();
+    let _guard = TerminalGuard::new();
     let mut stdout = stdout();
     let mut counter = 1;
 
@@ -98,8 +114,6 @@ pub fn run_ui_and_file_parcing_menu() -> Option<String> {
         }
     }
 
-    disable_raw_mode().unwrap();
-    execute!(stdout, Show).unwrap();
     println!();
     None
 }
@@ -117,21 +131,41 @@ fn print_file_choosing_greeting(stdout: &mut std::io::Stdout) {
     write!(stdout, "Press ↑ ↓ to select file").unwrap();
 }
 
-fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
-    enable_raw_mode().unwrap();
+fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefix: &str) {
+    let skip_names = ["target", "src", ".git", "node_modules", ".vscode", ".idea", "target"];
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
 
-    let mut files: Vec<String> = fs::read_dir(".")
-        .unwrap()
-        .filter_map(|entry| {
-            let entry = entry.ok()?;
-            let path = entry.path();
-            if path.is_file() {
-                Some(path.file_name()?.to_string_lossy().to_string())
-            } else {
-                None
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        if path.is_dir() {
+            if !skip_names.contains(&name.as_str()) {
+                let new_prefix = if prefix.is_empty() {
+                    name.clone()
+                } else {
+                    format!("{}/{}", prefix, name)
+                };
+                collect_files_recursive(&path, files, &new_prefix);
             }
-        })
-        .collect();
+        } else if path.is_file() {
+            let full_path = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{}/{}", prefix, name)
+            };
+            files.push(full_path);
+        }
+    }
+    
+}
+
+fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
+    let mut files: Vec<String> = Vec::new();
+    collect_files_recursive(std::path::Path::new("."), &mut files, "");
 
     if files.is_empty() {
         return None;
@@ -139,33 +173,56 @@ fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
 
     files.sort();
 
-    let mut selected = 0;
+    let mut selected = 0usize;
 
     loop {
-        execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
+        let (width, height) = size().unwrap();
 
+        execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
         write!(stdout, "Select file:\n").unwrap();
 
-        for (i, file) in files.iter().enumerate() {
-            execute!(stdout, MoveTo(0, (i + 2) as u16)).unwrap();
+        let window_size = (height as usize).saturating_sub(3);
 
-            if i == selected {
-                execute!(stdout, SetBackgroundColor(Color::DarkGrey)).unwrap();
+        let start = selected.saturating_sub(window_size / 2);
+        let end = (start + window_size).min(files.len());
+
+        for (i, file) in files[start..end].iter().enumerate() {
+            let real_index = start + i;
+
+            execute!(stdout, MoveTo(0, (i + 1) as u16)).unwrap();
+
+            if real_index == selected {
+                execute!(
+                    stdout,
+                    SetBackgroundColor(Color::Blue),
+                    SetForegroundColor(Color::White)
+                )
+                .unwrap();
+
                 write!(stdout, "> {}", file).unwrap();
+
                 execute!(stdout, ResetColor).unwrap();
             } else {
                 write!(stdout, "  {}", file).unwrap();
             }
         }
 
+        execute!(stdout, MoveTo(0, height - 1)).unwrap();
+        write!(
+            stdout,
+            "Selected: {} ({}/{}) | q - exit",
+            files[selected],
+            selected + 1,
+            files.len()
+        )
+        .unwrap();
+
         stdout.flush().unwrap();
 
         if let Event::Key(event) = read().unwrap() {
             match event.code {
                 KeyCode::Up => {
-                    if selected > 0 {
-                        selected -= 1;
-                    }
+                    selected = selected.saturating_sub(1);
                 }
                 KeyCode::Down => {
                     if selected < files.len() - 1 {
@@ -173,14 +230,18 @@ fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
                     }
                 }
 
+                KeyCode::PageDown => {
+                    selected = (selected + 10).min(files.len() - 1);
+                }
+                KeyCode::PageUp => {
+                    selected = selected.saturating_sub(10);
+                }
+
                 KeyCode::Enter => {
-                    let chosen = files[selected].clone();
-                    disable_raw_mode().unwrap();
-                    return Some(chosen);
+                    return Some(files[selected].clone());
                 }
 
                 KeyCode::Esc | KeyCode::Char('q') => {
-                    disable_raw_mode().unwrap();
                     return None;
                 }
 

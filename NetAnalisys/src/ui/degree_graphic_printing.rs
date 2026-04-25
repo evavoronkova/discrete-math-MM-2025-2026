@@ -1,22 +1,9 @@
-use std::collections::HashMap;
-
 use textplots::{Chart, Plot, Shape};
 
-use crate::analysis::degree;
-
-pub fn transform_normal_to_log(degree_map: HashMap<u32, f32>) -> Vec<(f32, f32)> {
-    degree_map
-        .into_iter()
-        .map(|(degree, count)| (f32::log10(degree as f32), f32::log10(count)))
-        .collect()
-}
-pub fn print_graph(degree_map: HashMap<u32, f32>) {
-    let mut data: Vec<(f32, f32)> = degree_map
-        .into_iter()
-        .map(|(degree, percent)| (degree as f32, percent))
-        .collect();
-
-    data.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+pub fn print_graph(data: Vec<(f32, f32)>) {
+    if data.is_empty() {
+        return;
+    }
 
     let x_min = data.first().unwrap().0;
     let x_max = data.last().unwrap().0;

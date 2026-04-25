@@ -1,15 +1,12 @@
 use plotters::prelude::*;
-use std::collections::HashMap;
 
 pub fn save_graph_plotters(
-    degree_map: HashMap<u32, f32>,
+    data: Vec<(f32, f32)>,
+    name: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let mut data: Vec<(f32, f32)> = degree_map
-        .into_iter()
-        .map(|(degree, percent)| (degree as f32, percent))
-        .collect();
-
-    data.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    if data.is_empty() {
+        return Ok(());
+    }
 
     let x_min = data.first().unwrap().0;
     let x_max = data.last().unwrap().0;
@@ -20,7 +17,8 @@ pub fn save_graph_plotters(
         .map(|(_, y)| *y)
         .fold(f32::NEG_INFINITY, f32::max);
 
-    let root = BitMapBackend::new("graph.png", (1280, 720)).into_drawing_area();
+    let name = format!("{}.png", name.unwrap_or("graph"));
+    let root = BitMapBackend::new(&name, (1280, 720)).into_drawing_area();
     root.fill(&WHITE)?;
 
     let mut chart = ChartBuilder::on(&root)
@@ -45,7 +43,7 @@ pub fn save_graph_plotters(
 
     root.present()?;
 
-    println!("График сохранён в graph.png");
+    println!("График сохранён в {}", name);
 
     Ok(())
 }

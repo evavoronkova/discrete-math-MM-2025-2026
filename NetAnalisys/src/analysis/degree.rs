@@ -39,7 +39,7 @@ fn mid_degree(graph: &Graph) -> f64 {
     sum as f64 / total_vertices as f64
 }
 
-fn degree_probability(graph: &Graph) -> HashMap<u32, f32> {
+pub fn degree_probability(graph: &Graph) -> Vec<(f32, f32)> {
     let degrees = all_degrees(graph);
     let total_vertices = graph.num_vertices();
     let mut hashmap: HashMap<u32, f32> = HashMap::new();
@@ -47,5 +47,16 @@ fn degree_probability(graph: &Graph) -> HashMap<u32, f32> {
         *hashmap.entry(*v).or_insert(0.0) += 1.0 / total_vertices as f32;
     }
 
-    hashmap
+    let mut data: Vec<(f32, f32)> = hashmap
+        .into_iter()
+        .map(|(degree, count)| (degree as f32, count))
+        .collect();
+    data.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+    data
+}
+
+pub fn transform_to_log(data: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
+    data.into_iter()
+        .map(|(degree, count)| (f32::log10(*degree), f32::log10(*count)))
+        .collect()
 }
