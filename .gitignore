@@ -21,3 +21,5 @@ build/
 *.whl
 .DS_Store
 .codex
+graphs/
+*.png

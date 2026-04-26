@@ -5,10 +5,7 @@ use tokio::task;
 
 type DynError = Box<dyn Error + Send + Sync>;
 
-pub async fn csv_parser(
-    path: &str,
-    graph_type: &DirectedOrUndirected,
-) -> Result<Graph, DynError> {
+pub async fn csv_parser(path: &str, graph_type: &DirectedOrUndirected) -> Result<Graph, DynError> {
     let path = path.to_string();
     let graph_type = graph_type.clone();
 
@@ -25,10 +22,15 @@ pub async fn csv_parser(
             if record.len() != 2 {
                 continue;
             }
+            let u: u32 = match record[0].trim().parse() {
+                Ok(val) => val,
+                Err(_) => continue,
+            };
 
-            let u: u32 = record[0].parse()?;
-            let v: u32 = record[1].parse()?;
-
+            let v: u32 = match record[1].trim().parse() {
+                Ok(val) => val,
+                Err(_) => continue,
+            };
             graph.add_edge(u, v);
         }
 

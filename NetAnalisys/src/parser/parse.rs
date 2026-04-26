@@ -23,16 +23,7 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
     let graph_type = match direction.as_deref() {
         Some("directed") => DirectedOrUndirected::Directed,
         Some("undirected") => DirectedOrUndirected::Undirected,
-        Some(dir) => {
-            return Err(format!(
-                "Expected a 'directed' or 'undirected' folder, found '{}'",
-                dir
-            )
-            .into());
-        }
-        None => {
-            return Err("The file must be inside the 'directed' or 'undirected' folder.".into());
-        }
+        _ => DirectedOrUndirected::Undirected,
     };
 
     let extension = path
