@@ -5,6 +5,7 @@ use crate::parser::{parse_from_csv, parse_from_mtx, parse_from_txt};
 use std::collections::HashMap;
 use std::error::Error;
 use std::path::Path;
+use tokio;
 
 #[allow(dead_code)]
 fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<dyn Error>> {
@@ -49,17 +50,20 @@ fn parse_type_file(path: &str) -> Result<(FileType, DirectedOrUndirected), Box<d
     }
 }
 
-pub fn parse_file(path: &str) -> Result<Graph, Box<dyn Error>> {
+pub async fn parse_file(path: &str) -> Result<Graph, Box<dyn Error>> {
     let (file_type, graph_type) = parse_type_file(path)?;
 
     let adjacency_list = match file_type {
-        FileType::Txt => parse_from_txt::txt_parser(path, &graph_type)?,
-        FileType::Csv => parse_from_csv::csv_parser(path, &graph_type)?,
-        FileType::Mtx => parse_from_mtx::mtx_parser(path, &graph_type)?,
+        FileType::Txt => parse_from_txt::txt_parser(path, &graph_type).await,
+        FileType::Csv => parse_from_csv::csv_parser(path, &graph_type).await,
+        FileType::Mtx => parse_from_mtx::mtx_parser(path, &graph_type).await,
     };
 
-    Ok(Graph {
-        adjacency_list,
-        graph_type,
-    })
+    match adjacency_list {
+        Ok(adjacency_list) => Ok(Graph {
+            adjacency_list,
+            graph_type,
+        }),
+        Err(e) => Err(e),
+    }
 }

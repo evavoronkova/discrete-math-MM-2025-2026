@@ -1,20 +1,25 @@
 use std::collections::HashMap;
 use std::error::Error;
-use std::fs::read_to_string;
 
 use super::directed_or_undirected::DirectedOrUndirected;
+use tokio::fs::File;
+use tokio::io::{self, AsyncBufReadExt, BufReader};
+
+type DynError = Box<dyn Error + Send + Sync>;
+
 #[allow(dead_code)]
-pub fn txt_parser(
+pub async fn txt_parser(
     path: &str,
     graph_type: &DirectedOrUndirected,
-) -> Result<HashMap<u32, Vec<u32>>, Box<dyn Error>> {
-    let content = read_to_string(path)?;
+) -> Result<HashMap<u32, Vec<u32>>, DynError> {
+    let file = File::open(path).await?;
+    let reader = BufReader::new(file);
     let mut adjacency_list: HashMap<u32, Vec<u32>> = HashMap::new();
-
-    for line in content.lines() {
+    let mut lines = reader.lines();
+    while let Some(line) = lines.next_line().await? {
         let line = line.trim();
 
-        if line.is_empty() || line.starts_with('#') {
+        if line.is_empty() {
             continue;
         }
 
@@ -34,6 +39,5 @@ pub fn txt_parser(
             adjacency_list.entry(v).or_default().push(u);
         }
     }
-
     Ok(adjacency_list)
 }

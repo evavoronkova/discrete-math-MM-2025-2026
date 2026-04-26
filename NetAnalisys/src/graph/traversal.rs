@@ -74,6 +74,32 @@ pub fn bfs_with_filter(
     dist
 }
 
+pub fn bfs_with_parents(graph: &Graph, start: u32) -> HashMap<u32, (usize, Option<u32>)> {
+    let mut visited = HashSet::new();
+    let mut dist = HashMap::new();
+    let mut queue = VecDeque::new();
+
+    visited.insert(start);
+    dist.insert(start, (0, None));
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let (current_dist, _) = dist[&node];
+
+        if let Some(neighbors) = graph.adjacency_list.get(&node) {
+            for &neighbor in neighbors {
+                if !visited.contains(&neighbor) {
+                    visited.insert(neighbor);
+                    dist.insert(neighbor, (current_dist + 1, Some(node)));
+                    queue.push_back(neighbor);
+                }
+            }
+        }
+    }
+
+    dist
+}
+
 pub fn dfs_for_comps(
     graph: &Graph,
     start: u32,
