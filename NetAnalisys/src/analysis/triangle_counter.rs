@@ -2,8 +2,8 @@ use crate::graph;
 use std::collections::{HashMap, HashSet};
 pub fn find_triangles(graph: &graph::Graph) -> u32 {
     let mut new_graph: HashMap<u32, HashSet<u32>> = HashMap::new();
-    for (&node, neighbours) in graph.adjacency_list.iter() {
-        new_graph.insert(node, neighbours.iter().cloned().collect());
+    for (node, neighbours) in graph.adjacency_entries() {
+        new_graph.insert(node, neighbours.iter().copied().collect());
     }
 
     let mut triangles = 0;

@@ -2,12 +2,12 @@ use crate::{
     analysis::connectivity::build_undirected, analysis::triangle_counter::find_triangles,
     graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
 };
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[allow(dead_code)]
 fn calculate_mid_k(graph: &Graph) -> f64 {
     let mut local_k = Vec::new();
-    for (node, neighbors) in &graph.adjacency_list {
+    for (_, neighbors) in graph.adjacency_entries() {
         let neighbor_count = neighbors.len();
         let mut actual_edges = 0;
         let max_edges = neighbor_count * (neighbor_count - 1) / 2;
@@ -17,22 +17,20 @@ fn calculate_mid_k(graph: &Graph) -> f64 {
         }
         for first_neighbor in neighbors.iter() {
             for second_neighbor in neighbors.iter() {
-                if first_neighbor < second_neighbor
-                    && graph.adjacency_list[first_neighbor].contains(second_neighbor)
-                {
+                if first_neighbor < second_neighbor && graph.has_edge(*first_neighbor, *second_neighbor) {
                     actual_edges += 1;
                 }
             }
         }
         local_k.push(actual_edges as f64 / max_edges as f64);
     }
-    local_k.iter().sum::<f64>() / graph.adjacency_list.len() as f64
+    local_k.iter().sum::<f64>() / graph.num_vertices() as f64
 }
 
 #[allow(dead_code)]
 fn triplet_counter(graph: &Graph) -> u32 {
     let mut triplets_count = 0;
-    for (node, neighbors) in &graph.adjacency_list {
+    for (_, neighbors) in graph.adjacency_entries() {
         let node_degree = neighbors.len();
         triplets_count += (node_degree * (node_degree - 1) / 2) as u32;
     }
@@ -56,7 +54,7 @@ fn calculate_mid_k_for_weak_component(graph: &Graph, comps: &Vec<HashSet<u32>>) 
 
 fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
     let undirected_graph: Graph;
-    let working_graph = match graph.graph_type {
+    let working_graph = match graph.kind() {
         DirectedOrUndirected::Directed => {
             undirected_graph = build_undirected(graph);
             &undirected_graph
@@ -64,24 +62,17 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
         DirectedOrUndirected::Undirected => graph,
     };
 
-    let mut adj_list: HashMap<u32, Vec<u32>> = HashMap::new();
+    let mut component_graph = Graph::new(DirectedOrUndirected::Undirected);
     for &v in comp {
-        if let Some(neighbors) = working_graph.adjacency_list.get(&v) {
-            let filtered: Vec<u32> = neighbors
-                .iter()
-                .filter(|&u| comp.contains(u))
-                .cloned()
-                .collect();
-            adj_list.insert(v, filtered);
-        } else {
-            adj_list.insert(v, Vec::new());
+        component_graph.add_vertex(v);
+        for &u in working_graph.neighbors(v) {
+            if comp.contains(&u) && v < u {
+                component_graph.add_edge(v, u);
+            }
         }
     }
 
-    Graph {
-        adjacency_list: adj_list,
-        graph_type: DirectedOrUndirected::Undirected,
-    }
+    component_graph
 }
 
 pub fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {

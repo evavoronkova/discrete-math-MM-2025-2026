@@ -10,7 +10,7 @@ pub struct LandmarkBasic {
 
 impl LandmarkBasic {
     pub fn new(graph: &Graph, num_landmarks: usize) -> Option<Self> {
-        let vertices: Vec<u32> = graph.adjacency_list.keys().cloned().collect();
+        let vertices: Vec<u32> = graph.vertices().collect();
         if vertices.is_empty() || num_landmarks == 0 {
             return None;
         }

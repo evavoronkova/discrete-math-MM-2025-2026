@@ -4,24 +4,21 @@ use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use std::collections::{HashMap, HashSet};
 
 pub fn build_undirected(graph: &Graph) -> Graph {
-    let mut undirected_adj = HashMap::new();
+    let mut undirected_graph = Graph::new(DirectedOrUndirected::Undirected);
 
-    for (&u, neighbors) in &graph.adjacency_list {
+    for (u, neighbors) in graph.adjacency_entries() {
+        undirected_graph.add_vertex(u);
         for &v in neighbors {
-            undirected_adj.entry(u).or_insert_with(Vec::new).push(v);
-            undirected_adj.entry(v).or_insert_with(Vec::new).push(u);
+            undirected_graph.add_edge(u, v);
         }
     }
 
-    Graph {
-        adjacency_list: undirected_adj,
-        graph_type: DirectedOrUndirected::Undirected,
-    }
+    undirected_graph
 }
 
 pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
     let owned_graph: Graph;
-    let graph_ref = match graph.graph_type {
+    let graph_ref = match graph.kind() {
         DirectedOrUndirected::Undirected => graph,
         DirectedOrUndirected::Directed => {
             owned_graph = build_undirected(graph);
@@ -31,7 +28,7 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
     let mut visited = HashSet::new();
     let mut components = Vec::new();
 
-    for &vertex in graph_ref.adjacency_list.keys() {
+    for vertex in graph_ref.vertices() {
         if !visited.contains(&vertex) {
             let mut comp = HashSet::new();
             dfs_for_comps(graph_ref, vertex, &mut visited, &mut comp);
@@ -45,7 +42,7 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
 #[allow(clippy::too_many_arguments)]
 pub fn strong_connect(
     v: u32,
-    adj: &HashMap<u32, Vec<u32>>,
+    graph: &Graph,
     index_counter: &mut u32,
     indexes: &mut HashMap<u32, u32>,
     lowlinks: &mut HashMap<u32, u32>,
@@ -59,23 +56,21 @@ pub fn strong_connect(
     stack.push(v);
     on_stack.insert(v, true);
 
-    if let Some(neighbors) = adj.get(&v) {
-        for &w in neighbors {
-            if !indexes.contains_key(&w) {
-                strong_connect(
-                    w,
-                    adj,
-                    index_counter,
-                    indexes,
-                    lowlinks,
-                    stack,
-                    on_stack,
-                    sccs,
-                );
-                lowlinks.insert(v, lowlinks[&v].min(lowlinks[&w]));
-            } else if *on_stack.get(&w).unwrap_or(&false) {
-                lowlinks.insert(v, lowlinks[&v].min(indexes[&w]));
-            }
+    for &w in graph.neighbors(v) {
+        if !indexes.contains_key(&w) {
+            strong_connect(
+                w,
+                graph,
+                index_counter,
+                indexes,
+                lowlinks,
+                stack,
+                on_stack,
+                sccs,
+            );
+            lowlinks.insert(v, lowlinks[&v].min(lowlinks[&w]));
+        } else if *on_stack.get(&w).unwrap_or(&false) {
+            lowlinks.insert(v, lowlinks[&v].min(indexes[&w]));
         }
     }
 
@@ -101,11 +96,11 @@ pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
     let mut on_stack = HashMap::new();
     let mut sccs = Vec::new();
 
-    for &v in graph.adjacency_list.keys() {
+    for v in graph.vertices() {
         if !indexes.contains_key(&v) {
             strong_connect(
                 v,
-                &graph.adjacency_list,
+                graph,
                 &mut index_counter,
                 &mut indexes,
                 &mut lowlinks,

@@ -2,7 +2,7 @@ use crate::{
     analysis::cluster_evaluation::get_max_comp,
     analysis::connectivity::{find_weak_components, fraction_in_largest_component},
     analysis::degree::all_degrees,
-    graph::{self, Graph},
+    graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
 };
 
@@ -10,30 +10,29 @@ use rand::seq::SliceRandom;
 use std::collections::{HashMap, HashSet};
 
 fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
-    let mut adj_list: HashMap<u32, Vec<u32>> = HashMap::new();
-    for (&src, targets) in &graph.adjacency_list {
+    let mut filtered_graph = Graph::new(graph.kind());
+    for (src, targets) in graph.adjacency_entries() {
         if to_remove.contains(&src) {
             continue;
-        } else {
-            let mut vector: Vec<u32> = Vec::new();
-            for target in targets {
-                if !to_remove.contains(target) {
-                    vector.push(*target);
-                }
+        }
+
+        filtered_graph.add_vertex(src);
+        for &target in targets {
+            if to_remove.contains(&target) {
+                continue;
             }
-            adj_list.insert(src, vector);
+
+            match graph.kind() {
+                DirectedOrUndirected::Directed => filtered_graph.add_edge(src, target),
+                DirectedOrUndirected::Undirected if src < target => {
+                    filtered_graph.add_edge(src, target)
+                }
+                DirectedOrUndirected::Undirected => {}
+            }
         }
     }
 
-    let graph_t = match graph.graph_type {
-        DirectedOrUndirected::Directed => DirectedOrUndirected::Directed,
-        DirectedOrUndirected::Undirected => DirectedOrUndirected::Undirected,
-    };
-
-    Graph {
-        adjacency_list: adj_list,
-        graph_type: graph_t,
-    }
+    filtered_graph
 }
 
 fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
@@ -81,7 +80,7 @@ fn lcc_after_random_removal(graph: &Graph, trials: usize) -> HashMap<u32, f64> {
         let mut rng = rand::thread_rng();
         let mut mid_fraction: f64 = 0.0;
         for _ in 0..trials {
-            let mut vertices: Vec<u32> = graph.adjacency_list.keys().cloned().collect();
+            let mut vertices: Vec<u32> = graph.vertices().collect();
             vertices.shuffle(&mut rng);
             let to_remove: HashSet<u32> =
                 vertices.into_iter().take(num_to_remove as usize).collect();

@@ -4,8 +4,8 @@ pub mod traversal;
 
 #[derive(Debug)]
 pub struct Graph {
-    pub adjacency_list: HashMap<u32, Vec<u32>>,
-    pub graph_type: DirectedOrUndirected,
+    adjacency_list: HashMap<u32, Vec<u32>>,
+    graph_type: DirectedOrUndirected,
 }
 
 impl Graph {
@@ -16,13 +16,51 @@ impl Graph {
         }
     }
 
+    pub fn kind(&self) -> DirectedOrUndirected {
+        self.graph_type
+    }
+
+    pub fn add_vertex(&mut self, vertex: u32) {
+        self.adjacency_list.entry(vertex).or_default();
+    }
+
+    pub fn add_edge(&mut self, source: u32, target: u32) {
+        self.adjacency_list.entry(source).or_default().push(target);
+        self.add_vertex(target);
+
+        if matches!(self.graph_type, DirectedOrUndirected::Undirected) {
+            self.adjacency_list.entry(target).or_default().push(source);
+        }
+    }
+
+    pub fn neighbors(&self, vertex: u32) -> &[u32] {
+        self.adjacency_list
+            .get(&vertex)
+            .map(Vec::as_slice)
+            .unwrap_or(&[])
+    }
+
+    pub fn vertices(&self) -> impl Iterator<Item = u32> + '_ {
+        self.adjacency_list.keys().copied()
+    }
+
+    pub fn adjacency_entries(&self) -> impl Iterator<Item = (u32, &[u32])> + '_ {
+        self.adjacency_list
+            .iter()
+            .map(|(&vertex, neighbors)| (vertex, neighbors.as_slice()))
+    }
+
+    pub fn has_edge(&self, source: u32, target: u32) -> bool {
+        self.neighbors(source).contains(&target)
+    }
+
     pub fn num_vertices(&self) -> usize {
         self.adjacency_list.len()
     }
 
     pub fn num_edges(&self) -> usize {
         let total: usize = self.adjacency_list.values().map(|v| v.len()).sum();
-        match self.graph_type {
+        match self.kind() {
             DirectedOrUndirected::Undirected => total / 2,
             DirectedOrUndirected::Directed => total,
         }

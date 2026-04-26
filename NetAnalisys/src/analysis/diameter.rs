@@ -7,7 +7,7 @@ use std::collections::{HashSet, VecDeque};
 pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
     let start = match component {
         Some(comp) => *comp.iter().next().unwrap(),
-        None => *graph.adjacency_list.keys().next().unwrap(),
+        None => graph.vertices().next().unwrap(),
     };
 
     let dist = bfs_with_filter(graph, start, component);
@@ -28,7 +28,7 @@ pub fn random_like_diameter_calculate(
 
     let vertices: Vec<u32> = match component {
         Some(comp) => comp.iter().cloned().collect(),
-        None => graph.adjacency_list.keys().cloned().collect(),
+        None => graph.vertices().collect(),
     };
 
     let mut max_distance = 0;
@@ -53,7 +53,7 @@ pub fn snowball_sampling(
     let mut rng = rand::thread_rng();
     let vertices: Vec<u32> = match component {
         Some(comp) => comp.iter().cloned().collect(),
-        None => graph.adjacency_list.keys().cloned().collect(),
+        None => graph.vertices().collect(),
     };
 
     if vertices.is_empty() {
@@ -79,21 +79,19 @@ pub fn snowball_sampling(
             break;
         }
 
-        if let Some(neighbors) = graph.adjacency_list.get(&node) {
-            for &neighbor in neighbors {
-                if sample.len() >= sample_size {
-                    break;
-                }
+        for &neighbor in graph.neighbors(node) {
+            if sample.len() >= sample_size {
+                break;
+            }
 
-                let allowed = match component {
-                    Some(comp) => comp.contains(&neighbor),
-                    None => true,
-                };
+            let allowed = match component {
+                Some(comp) => comp.contains(&neighbor),
+                None => true,
+            };
 
-                if allowed && !sample.contains(&neighbor) {
-                    sample.insert(neighbor);
-                    queue.push_back(neighbor);
-                }
+            if allowed && !sample.contains(&neighbor) {
+                sample.insert(neighbor);
+                queue.push_back(neighbor);
             }
         }
     }
@@ -109,7 +107,7 @@ fn percentile_90_distance(
 
     let vertices: Vec<u32> = match component {
         Some(comp) => comp.iter().cloned().collect(),
-        None => graph.adjacency_list.keys().cloned().collect(),
+        None => graph.vertices().collect(),
     };
     if vertices.is_empty() || vertices.len() < 2 {
         return 0;
