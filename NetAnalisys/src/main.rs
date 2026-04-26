@@ -27,13 +27,14 @@ fn test_data() -> HashMap<u32, f32> {
 
     map
 }
-fn main() {
+#[tokio::main]
+async fn main() {
     let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
     let mut graph: graph::Graph =
         graph::Graph::new(parser::directed_or_undirected::DirectedOrUndirected::Undirected);
     match file_name {
         Some(path) => {
-            graph = parser::parse::parse_file(&path).expect("Failed to parse graph");
+            graph = parser::parse::parse_file(&path).await.expect("Failed to parse the file");
             let degree_data: Vec<(f32, f32)> = analysis::degree::degree_probability(&graph);
             let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);
 
