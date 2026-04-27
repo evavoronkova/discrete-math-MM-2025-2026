@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 
 class Solution:
     def maxAmount(self, initialCurrency: str, pairs1: list[list[str]], rates1: list[float], pairs2: list[list[str]],
@@ -18,34 +18,28 @@ class Solution:
             graph2[start][target] = rate
             graph2[target][start] = 1.0 / rate
 
-        amounts2 = [1.0]
-        amounts1 = defaultdict(float)
+        def bfs(start_curr: str, start_amount: float, graph: defaultdict[str, dict]):
+            max_amounts = defaultdict(float)
+            max_amounts[start_curr] = start_amount
 
-        def dfs1(curr: str, amount: float, visited: list[str]):
-            visited.append(curr)
-            amounts1[curr] = amount
+            queue = deque()
+            queue.append((start_curr, start_amount))
 
-            for neighbour, rate in graph1[curr].items():
-                if neighbour not in visited:
-                    dfs1(neighbour, amount * rate, visited)
-                    visited.pop()
+            while queue:
+                curr, amount = queue.popleft()
+                for neighbour, rate in graph[curr].items():
+                    new_amount = amount * rate
+                    if new_amount > max_amounts[neighbour]:
+                        max_amounts[neighbour] = new_amount
+                        queue.append((neighbour, new_amount))
+            return max_amounts
 
-        def dfs2(curr: str, amount: float, visited: list[str]):
-            visited.append(curr)
-
-            if curr == initialCurrency:
-                amounts2.append(amount)
-                return
-
-            for neighbour, rate in graph2[curr].items():
-                if neighbour not in visited:
-                    dfs2(neighbour, amount * rate, visited)
-                    visited.pop()
-
-        dfs1(initialCurrency, 1.0, [])
+        amounts1 = bfs(initialCurrency, 1.0, graph1)
+        res = 1.0
 
         for currency, amount in amounts1.items():
             if currency in graph2:
-                dfs2(currency, amount, [])
+                amounts2 = bfs(currency, amount, graph2)
+                res = max(res, amounts2[initialCurrency])
 
-        return max(amounts2)
+        return res
