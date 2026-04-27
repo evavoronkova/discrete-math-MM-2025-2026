@@ -1,9 +1,9 @@
-from collections import deque, defaultdict
+from collections import deque
 
 
 class Solution:
     def isBipartite(self, graph: list[list[int]]) -> bool:
-        colours = defaultdict(int)
+        colours = [0] * len(graph)
         queue = deque()
 
         for i in range(len(graph)):
