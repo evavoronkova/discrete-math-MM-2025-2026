@@ -8,7 +8,10 @@ struct LandmarkBFS {
     distances: Vec<HashMap<u32, usize>>,
 }
 
-fn build_spts(graph: &Graph, landmarks: &[u32]) -> HashMap<u32, HashMap<u32, (usize, Option<u32>)>> {
+fn build_spts(
+    graph: &Graph,
+    landmarks: &[u32],
+) -> HashMap<u32, HashMap<u32, (usize, Option<u32>)>> {
     landmarks
         .iter()
         .map(|&l| {
@@ -18,7 +21,11 @@ fn build_spts(graph: &Graph, landmarks: &[u32]) -> HashMap<u32, HashMap<u32, (us
         .collect()
 }
 
-fn path_to_landmark(v: u32, landmark: u32, spts: &HashMap<u32, HashMap<u32, (usize, Option<u32>)>>) -> Vec<u32> {
+fn path_to_landmark(
+    v: u32,
+    landmark: u32,
+    spts: &HashMap<u32, HashMap<u32, (usize, Option<u32>)>>,
+) -> Vec<u32> {
     let mut path = Vec::new();
     let mut current = v;
 
@@ -28,10 +35,10 @@ fn path_to_landmark(v: u32, landmark: u32, spts: &HashMap<u32, HashMap<u32, (usi
             if let Some(p) = parent {
                 current = *p;
             } else {
-                break; 
+                break;
             }
         } else {
-            break; 
+            break;
         }
     }
 

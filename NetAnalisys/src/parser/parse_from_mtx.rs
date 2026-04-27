@@ -8,10 +8,7 @@ use super::directed_or_undirected::DirectedOrUndirected;
 
 type DynError = Box<dyn Error + Send + Sync>;
 
-pub async fn mtx_parser(
-    path: &str,
-    graph_type: &DirectedOrUndirected,
-) -> Result<Graph, DynError> {
+pub async fn mtx_parser(path: &str, graph_type: &DirectedOrUndirected) -> Result<Graph, DynError> {
     let file = File::open(path).await?;
     let reader = BufReader::new(file);
     let mut graph = Graph::new(*graph_type);

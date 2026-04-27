@@ -335,7 +335,7 @@ fn random_star(rng: &mut rand::rngs::ThreadRng) -> &'static str {
 pub fn spawn_cat_loading_animation(
     start_x: u16,
     start_y: u16,
-    time_start: Option<std::time::Instant>
+    time_start: Option<std::time::Instant>,
 ) -> (Arc<AtomicBool>, thread::JoinHandle<()>) {
     let stop_flag = Arc::new(AtomicBool::new(false));
     let thread_flag = Arc::clone(&stop_flag);
@@ -346,7 +346,14 @@ pub fn spawn_cat_loading_animation(
         let mut tail_state = 0usize;
 
         while !thread_flag.load(Ordering::Relaxed) {
-            draw_cat_loading_frame(&mut stdout, start_x, start_y, &mut rng, tail_state, time_start);
+            draw_cat_loading_frame(
+                &mut stdout,
+                start_x,
+                start_y,
+                &mut rng,
+                tail_state,
+                time_start,
+            );
             tail_state = (tail_state + 1) % 4;
             thread::sleep(Duration::from_millis(360));
         }

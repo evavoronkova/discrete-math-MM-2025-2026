@@ -1,5 +1,5 @@
-use crate::graph::traversal::bfs;
 use crate::graph::Graph;
+use crate::graph::traversal::bfs;
 use rand::Rng;
 use std::collections::{HashMap, HashSet};
 
@@ -27,7 +27,10 @@ impl LandmarkBasic {
         let landmarks: Vec<u32> = chosen.into_iter().collect();
         let distances = landmarks.iter().map(|&l| bfs(graph, l)).collect();
 
-        Some(Self { landmarks, distances })
+        Some(Self {
+            landmarks,
+            distances,
+        })
     }
 
     pub fn estimate(&self, s: u32, t: u32) -> Option<usize> {

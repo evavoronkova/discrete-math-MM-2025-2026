@@ -29,9 +29,7 @@ pub fn calculate_density(graph: &Graph) -> f64 {
     let edges = graph.num_edges();
 
     match graph.kind() {
-        DirectedOrUndirected::Undirected => {
-            (2.0 * edges as f64) / ((n * (n - 1)) as f64)
-        }
+        DirectedOrUndirected::Undirected => (2.0 * edges as f64) / ((n * (n - 1)) as f64),
         DirectedOrUndirected::Directed => (edges as f64) / ((n * (n - 1)) as f64),
     }
 }

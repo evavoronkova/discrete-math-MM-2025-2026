@@ -17,7 +17,9 @@ fn calculate_mid_k(graph: &Graph) -> f64 {
         }
         for first_neighbor in neighbors.iter() {
             for second_neighbor in neighbors.iter() {
-                if first_neighbor < second_neighbor && graph.has_edge(*first_neighbor, *second_neighbor) {
+                if first_neighbor < second_neighbor
+                    && graph.has_edge(*first_neighbor, *second_neighbor)
+                {
                     actual_edges += 1;
                 }
             }
