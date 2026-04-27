@@ -8,16 +8,19 @@ class Solution:
             first, second = edges[i]
             prob = succProb[i]
             graph[first][second] = prob
+            graph[second][first] = prob
 
         probs = [0.0]
 
-        def dfs(current: int, prob: float):
+        def dfs(current: int, prob: float, visited: list[int]):
             if current == end_node:
                 probs.append(prob)
                 return
 
+            visited.append(current)
             for neighbour, next_prob in graph[current].items():
-                dfs(neighbour, prob * next_prob)
+                if neighbour not in visited:
+                    dfs(neighbour, prob * next_prob, visited)
 
-        dfs(start_node, 1.0)
+        dfs(start_node, 1.0, [])
         return max(probs)
