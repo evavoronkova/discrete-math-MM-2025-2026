@@ -25,10 +25,6 @@ pub async fn txt_parser(path: &str, graph_type: &DirectedOrUndirected) -> Result
 
         let parts: Vec<&str> = line.split_whitespace().collect();
 
-        if parts.len() != 2 {
-            continue;
-        }
-
         let u: u32 = parts[0].parse()?;
         let v: u32 = parts[1].parse()?;
 

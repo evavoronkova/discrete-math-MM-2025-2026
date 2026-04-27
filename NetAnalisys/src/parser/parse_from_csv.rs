@@ -19,9 +19,6 @@ pub async fn csv_parser(path: &str, graph_type: &DirectedOrUndirected) -> Result
         for result in reader.records() {
             let record = result?;
 
-            if record.len() != 2 {
-                continue;
-            }
             let u: u32 = match record[0].trim().parse() {
                 Ok(val) => val,
                 Err(_) => continue,
