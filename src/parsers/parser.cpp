@@ -15,12 +15,10 @@ graph parser::parse(const string &file_path) {
     if (in.is_open()) {
         string line;
         while (getline(in, line)) {
-            auto action = whatWeDoWithIt(line);
-            switch (action) {
+            switch (whatWeDoWithIt(line)) {
                 case TryParseEdge:
                 {
-                    edge new_edge = try_parse_edge(line);
-                    if (new_edge != null_edge) // If one of many strokes in invalid, we only send warning
+                    if (edge new_edge = try_parse_edge(line); new_edge != null_edge) // If one of many strokes in invalid, we only send warning
                         g.insert(new_edge.first, new_edge.second);
                     break;
                 }
