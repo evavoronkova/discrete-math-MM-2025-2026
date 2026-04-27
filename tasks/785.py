@@ -20,20 +20,3 @@ class Solution:
                         elif colours[neighbour] == colours[curr]:
                             return False
         return True
-
-
-
-
-
-
-        # for i in range(len(graph)):
-        #     colour = Colours.RED
-        #     if i not in red:
-        #         if i in black:
-        #             colour = Colours.BLACK
-        #         else:
-        #             red.add(i)
-        #
-        #     for j in range(len(graph[i])):
-        #         v = graph[i][j]
-        #         if v in
