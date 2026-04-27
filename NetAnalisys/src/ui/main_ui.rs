@@ -1,6 +1,12 @@
-use crossterm::{cursor::*, event::*, execute, style::*, terminal::*};
+use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
+use rand::Rng;
 use std::fs;
-use std::io::{Write, stdout};
+use std::io::{Stdout, Write, stdout};
+use std::sync::{
+    Arc,
+    atomic::{AtomicBool, Ordering},
+};
+use std::{thread, time::Duration};
 
 struct TerminalGuard;
 
@@ -132,7 +138,15 @@ fn print_file_choosing_greeting(stdout: &mut std::io::Stdout) {
 }
 
 fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefix: &str) {
-    let skip_names = ["target", "src", ".git", "node_modules", ".vscode", ".idea", "target"];
+    let skip_names = [
+        "target",
+        "src",
+        ".git",
+        "node_modules",
+        ".vscode",
+        ".idea",
+        "target",
+    ];
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
         Err(_) => return,
@@ -160,7 +174,6 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefi
             files.push(full_path);
         }
     }
-    
 }
 
 fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
@@ -249,4 +262,101 @@ fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
             }
         }
     }
+}
+
+fn draw_cat_loading_frame(
+    stdout: &mut Stdout,
+    start_x: u16,
+    start_y: u16,
+    rng: &mut rand::rngs::ThreadRng,
+    tail_state: usize,
+    time_start: Option<std::time::Instant>,
+) {
+    let tail = match tail_state % 4 {
+        0 => "\\",
+        1 => "~\\",
+        2 => "~~\\",
+        _ => "~~~\\",
+    };
+
+    let eyes = if rng.gen_bool(0.15) { "-.-" } else { "o.o" };
+
+    let scene = format!(
+        "     {0}      {1}        {2}      {3}\n\
+  {4}         {5}      {6}        {7}\n\
+\n\
+                 Waiting for graph magic for {11}...\n\
+\n\
+        /\\_/\\\\\n\
+       ( {8} )      {9}\n\
+       /  ^  \\\n\
+      /_/|_|__\\\\\n\
+         /   {10}\n\
+\n\
+  ───────────────────────────────",
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        random_star(rng),
+        eyes,
+        random_star(rng),
+        tail,
+        time_start
+            .map(|t| format!("{:.1?}", t.elapsed()))
+            .unwrap_or_else(|| "0s".to_string())
+    );
+
+    stdout
+        .queue(MoveTo(start_x, start_y))
+        .unwrap()
+        .queue(Clear(ClearType::FromCursorDown))
+        .unwrap();
+
+    for (line_index, line) in scene.lines().enumerate() {
+        stdout
+            .queue(MoveTo(start_x, start_y + line_index as u16))
+            .unwrap()
+            .queue(Print(line))
+            .unwrap();
+    }
+
+    stdout.flush().unwrap();
+}
+
+fn random_star(rng: &mut rand::rngs::ThreadRng) -> &'static str {
+    const STARS: [&str; 4] = ["✦", "✧", ".", " "];
+    STARS[rng.gen_range(0..STARS.len())]
+}
+
+pub fn spawn_cat_loading_animation(
+    start_x: u16,
+    start_y: u16,
+    time_start: Option<std::time::Instant>
+) -> (Arc<AtomicBool>, thread::JoinHandle<()>) {
+    let stop_flag = Arc::new(AtomicBool::new(false));
+    let thread_flag = Arc::clone(&stop_flag);
+
+    let handle = thread::spawn(move || {
+        let mut stdout = stdout();
+        let mut rng = rand::thread_rng();
+        let mut tail_state = 0usize;
+
+        while !thread_flag.load(Ordering::Relaxed) {
+            draw_cat_loading_frame(&mut stdout, start_x, start_y, &mut rng, tail_state, time_start);
+            tail_state = (tail_state + 1) % 4;
+            thread::sleep(Duration::from_millis(360));
+        }
+
+        let _ = execute!(
+            stdout,
+            MoveTo(start_x, start_y),
+            Clear(ClearType::FromCursorDown)
+        );
+    });
+
+    (stop_flag, handle)
 }

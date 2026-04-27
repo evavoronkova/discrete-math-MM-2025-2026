@@ -8,7 +8,9 @@ pub fn print_graph(data: Vec<(f32, f32)>) {
     let x_min = data.first().unwrap().0;
     let x_max = data.last().unwrap().0;
     println!("range X: [{:.2}, {:.2}]", x_min, x_max);
+    println!("|{}|", "-".repeat(180));
     Chart::new(180, 60, x_min, x_max)
         .lineplot(&Shape::Lines(&data))
         .display();
+    println!("|{}|", "-".repeat(180));
 }
