@@ -1,4 +1,6 @@
 from collections import defaultdict
+import heapq
+
 
 class Solution:
     def maxProbability(self, n: int, edges: list[list[int]], succProb: list[float], start_node: int, end_node: int) -> float:
@@ -10,17 +12,23 @@ class Solution:
             graph[first][second] = prob
             graph[second][first] = prob
 
-        probs = [0.0]
+        probs = [0.0] * n
+        probs[start_node] = 1.0
 
-        def dfs(current: int, prob: float, visited: list[int]):
-            if current == end_node:
-                probs.append(prob)
-                return
+        queue = [(-1.0, start_node)]
 
-            visited.append(current)
-            for neighbour, next_prob in graph[current].items():
-                if neighbour not in visited:
-                    dfs(neighbour, prob * next_prob, visited)
+        while queue:
+            prob, node = heapq.heappop(queue)
+            prob = -prob
 
-        dfs(start_node, 1.0, [])
-        return max(probs)
+            if node == end_node:
+                return prob
+
+            if prob < probs[node]:
+                continue
+
+            for neighbour, new_prob in graph[node].items():
+                if prob * new_prob > probs[neighbour]:
+                    probs[neighbour] = prob * new_prob
+                    heapq.heappush(queue, (-probs[neighbour], neighbour))
+        return 0.0
