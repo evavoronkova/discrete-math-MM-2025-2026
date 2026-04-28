@@ -1,7 +1,5 @@
 use crate::{
-    analysis::cluster_evaluation::get_max_comp,
-    analysis::connectivity::{find_weak_components, fraction_in_largest_component},
-    analysis::degree::all_degrees,
+    analysis::{cluster_evaluation::get_max_comp, connectivity::{find_weak_components, fraction_in_largest_component, get_largest_comp}, degree::all_degrees},
     graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
 };
@@ -58,7 +56,8 @@ fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
 
         let new_graph = remove_vertices(graph, &to_remove);
         let mut comps = find_weak_components(&new_graph);
-        let fraction = fraction_in_largest_component(&mut comps, new_graph.num_vertices());
+        let comp = get_largest_comp(&comps);
+        let fraction = fraction_in_largest_component(&comp, new_graph.num_vertices());
         hashmap.insert(percent as u32, fraction);
     }
 
@@ -87,7 +86,8 @@ fn lcc_after_random_removal(graph: &Graph, trials: usize) -> HashMap<u32, f64> {
 
             let new_graph = remove_vertices(graph, &to_remove);
             let mut comps = find_weak_components(&new_graph);
-            let fraction = fraction_in_largest_component(&mut comps, new_graph.num_vertices());
+            let comp = get_largest_comp(&comps);
+            let fraction = fraction_in_largest_component(&comp, new_graph.num_vertices());
             mid_fraction += fraction;
         }
         mid_fraction /= trials as f64;

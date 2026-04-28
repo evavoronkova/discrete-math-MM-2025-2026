@@ -148,7 +148,12 @@ pub fn get_number_of_comps(comps: &Vec<HashSet<u32>>) -> u32 {
 }
 
 #[allow(clippy::ptr_arg)]
-pub fn fraction_in_largest_component(comps: &Vec<HashSet<u32>>, num_vertices: usize) -> f64 {
-    let max_len = comps.iter().map(|comp| comp.len()).max().unwrap();
-    max_len as f64 / num_vertices as f64
+pub fn fraction_in_largest_component(comp: &HashSet<u32>, num_vertices: usize) -> f64 {
+    comp.len() as f64 / num_vertices as f64
+}
+
+pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+    let mut largest: HashSet<u32> = HashSet::new();
+    comps.iter().map(|comp| if comp.len() > largest.len() {largest = comp.clone()});
+    largest
 }
