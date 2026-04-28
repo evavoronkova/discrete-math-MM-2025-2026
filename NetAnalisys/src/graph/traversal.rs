@@ -98,12 +98,19 @@ pub fn dfs_for_comps(
     visited: &mut HashSet<u32>,
     comp: &mut HashSet<u32>,
 ) {
-    if !visited.insert(start) {
-        return;
-    }
+    let mut stack = vec![start];
 
-    comp.insert(start);
-    for &neighbor in graph.neighbors(start) {
-        dfs_for_comps(graph, neighbor, visited, comp);
+    while let Some(node) = stack.pop() {
+        if !visited.insert(node) {
+            continue;
+        }
+
+        comp.insert(node);
+
+        for &neighbor in graph.neighbors(node) {
+            if !visited.contains(&neighbor) {
+                stack.push(neighbor);
+            }
+        }
     }
 }

@@ -50,41 +50,70 @@ pub fn strong_connect(
     on_stack: &mut HashMap<u32, bool>,
     sccs: &mut Vec<HashSet<u32>>,
 ) {
+    struct Frame {
+        vertex: u32,
+        next_neighbor_idx: usize,
+        parent: Option<u32>,
+    }
+
     *index_counter += 1;
     indexes.insert(v, *index_counter);
     lowlinks.insert(v, *index_counter);
     stack.push(v);
     on_stack.insert(v, true);
 
-    for &w in graph.neighbors(v) {
-        if !indexes.contains_key(&w) {
-            strong_connect(
-                w,
-                graph,
-                index_counter,
-                indexes,
-                lowlinks,
-                stack,
-                on_stack,
-                sccs,
-            );
-            lowlinks.insert(v, lowlinks[&v].min(lowlinks[&w]));
-        } else if *on_stack.get(&w).unwrap_or(&false) {
-            lowlinks.insert(v, lowlinks[&v].min(indexes[&w]));
-        }
-    }
+    let mut frames = vec![Frame {
+        vertex: v,
+        next_neighbor_idx: 0,
+        parent: None,
+    }];
 
-    if lowlinks[&v] == indexes[&v] {
-        let mut scc = HashSet::new();
-        loop {
-            let w = stack.pop().unwrap();
-            on_stack.insert(w, false);
-            scc.insert(w);
-            if w == v {
-                break;
+    while let Some(mut frame) = frames.pop() {
+        let neighbors = graph.neighbors(frame.vertex);
+
+        if frame.next_neighbor_idx < neighbors.len() {
+            let current_vertex = frame.vertex;
+            let neighbor = neighbors[frame.next_neighbor_idx];
+            frame.next_neighbor_idx += 1;
+            frames.push(frame);
+
+            if !indexes.contains_key(&neighbor) {
+                *index_counter += 1;
+                indexes.insert(neighbor, *index_counter);
+                lowlinks.insert(neighbor, *index_counter);
+                stack.push(neighbor);
+                on_stack.insert(neighbor, true);
+
+                frames.push(Frame {
+                    vertex: neighbor,
+                    next_neighbor_idx: 0,
+                    parent: Some(current_vertex),
+                });
+            } else if *on_stack.get(&neighbor).unwrap_or(&false) {
+                let new_lowlink = lowlinks[&current_vertex].min(indexes[&neighbor]);
+                lowlinks.insert(current_vertex, new_lowlink);
             }
+
+            continue;
         }
-        sccs.push(scc);
+
+        if let Some(parent) = frame.parent {
+            let parent_lowlink = lowlinks[&parent].min(lowlinks[&frame.vertex]);
+            lowlinks.insert(parent, parent_lowlink);
+        }
+
+        if lowlinks[&frame.vertex] == indexes[&frame.vertex] {
+            let mut scc = HashSet::new();
+            loop {
+                let w = stack.pop().unwrap();
+                on_stack.insert(w, false);
+                scc.insert(w);
+                if w == frame.vertex {
+                    break;
+                }
+            }
+            sccs.push(scc);
+        }
     }
 }
 
