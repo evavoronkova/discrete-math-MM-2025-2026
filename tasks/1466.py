@@ -9,7 +9,8 @@ class Solution:
             graph[a].append((b, 1))
             graph[b].append((a, 0))
 
-        visited = [0]
+        visited = [0] * n
+        visited[0] = 1
         queue = deque()
         queue.append(0)
 
@@ -18,9 +19,9 @@ class Solution:
         while queue:
             current = queue.popleft()
             for neighbour, direction in graph[current]:
-                if neighbour not in visited:
+                if not visited[neighbour]:
                     min_changed += direction
-                    visited.append(neighbour)
+                    visited[neighbour] = 1
                     queue.append(neighbour)
 
         return min_changed
