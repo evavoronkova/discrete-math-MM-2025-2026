@@ -6,6 +6,7 @@ mod landmarks;
 mod parser;
 mod ui;
 
+use crate::analysis::connectivity::{find_weak_components, fraction_in_largest_component, get_number_of_comps, tarjan_scc};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
 use rand::seq::SliceRandom;
@@ -38,6 +39,21 @@ async fn main() {
                     panic!("Failed to parse the file: {error}");
                 }
             };
+            let mut buffer_for_print: Vec<&str> = Vec::new();
+            let graph_type = graph.kind();
+            let num_vertices = graph.num_vertices();
+            // buffer_for_print.push(format!("Number of vertices in graph: {}", num_vertices).as_str());
+            let num_edges = graph.num_edges();
+            // buffer_for_print.push(format!("Number of edges in graph: {}", num_edges).as_str());
+            let density = graph.density(num_vertices, num_edges);
+            let weak_comps = find_weak_components(&graph);
+            let num_weak_comps = get_number_of_comps(&weak_comps);
+            let fraction_in_weak_comp = fraction_in_largest_component(&weak_comps, num_vertices);
+            if DirectedOrUndirected::Directed == graph_type {
+                let strong_comps = tarjan_scc(&graph);
+                let num_strong_comps = get_number_of_comps(&strong_comps);
+                let fraction_in_strong_comp = fraction_in_largest_component(&strong_comps, num_vertices);
+            }
 
             let degree_data: Vec<(f32, f32)> = analysis::degree::degree_probability(&graph);
             let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);

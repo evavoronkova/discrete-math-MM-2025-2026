@@ -65,4 +65,15 @@ impl Graph {
             DirectedOrUndirected::Directed => total,
         }
     }
+
+    pub fn density(&self, num_vertices: usize, num_edges: usize) -> f64 {
+        if num_vertices < 2 {
+            return 0.0;
+        }
+
+        match self.kind() {
+            DirectedOrUndirected::Undirected => (2.0 * num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64),
+            DirectedOrUndirected::Directed => (num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64),
+        }
+    }
 }
