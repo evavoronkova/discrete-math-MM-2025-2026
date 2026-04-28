@@ -1,0 +1,73 @@
+{
+    "Basic Information": {
+        "Name": "Email-EuAll.txt",
+        "Type": "Undirected",
+        "Amount of vertexes": 265214,
+        "Amount of edges": 365570,
+        "Density": 1.0394636114519873e-05
+    },
+    "Additional Information": {
+        "Minimum degree": 1,
+        "Maximum degree": 7636,
+        "Average degree": 2.7567926278401593,
+        "Amount of triangles": 3264495,
+        "Amount of closed triplets": 1088165,
+        "Amount of opened triplets": 388973236,
+        "Global Clustering coefficient": 0.0027897274562678404,
+        "Average Clustering coefficient": 0.06724249991544598,
+        "Average Clustering coefficient in max CC": 0.07927100202876211,
+        "Double sweep diameter": 14,
+        "Sample diameter": 10,
+        "Snowball diameter": 2,
+        "Sample 90 procentile": 6,
+        "Snowball 90 procentile": 6,
+        "Probability that random vertex has degree <= than some degree": {
+            "1": 0.8519233524625397,
+            "2": 0.9346075244896574,
+            "4": 0.9701637168475269,
+            "8": 0.985313746634793,
+            "16": 0.9918216987036882,
+            "32": 0.9947137028965288,
+            "64": 0.996270935923443,
+            "128": 0.9974134095485159,
+            "256": 0.9984126026529543,
+            "512": 0.9993363849570608,
+            "1024": 0.9997888497590728,
+            "2048": 0.9999698356798776,
+            "4096": 0.9999849178399447,
+            "8192": 1.0000000000000118
+        },
+        "Sizes of max CC after delete x% random vertexes": {
+            "0%": 224832,
+            "10%": 202386,
+            "20%": 179142,
+            "30%": 156038,
+            "40%": 132116,
+            "50%": 109176,
+            "60%": 86993,
+            "70%": 64619,
+            "80%": 42217,
+            "90%": 20361,
+            "100%": 0
+        },
+        "Sizes of max CC after delete x% max degreed vertexes": {
+            "0%": 224832,
+            "0.5%": 3936,
+            "1.0%": 48,
+            "2.0%": 17,
+            "3.0%": 10,
+            "4.0%": 9,
+            "5.0%": 5,
+            "7.5%": 5,
+            "10.0%": 5,
+            "15.0%": 2,
+            "25.0%": 2,
+            "35.0%": 2,
+            "50.0%": 2
+        }
+    },
+    "Connected Components": {
+        "Amount of CCs": 15836,
+        "Fraction of vertexes in max CC": 0.847738053043957
+    }
+}
