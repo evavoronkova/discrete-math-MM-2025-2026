@@ -39,12 +39,12 @@ async fn main() {
                     panic!("Failed to parse the file: {error}");
                 }
             };
-            let mut buffer_for_print: Vec<&str> = Vec::new();
+            let mut buffer_for_print: Vec<String> = Vec::new();
             let graph_type = graph.kind();
             let num_vertices = graph.num_vertices();
-            // buffer_for_print.push(format!("Number of vertices in graph: {}", num_vertices).as_str());
+            buffer_for_print.push(format!("Number of vertices in graph: {}", num_vertices));
             let num_edges = graph.num_edges();
-            // buffer_for_print.push(format!("Number of edges in graph: {}", num_edges).as_str());
+            buffer_for_print.push(format!("Number of edges in graph: {}", num_edges));
             let density = graph.density(num_vertices, num_edges);
             let weak_comps = find_weak_components(&graph);
             let num_weak_comps = get_number_of_comps(&weak_comps);
