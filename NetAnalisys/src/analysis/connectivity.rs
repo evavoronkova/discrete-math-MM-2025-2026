@@ -1,7 +1,11 @@
+use rayon::iter::IntoParallelIterator;
+
 use crate::graph::Graph;
 use crate::graph::traversal::dfs_for_comps;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
+use rayon::prelude::*;
 use std::collections::{HashMap, HashSet};
+
 
 pub fn build_undirected(graph: &Graph) -> Graph {
     let mut undirected_graph = Graph::new(DirectedOrUndirected::Undirected);
@@ -152,13 +156,18 @@ pub fn fraction_in_largest_component(comp: &HashSet<u32>, num_vertices: usize) -
     comp.len() as f64 / num_vertices as f64
 }
 
-pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
-    let mut largest: HashSet<u32> = HashSet::new();
-    for comp in comps {
-        if comp.len() > largest.len() {
-            largest = comp.clone();
-        }
-    }
+pub fn fraction_from_component_size(component_size: usize, num_vertices: usize) -> f64 {
+    component_size as f64 / num_vertices as f64
+}
 
-    largest
+pub fn largest_component_size(comps: &[HashSet<u32>]) -> usize {
+    comps.par_iter().map(HashSet::len).max().unwrap_or(0)
+}
+
+pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+    comps
+        .par_iter()
+        .max_by_key(|comp| comp.len())
+        .cloned()
+        .unwrap_or_default()
 }

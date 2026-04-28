@@ -21,6 +21,9 @@ pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
     degrees
 }
 
+/*  ПЕРЕДЕЛАТЬ БЛЯТЬ, У НАС НАХУЯ ТО ТРИ РАЗА ПО ВСЕМУ ГРАФУ ПРОХОДИТ, МОЖНО ПРОСТО ПЕРЕДАТЬ СПИСОК ВСЕХ СТЕПЕНЕЙ ИЗ ALL_DEGREES
+А ЕЩЕ НАДО ЗАИНЛАЙНИТЬ ИХ
+*/
 fn min_degree(graph: &Graph) -> u32 {
     all_degrees(graph).values().copied().min().unwrap_or(0)
 }
