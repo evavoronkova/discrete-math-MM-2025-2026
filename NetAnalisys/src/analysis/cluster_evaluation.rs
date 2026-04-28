@@ -1,5 +1,5 @@
 use crate::{
-    analysis::connectivity::build_undirected, analysis::triangle_counter::find_triangles,
+    analysis::connectivity::{build_undirected, get_largest_comp}, analysis::triangle_counter::find_triangles,
     graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
 };
 use std::collections::HashSet;
@@ -49,7 +49,7 @@ fn calculate_global_k(graph: &Graph) -> f64 {
 }
 
 fn calculate_mid_k_for_weak_component(graph: &Graph, comps: &Vec<HashSet<u32>>) -> f64 {
-    let max_comp = get_max_comp(comps);
+    let max_comp = get_largest_comp(comps);
     let new_graph = create_graph_on_weak_component(graph, &max_comp);
     calculate_mid_k(&new_graph)
 }
@@ -75,16 +75,4 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
     }
 
     component_graph
-}
-
-pub fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
-    let mut max_comp: HashSet<u32> = HashSet::new();
-
-    for i in comps {
-        if max_comp.len() < i.len() {
-            max_comp = i.clone();
-        }
-    }
-
-    max_comp
 }

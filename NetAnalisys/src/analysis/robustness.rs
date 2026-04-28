@@ -1,6 +1,5 @@
 use crate::{
     analysis::{
-        cluster_evaluation::get_max_comp,
         connectivity::{find_weak_components, fraction_in_largest_component, get_largest_comp},
         degree::all_degrees,
     },
