@@ -23,11 +23,17 @@ class Solution:
                 for j in range(substr_num):
                     costs[i][j] = min(costs[i][j], costs[i][k] + costs[k][j])
 
+        trie = {}
+        for substring in substrings:
+            node = trie
+            for char in substring:
+                node = node.setdefault(char, {})
+            node['id'] = substr_id[substring]
+
+
         num = len(source)
         dynamic_costs = [INF] * (num + 1)
         dynamic_costs[0] = 0
-
-        lengths = sorted(list(set(len(s) for s in original)))
 
         for i in range(num):
             if dynamic_costs[i] == INF:
@@ -35,12 +41,17 @@ class Solution:
             if source[i] == target[i]:
                 dynamic_costs[i + 1] = min(dynamic_costs[i + 1], dynamic_costs[i])
 
-            for length in lengths:
-                if i + length <= num:
-                    old = source[i:i + length]
-                    new = target[i:i + length]
-                    if old in substr_id and new in substr_id:
-                        j, k = substr_id[old], substr_id[new]
-                        if costs[j][k] != INF:
-                            dynamic_costs[i + length] = min(dynamic_costs[i + length], dynamic_costs[i] + costs[j][k])
+            old = trie
+            new = trie
+            for j in range(i, num):
+                if source[j] not in old or target[j] not in new:
+                    break
+                old = old[source[j]]
+                new = new[target[j]]
+
+                if 'id' in old and 'id' in new:
+                    k1, k2 = old['id'], new['id']
+                    if costs[k1][k2] != INF:
+                        dynamic_costs[j + 1] = min(dynamic_costs[j + 1], dynamic_costs[i] + costs[k1][k2])
+
         return dynamic_costs[num] if dynamic_costs[num] != INF else -1
