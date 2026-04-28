@@ -1,10 +1,8 @@
 #include <omp.h>
-#include "analyzer.h"
 #include <atomic>
 #include <queue>
 
-#include <atomic>
-#include <queue>
+#include "analyzer.h"
 
 double graph_analyzer::get_density() const {
     const size_t max_edges = g.amount_vertexes() * (g.amount_vertexes() - 1) / 2;
@@ -338,6 +336,33 @@ double graph_analyzer::get_probability_that_random_vertex_has_some_degree(const 
 
     return static_cast<double>(degrees_counter[degree]) / static_cast<double>(g.amount_vertexes());
 }
+double graph_analyzer::get_probability_that_random_vertex_has_less_than_some_degree(const size_t degree) {
+    double s = 0;
+    for (size_t i = 1; i <= degree; i++){
+        s += get_probability_that_random_vertex_has_some_degree(i);
+    }
+    return s;
+}
+
+json graph_analyzer::get_probabilities_that_random_vertex_has_less_than_some_degree() {
+    if (degrees_vector.empty()) init_degree_counters_cache();
+
+    ranges::sort(degrees_vector, other::degree_greater);
+    json probabilities;
+    if (degrees_vector.empty()) return probabilities;
+
+    const int max_degree = get_max_degree();
+    vector<size_t> degrees_per_step = {1};
+    size_t i = 1;
+    while (i <= max_degree) {
+        i *= 2;
+        degrees_per_step.push_back(i);
+    } ;
+    for (const auto degree : degrees_per_step) {
+        probabilities[to_string(degree)] = get_probability_that_random_vertex_has_less_than_some_degree(degree);
+    }
+    return probabilities;
+}
 
 // Function returns log2(probability), which enters in (-infinity, 0], what means random vertex has degree, which enters in...
 // ... [2 ^ log2_degree,  2 ^ (log2_degree + 1) )
@@ -377,32 +402,55 @@ set<int> graph_analyzer::get_max_CC() {
     return max_CC;
 }
 
-size_t graph_analyzer::get_size_of_max_CC_after_delete_x_percentage_vertexes(const double x){
-    if (x < 0 || x > 1) throw runtime_error("X must be between 0 and 1");
-    if (x == 1) return 0;
+json graph_analyzer::get_sizes_of_max_CC_after_delete_x_percentage_vertexes() {
+    json sizes = {{"0%", get_max_CC().size()}};
+    constexpr int steps = 10;
+    const long to_delete = g.amount_vertexes() / 10;
+    set<int> deletable_set = g.get_vertexes();
+    vector deletable_list(deletable_set.begin(), deletable_set.end());
 
-    const auto deleting_amount = static_cast<size_t>(x * static_cast<double>(g.amount_vertexes()));
-    for (const auto deleting = other::get_random_n_elements_from_set(g.get_vertexes(), deleting_amount); const auto v : deleting) {
-        g.remove_vertex(v);
+    other::shuffle_vector(deletable_list);
+    int ind = 0;
+    for (int i = 1; i <= steps; ++i) {
+        long deleted_on_step = (g.amount_vertexes() < to_delete) ? g.amount_vertexes() : to_delete;
+        while (deleted_on_step > 0) {
+            int el = deletable_list[ind++];
+
+            long amount_before = g.amount_vertexes();
+            g.remove_vertex(el); // This thing also can delete of neighbors of "el" in special case
+            long amount_after = g.amount_vertexes();
+
+            deleted_on_step -= (amount_before - amount_after);
+        }
+        sizes[to_string(i * steps) + "%"] = get_max_CC().size();
     }
-    return get_max_CC().size();
+    return sizes;
 }
-
-size_t graph_analyzer::get_size_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(const double x) {
-    if (x < 0 || x > 1) throw runtime_error("X must be between 0 and 1");
-    if (x == 1) return 0;
-
-    const auto deleting_amount = static_cast<size_t>(x * static_cast<double>(g.amount_vertexes()));
-    init_degree_counters_cache();
-
-    ranges::sort(degrees_vector, other::degree_greater);
-    size_t deleted = 0;
-    while (deleted < deleting_amount) {
-        g.remove_vertex(degrees_vector[deleted].second);
-        ++deleted;
+json graph_analyzer::get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees() {
+    if (g.type != Undirected) throw runtime_error("get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees: You can use this function only on undirected graph!");
+    json sizes = {{"0%", get_max_CC().size()}};
+    size_t initial_size = g.amount_vertexes();
+    vector<double> percentage_to_delete_on_each_step = {0.005, 0.005, 0.01, 0.01, 0.01, 0.01, 0.025, 0.025, 0.05, 0.1, 0.1, 0.15};
+    vector<double> percentage_to_delete_sum = vector(percentage_to_delete_on_each_step.size(), -1.0);
+    percentage_to_delete_sum[0] = percentage_to_delete_on_each_step[0];
+    for (int i = 1; i < percentage_to_delete_on_each_step.size(); ++i) {
+        percentage_to_delete_sum[i] = percentage_to_delete_sum[i - 1] + percentage_to_delete_on_each_step[i];
     }
 
-    return get_max_CC().size();
+    init_degree_counters_cache();
+    ranges::sort(degrees_vector, other::degree_greater);
+    int ind = 0;
+    for (int i = 0; i < percentage_to_delete_on_each_step.size(); ++i) {
+        long to_delete_on_step = min(static_cast<size_t>(initial_size * percentage_to_delete_on_each_step[i]), g.amount_vertexes()); // if deleted_on_step = average_delete_step
+        long deleted = 0;
+        while (deleted < to_delete_on_step) {
+            g.remove_vertex(degrees_vector[ind++].second);
+            ++deleted;
+        }
+        string string_percent = std::format("{:.1f}", percentage_to_delete_sum[i] * 100) + '%';
+        sizes[string_percent] = get_max_CC().size();
+    }
+    return sizes;
 }
 
 double graph_analyzer::get_average_clustering_coefficient_max_CC() {

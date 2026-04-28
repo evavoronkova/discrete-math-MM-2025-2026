@@ -7,33 +7,46 @@
 #include "src/summarizer/summarizer.h"
 #include "tests/tests.h"
 
+using namespace summarizer;
+
 const string project_path = filesystem::current_path().parent_path();
 const string datasets_path = project_path + "/datasets/";
+const string summarized_path = project_path + "/summarized/";
+
+static json output_json;
+static string output_file;
 
 enum dataset {
     socwiki, google, notredame, stanford,
     wiki, astro, coauthors, grqc,
     email, git, orkut, youtube, vk
 };
-map<dataset, string> datasets = {
-    {socwiki,   datasets_path + "directed/soc-wiki-Vote.mtx"},
-    {google,    datasets_path + "directed/google.txt"},
-    {notredame, datasets_path + "directed/web-NotreDame.txt"},
-    {stanford,  datasets_path + "directed/web-Stanford.txt"},
-    {wiki,      datasets_path + "directed/Wiki-Vote.txt"},
+map<dataset, string> paths = {
+    {socwiki,   "directed/soc-wiki-Vote.mtx"},
+    {google,    "directed/web-Google.txt"},
+    {notredame, "directed/web-NotreDame.txt"},
+    {stanford,  "directed/web-Stanford.txt"},
+    {wiki,      "directed/Wiki-Vote.txt"},
 
-    {astro,     datasets_path + "undirected/CA-AstroPh.txt"},
-    {coauthors, datasets_path + "undirected/ca-coauthors-dblp.txt"},
-    {grqc,      datasets_path + "undirected/CA-GrQc.txt"},
-    {email,     datasets_path + "undirected/Email-EuAll.txt"},
-    {git,       datasets_path + "undirected/musae_git_edges.csv"},
+    {astro,     "undirected/CA-AstroPh.txt"},
+    {coauthors, "undirected/ca-coauthors-dblp.txt"},
+    {grqc,      "undirected/CA-GrQc.txt"},
+    {email,     "undirected/Email-EuAll.txt"},
+    {git,       "undirected/musae_git_edges.csv"},
 
-    {orkut,     datasets_path + "very_large_graphs/com-orkut.ungraph.txt"},
-    {youtube,   datasets_path + "very_large_graphs/com-youtube.ungraph.txt"},
-    {vk,        datasets_path + "very_large_graphs/vk.csv"}
+    {orkut,     "very_large_graphs/com-orkut.ungraph.txt"},
+    {youtube,   "very_large_graphs/com-youtube.ungraph.txt"},
+    {vk,        "very_large_graphs/vk.csv"}
 };
+string get_dataset_path(const dataset ds) {
+    return datasets_path + paths[ds];
+}
+string get_summarized_path(const dataset ds) {
+    return summarized_path + filesystem::path(paths[ds]).replace_extension(".json").string();
+}
 
-bool measure_is_finished;
+static bool measure_is_finished;
+
 void print_measure_time(const string& name, const long ms, const auto& result = "") {
     std::ostringstream oss;
     oss << fixed << result;
@@ -53,9 +66,8 @@ void loop_print_measure_time(const string& name) {
         this_thread::sleep_for(chrono::milliseconds(20));
     }
 }
-
 template <typename Func>
-auto measure(const string& name, Func&& func) {
+auto measure(const measure_type type, const string& name, Func&& func) {
     measure_is_finished = false;
     thread t_print(loop_print_measure_time, name); // Запускаем отдельный поток с циклом
 
@@ -66,8 +78,12 @@ auto measure(const string& name, Func&& func) {
 
     measure_is_finished = true;
     t_print.join();
-
     print_measure_time(name, ms, result);
+
+    if (type != undefined_field) {
+        get_json_placing(output_json, type) = result;
+        json_write(output_json, output_file, true);
+    }
     cout << endl;
     return result;
 }
@@ -76,61 +92,58 @@ void parse_example() {
     graph g;
     graph_analyzer analyzer(g);
 
-    const dataset graph_name = dataset::email; // Choose one
+    constexpr dataset dgraph = dataset::email; // Choose one
+    output_file = get_summarized_path(dgraph);
     const auto start = std::chrono::steady_clock::now();
 
-    measure("parsing", [&] { g = uni_parser::parse(datasets[graph_name]); return "----- start tests -----";});
+    measure(undefined_field, "parsing",                                            [&] { g = uni_parser::parse(get_dataset_path(dgraph)); return "----- start tests -----";});
 
     // Base graph data
-    measure("graph name",                [&]{ return filesystem::path(datasets[graph_name]).filename(); });
-    measure("graph type",                [&]{ return g.type == Directed ? "Directed" : "Undirected"; });
-    measure("amount vertexes",           [&] { return g.amount_vertexes(); });
-    measure("amount edges",              [&] { return g.amount_edges; });
-    measure("min degree",                [&] { return analyzer.get_min_degree(); });
-    measure("max degree",                [&] { return analyzer.get_max_degree(); });
-    measure("average degree",            [&]{ return analyzer.get_average_degree(); });
-    measure("density",                   [&]{ return analyzer.get_density(); });
-
-    measure("amount of triangles",       [&] { return analyzer.get_amount_of_triangles(); });
-    measure("amount of closed triplets", [&] { return analyzer.get_amount_of_closed_triplets(); });
-    measure("amount of opened triplets", [&] { return analyzer.get_amount_of_opened_triplets(); });
-    measure("global cluster coef",       [&]{ return analyzer.get_global_clustering_coefficient(); });
-    // CC
-    measure("amount of CC",              [&] { return analyzer.get_amount_of_CC(); });
-    measure("average cluster coef",      [&]{ return analyzer.get_average_clustering_coefficient(); });
-    measure("avr cluster coef in max CC",[&]{ return analyzer.get_average_clustering_coefficient_max_CC(); });
-    measure("double sweep diameter",     [&] { return analyzer.estimate_diameter_of_max_CC_from_double_sweep(); });
-    measure("sample diameter",           [&] { return analyzer.estimate_diameter_of_max_CC_from_sample(); });
-    measure("snowball diameter",         [&] { return analyzer.estimate_diameter_of_max_CC_from_snowball(); });
-    measure("sample 90 percentile",      [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_sample(); });
-    measure("snowball 90 percentile",    [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_snowball(); });
-    measure("fraction of ver in max CC", [&]{ return analyzer.get_fraction_of_vertexes_in_max_CC(); });
-    // SCC
-    if (datasets[graph_name].contains("/directed/")) {
-        measure("amount of SCC",             [&] { return analyzer.get_amount_of_SCC(); });
-        measure("fraction of ver in max SCC",[&]{ return analyzer.get_fraction_of_vertexes_in_max_SCC(); });
+    measure(graph_name, "graph name",                                              [&]{ return filesystem::path(get_dataset_path(dgraph)).filename(); });
+    measure(graph_type, "graph type",                                                   [&]{ return g.type == Directed ? "Directed" : "Undirected"; });
+    measure(amount_of_vertexes, "amount vertexes",                                 [&] { return g.amount_vertexes(); });
+    measure(amount_of_edges, "amount edges",                                       [&] { return g.amount_edges; });
+    if (g.type == Undirected) {
+        measure(min_degree, "min degree",                                          [&] { return analyzer.get_min_degree(); });
+        measure(max_degree, "max degree",                                          [&] { return analyzer.get_max_degree(); });
+        measure(average_degree, "average degree",                                  [&]{ return analyzer.get_average_degree(); });
     }
-    // Все функции вероятности пропущены потому что там числа надо вставлять, сам добавишь
 
+    measure(density, "density",                                                    [&]{ return analyzer.get_density(); });
 
-    // Warning! Those functions break the graph when argument != 0
-    measure("delete 0 percentage",       [&] { return analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(0); });
-    measure("delete 0.9 percentage",     [&] { return analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(0.9); });
+    measure(amount_of_triangles, "amount of triangles",                            [&] { return analyzer.get_amount_of_triangles(); });
+    measure(amount_of_closed_triplets, "amount of closed triplets",                [&] { return analyzer.get_amount_of_closed_triplets(); });
+    measure(amount_of_opened_triplets, "amount of opened triplets",                [&] { return analyzer.get_amount_of_opened_triplets(); });
+    measure(global_clustering_coefficient, "global cluster coef",                  [&]{ return analyzer.get_global_clustering_coefficient(); });
+    // CC
+    measure(amount_of_CCs, "amount of CC",                                         [&] { return analyzer.get_amount_of_CC(); });
+    measure(average_clustering_coefficient, "average cluster coef",                [&]{ return analyzer.get_average_clustering_coefficient(); });
+    measure(average_clustering_coefficient_in_max_CC, "avr cluster coef in max CC",[&]{ return analyzer.get_average_clustering_coefficient_max_CC(); });
+    measure(double_sweep_diameter, "double sweep diameter",                        [&] { return analyzer.estimate_diameter_of_max_CC_from_double_sweep(); });
+    measure(sample_diameter, "sample diameter",                                    [&] { return analyzer.estimate_diameter_of_max_CC_from_sample(); });
+    measure(snowball_diameter, "snowball diameter",                                [&] { return analyzer.estimate_diameter_of_max_CC_from_snowball(); });
+    measure(sample_90_percentile, "sample 90 percentile",                          [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_sample(); });
+    measure(snowball_90_percentile, "snowball 90 percentile",                      [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_snowball(); });
+    measure(fraction_of_vertexes_in_max_CC, "fraction of ver in max CC",           [&]{ return analyzer.get_fraction_of_vertexes_in_max_CC(); });
+    // SCC
+    if (g.type == Directed) {
+        measure(amount_of_SCCs, "amount of SCC",                                   [&] { return analyzer.get_amount_of_SCC(); });
+        measure(fraction_of_vertexes_in_max_SCC, "fraction of ver in max SCC",     [&]{ return analyzer.get_fraction_of_vertexes_in_max_SCC(); });
+    }
+
+    measure(probability_that_random_vertex_has_degree_less_than_some_degree, "probab. that v. has degree less",
+                [&] { return analyzer.get_probabilities_that_random_vertex_has_less_than_some_degree(); });
+    // Warning! These functions break the graph
+    graph g_copy = g;
+    measure(sizes_of_max_CC_after_delete_x_percent_random_vertexes, "delete 0% - 100% random vertexes",
+            [&] { return analyzer.get_sizes_of_max_CC_after_delete_x_percentage_vertexes(); });
+    measure(sizes_of_max_CC_after_delete_x_percent_max_degreed_vertexes, "delete 0% - 100% max degreed vertexes",
+            [&] { return graph_analyzer(g_copy).get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(); });
 
     const auto end = std::chrono::steady_clock::now();
     const auto ms = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     cout << endl; // для привлечения внимания, что следующая строка - не результат теста
-    measure("Total execution time",   [&]{ return to_string(ms) + " ms"; });
-}
-
-void json_example() { // Если что сломается - сорян
-    const string graph_name = "email"; // Chose one
-    string summarized_path = project_path + "/summarized/" + graph_name + ".json";
-    string summarized_out_path = project_path + "/summarized/" + graph_name + "_out.json";
-    json j = summarizer::json_open(summarized_path);
-    j["test"] = 123;
-    summarizer::json_write(j, summarized_out_path, true);
-    cout << j.dump(4) << endl;
+    measure(undefined_field, "Total execution time",   [&]{ return to_string(ms) + " ms"; });
 }
 
 int main() {
@@ -142,8 +155,8 @@ int main() {
     // string graph_path = project_path + "/datasets/directed/web-Stanford.txt";
     // string graph_path = project_path + "/datasets/undirected/musae_git_edges.csv";
 
-    string graph_path = project_path + "/datasets/undirected/Email-EuAll.txt";
-    string summarized_path = project_path + "/summarized/" + filesystem::path(graph_path).filename().string() + ".json";
+    // string graph_path = project_path + "/datasets/undirected/Email-EuAll.txt";
+    // string summarized_path = project_path + "/summarized/" + filesystem::path(graph_path).filename().string() + ".json";
 
     // summarizer::sum_up(graph_path, summarized_path);
     // json_example();

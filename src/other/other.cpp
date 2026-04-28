@@ -14,6 +14,11 @@ namespace other {
         ranges::sample(initial, std::back_inserter(out), static_cast<long>(n), gen);
         return out;
     }
+    void shuffle_vector(vector<int>& initial) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        ranges::shuffle(initial, gen);
+    }
     bool set_greater(const set<int> &a, const set<int> &b) {
         if (a.size() == b.size())
             return *a.begin() < *b.begin();

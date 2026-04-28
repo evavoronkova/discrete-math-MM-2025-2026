@@ -6,138 +6,65 @@
 #include <iostream>
 
 const string basic_information = "Basic Information";
-const string additional_information = "Additional Information";
 const string connected_components = "Connected Components";
-
+const string additional_information = "Additional Information";
 
 namespace summarizer {
+
     void destructive_summarizes(json& j, graph& g);
-    // void set_result(json& j, result res, const any& value) {
-    //     j[result_to_string(res)] = value;
-    // }
-    void set_graph_name(json& j, const string& name) {
-        j[basic_information]["Name"] = filesystem::path(name).filename();
-    }
-    void set_graph_type(json &j, g_type type) {
-        j[basic_information]["Type"] = type == Directed ? "Directed" : "Undirected";
-    }
-    void set_amount_of_vertexes(json &j, size_t amount) {
-        j[basic_information]["Amount of vertexes"] = amount;
-    }
-    void set_amount_of_edges(json &j, size_t amount) {
-        j[basic_information]["Amount of edges"] = amount;
-    }
-    void set_density(json &j, double density) {
-        j[basic_information]["Density"] = density;
-    }
-    void set_amount_of_CCs(json &j, size_t amount) {
-        j[connected_components]["Amount of CCs"] = amount;
-    }
-    void set_amount_of_SCCs(json &j, size_t amount) {
-        j[connected_components]["Amount of SCCs"] = amount;
-    }
-    void set_fraction_of_vertexes_in_max_CC(json &j, double fraction) {
-        j[connected_components]["Fraction of vertexes in max CC"] = fraction;
-    }
-    void set_fraction_of_vertexes_in_max_SCC(json &j, double fraction) {
-        j[connected_components]["Fraction of vertexes in max SCC"] = fraction;
-    }
-    void set_min_degree(json &j, size_t degree) {
-        j[additional_information]["Minimum degree"] = degree;
-    }
-    void set_max_degree(json &j, size_t degree) {
-        j[additional_information]["Maximum degree"] = degree;
-    }
-    void set_average_degree(json &j, double degree) {
-        j[additional_information]["Average degree"] = degree;
-    }
-    void set_amount_of_triangles(json &j, size_t amount) {
-        j[additional_information]["Amount of triangles"] = amount;
-    }
-    void set_global_clustering_coefficient(json &j, double coef) {
-        j[additional_information]["Global Clustering coefficient"] = coef;
-    }
-    void set_average_clustering_coefficient(json &j, double coef) {
-        j[additional_information]["Average Clustering coefficient"] = coef;
-    }
-    void sum_up(const string &graph_path, const string &log_path){
-        ofstream out(log_path);
-        if (!out.is_open()) throw runtime_error("sum_up: Cannot open output file!");
 
-        graph g = uni_parser::parse(graph_path);
-        auto analyzer = graph_analyzer(g);
-        json j;
+    nlohmann::basic_json<nlohmann::ordered_map>& get_json_placing(json &j, const measure_type type) {
+        switch (type) {
+            case graph_name: return j[basic_information]["Name"];
+            case graph_type: return j[basic_information]["Type"];
+            case amount_of_vertexes: return j[basic_information]["Amount of vertexes"];
+            case amount_of_edges: return j[basic_information]["Amount of edges"];
+            case density: return j[basic_information]["Density"];
+            case amount_of_CCs: return j[connected_components]["Amount of CCs"];
+            case amount_of_SCCs: return j[connected_components]["Amount of SCCs"];
+            case fraction_of_vertexes_in_max_CC: return j[connected_components]["Fraction of vertexes in max CC"];
+            case fraction_of_vertexes_in_max_SCC: return j[connected_components]["Fraction of vertexes in max SCC"];
+            case min_degree: return j[additional_information]["Minimum degree"];
+            case max_degree: return j[additional_information]["Maximum degree"];
+            case average_degree: return j[additional_information]["Average degree"];
+            case amount_of_triangles: return j[additional_information]["Amount of triangles"];
+            case global_clustering_coefficient: return j[additional_information]["Global Clustering coefficient"];
+            case amount_of_opened_triplets: return j[additional_information]["Amount of opened triplets"];
+            case amount_of_closed_triplets: return j[additional_information]["Amount of closed triplets"];
+            case average_clustering_coefficient: return j[additional_information]["Average Clustering coefficient"];
+            case average_clustering_coefficient_in_max_CC: return j[additional_information]["Average Clustering coefficient in max CC"];
+            case double_sweep_diameter: return j[additional_information]["Double sweep diameter"];
+            case sample_diameter: return j[additional_information]["Sample diameter"];
+            case snowball_diameter: return j[additional_information]["Snowball diameter"];
+            case sample_90_percentile: return j[additional_information]["Sample 90 procentile"];
+            case snowball_90_percentile: return j[additional_information]["Snowball 90 procentile"];
+            case probability_that_random_vertex_has_degree_less_than_some_degree: return j[additional_information]["Probability that random vertex has degree <= than some degree"];
+            case sizes_of_max_CC_after_delete_x_percent_random_vertexes: return j[additional_information]["Sizes of max CC after delete x% random vertexes"];
+            case sizes_of_max_CC_after_delete_x_percent_max_degreed_vertexes: return j[additional_information]["Sizes of max CC after delete x% max degreed vertexes"];
 
-        set_graph_name(j, filesystem::path(graph_path).filename().string());
-        set_graph_type(j, g.type);
-        set_amount_of_vertexes(j, g.amount_vertexes());
-        set_amount_of_edges(j, g.amount_edges);
-        set_density(j, analyzer.get_density());
-
-        set_amount_of_CCs(j, analyzer.get_amount_of_CC());
-        set_fraction_of_vertexes_in_max_CC(j, analyzer.get_fraction_of_vertexes_in_max_CC());
-        if (g.type == Directed) {
-            set_amount_of_SCCs(j, analyzer.get_amount_of_SCC());
-            set_fraction_of_vertexes_in_max_SCC(j, analyzer.get_fraction_of_vertexes_in_max_SCC());
+            case undefined_field: return j["undefined"];
         }
-
-        if (g.type == Undirected) {
-            set_min_degree(j, analyzer.get_min_degree());
-            set_max_degree(j, analyzer.get_max_degree());
-            set_average_degree(j, analyzer.get_average_degree());
-        }
-
-        set_amount_of_triangles(j, analyzer.get_amount_of_triangles());
-        set_global_clustering_coefficient(j, analyzer.get_global_clustering_coefficient()); // x16 seconds
-        set_average_clustering_coefficient(j, analyzer.get_average_clustering_coefficient()); // x6 seconds
-
-        destructive_summarizes(j, g);
-        out << j.dump(4);
-        out.close();
+        throw runtime_error("get_json_placing: Undefined measure type!");
     }
-    json json_open(string& file_path) {
+
+    json json_open(const string& file_path) {
         ifstream in(file_path);
         if (!in.is_open()) throw runtime_error("json_open: Cannot open a json file!");
         json j = json::parse(in);
         in.close();
         return j;
     }
-    void json_write(json &j, string& file_path, bool force) {
+    void json_write(json &j, const string& file_path, const bool force) {
         if (!force && filesystem::exists(file_path)) throw runtime_error("json_write: Writeable file already exists! If you sure what you do, use `force` flag");
+
+        filesystem::path dirPath = filesystem::path(file_path).parent_path();
+        if (!filesystem::exists(dirPath)) {
+            filesystem::create_directory(dirPath);
+        }
         ofstream out(file_path);
-        if (!out.is_open()) throw runtime_error("json_write: Cannot open a json file!");
+        if (!out.is_open())
+            throw runtime_error("json_write: Cannot open a json file!");
         out << j.dump(4);
         out.close();
-    }
-    void destructive_summarizes(json& j, graph &g_copy) {
-        graph g = g_copy;
-        auto analyzer = graph_analyzer(g);
-
-        int steps = 10;
-        float p = 1.0f / (float) steps;
-        j[additional_information]["Sizes of max CC after delete x% vertexes"]["0"]
-            = analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(0);
-        for (int i = 0; i < steps; i++) {
-            double curr_p = p / (1 - ((float)i / (float)steps));
-            size_t size = analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(curr_p);
-            j[additional_information]["Sizes of max CC after delete x% vertexes"]
-                [to_string((i + 1) * 100 / steps)] = size;
-        }
-
-        if (g.type == Undirected) {
-            g = g_copy;
-            analyzer.g = g;
-
-            p = 1.0f / (float) steps;
-            j[additional_information]["Sizes of max CC after delete x% vertexes of max degrees"]["0"]
-                = analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(0);
-// #pragma omp parallel for
-            for (int i = 0; i < steps; i++) {
-                double curr_p = p / (1 - ((float)i / (float)steps));
-                size_t size = analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(curr_p);
-                j[additional_information]["Sizes of max CC after delete x% vertexes of max degrees"]
-                    [to_string((i + 1) * 100 / steps)] = size;
-            }
-        }
     }
 }

@@ -1,7 +1,6 @@
 #ifndef ANALYZERS_H
 #define ANALYZERS_H
 
-#include <any>
 #include <cmath>
 #include <unordered_map>
 #include <vector>
@@ -9,6 +8,7 @@
 #include <queue>
 
 #include "general.h"
+#include "summarizer/summarizer.h"
 
 class graph_analyzer {
 public:
@@ -44,10 +44,13 @@ public:
     double get_average_degree() const;
 
     double get_probability_that_random_vertex_has_some_degree(size_t degree);
+    double get_probability_that_random_vertex_has_less_than_some_degree(size_t degree);
+    json get_probabilities_that_random_vertex_has_less_than_some_degree();
+
     double get_probability_that_random_vertex_has_some_degree_log_log(size_t log2_degree);
 
-    size_t get_size_of_max_CC_after_delete_x_percentage_vertexes(double x);
-    size_t get_size_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(double x);
+    json get_sizes_of_max_CC_after_delete_x_percentage_vertexes();
+    json get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees();
 
     size_t estimate_diameter_of_max_CC_from_double_sweep();
     size_t estimate_diameter_of_max_CC_from_sample(int sample_size = 1000);
