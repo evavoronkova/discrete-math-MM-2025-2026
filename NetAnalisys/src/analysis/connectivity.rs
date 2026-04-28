@@ -154,6 +154,11 @@ pub fn fraction_in_largest_component(comp: &HashSet<u32>, num_vertices: usize) -
 
 pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
     let mut largest: HashSet<u32> = HashSet::new();
-    comps.iter().map(|comp| if comp.len() > largest.len() {largest = comp.clone()});
+    for comp in comps {
+        if comp.len() > largest.len() {
+            largest = comp.clone();
+        }
+    }
+
     largest
 }

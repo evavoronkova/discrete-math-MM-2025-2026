@@ -72,8 +72,12 @@ impl Graph {
         }
 
         match self.kind() {
-            DirectedOrUndirected::Undirected => (2.0 * num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64),
-            DirectedOrUndirected::Directed => (num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64),
+            DirectedOrUndirected::Undirected => {
+                (2.0 * num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64)
+            }
+            DirectedOrUndirected::Directed => {
+                (num_edges as f64) / ((num_vertices * (num_vertices - 1)) as f64)
+            }
         }
     }
 }

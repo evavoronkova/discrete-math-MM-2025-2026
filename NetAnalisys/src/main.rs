@@ -6,7 +6,10 @@ mod landmarks;
 mod parser;
 mod ui;
 
-use crate::analysis::connectivity::{find_weak_components, fraction_in_largest_component, get_largest_comp, get_number_of_comps, tarjan_scc};
+use crate::analysis::connectivity::{
+    find_weak_components, fraction_in_largest_component, get_largest_comp, get_number_of_comps,
+    tarjan_scc,
+};
 use crate::analysis::diameter::approximate_diameter;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
@@ -52,15 +55,23 @@ async fn main() {
             let num_weak_comps = get_number_of_comps(&weak_comps);
             buffer_for_print.push(format!("Number of weak components: {}", num_weak_comps));
             let largest_weak_comp = get_largest_comp(&weak_comps);
-            let fraction_in_weak_comp = fraction_in_largest_component(&largest_weak_comp, num_vertices);
-            buffer_for_print.push(format!("Fraction in largest weak component: {}", fraction_in_weak_comp));
+            let fraction_in_weak_comp =
+                fraction_in_largest_component(&largest_weak_comp, num_vertices);
+            buffer_for_print.push(format!(
+                "Fraction in largest weak component: {}",
+                fraction_in_weak_comp
+            ));
             if DirectedOrUndirected::Directed == graph_type {
                 let strong_comps = tarjan_scc(&graph);
                 let largest_strong_comp = get_largest_comp(&strong_comps);
                 let num_strong_comps = get_number_of_comps(&strong_comps);
                 buffer_for_print.push(format!("Number of strong components: {}", num_strong_comps));
-                let fraction_in_strong_comp = fraction_in_largest_component(&largest_strong_comp, num_vertices);
-                buffer_for_print.push(format!("Fraction in largest strong component: {}", fraction_in_strong_comp));
+                let fraction_in_strong_comp =
+                    fraction_in_largest_component(&largest_strong_comp, num_vertices);
+                buffer_for_print.push(format!(
+                    "Fraction in largest strong component: {}",
+                    fraction_in_strong_comp
+                ));
             }
             let diameter = approximate_diameter(&graph, Some(&largest_weak_comp));
             buffer_for_print.push(format!("Dieameter of largest weak component: {}", diameter));
