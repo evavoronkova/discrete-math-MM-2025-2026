@@ -1,18 +1,26 @@
+from collections import deque
+
+
 class Solution:
     def minReorder(self, n: int, connections: list[list[int]]) -> int:
-        roads = connections.copy()
-        to_cities = [0]
+        graph = [[] for _ in range(n)]
+
+        for a, b in connections:
+            graph[a].append((b, 1))
+            graph[b].append((a, 0))
+
+        visited = [0]
+        queue = deque()
+        queue.append(0)
+
         min_changed = 0
 
-        while roads:
-            for pair in roads:
-                a, b = pair
-                if a in to_cities:
-                    min_changed += 1
-                    to_cities.append(b)
-                    roads.remove(pair)
-                elif b in to_cities:
-                    to_cities.append(a)
-                    roads.remove(pair)
+        while queue:
+            current = queue.popleft()
+            for neighbour, direction in graph[current]:
+                if neighbour not in visited:
+                    min_changed += direction
+                    visited.append(neighbour)
+                    queue.append(neighbour)
 
         return min_changed
