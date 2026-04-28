@@ -66,6 +66,7 @@ void loop_print_measure_time(const string& name) {
         this_thread::sleep_for(chrono::milliseconds(20));
     }
 }
+
 template <typename Func>
 auto measure(const measure_type type, const string& name, Func&& func) {
     measure_is_finished = false;
@@ -88,11 +89,10 @@ auto measure(const measure_type type, const string& name, Func&& func) {
     return result;
 }
 
-void parse_example() {
+void parse_example(dataset dgraph) {
     graph g;
     graph_analyzer analyzer(g);
 
-    constexpr dataset dgraph = dataset::email; // Choose one
     output_file = get_summarized_path(dgraph);
     const auto start = std::chrono::steady_clock::now();
 
@@ -115,30 +115,40 @@ void parse_example() {
     measure(amount_of_closed_triplets, "amount of closed triplets",                [&] { return analyzer.get_amount_of_closed_triplets(); });
     measure(amount_of_opened_triplets, "amount of opened triplets",                [&] { return analyzer.get_amount_of_opened_triplets(); });
     measure(global_clustering_coefficient, "global cluster coef",                  [&]{ return analyzer.get_global_clustering_coefficient(); });
+
     // CC
     measure(amount_of_CCs, "amount of CC",                                         [&] { return analyzer.get_amount_of_CC(); });
+    measure(fraction_of_vertexes_in_max_CC, "fraction of ver in max CC",           [&]{ return analyzer.get_fraction_of_vertexes_in_max_CC(); });
+
     measure(average_clustering_coefficient, "average cluster coef",                [&]{ return analyzer.get_average_clustering_coefficient(); });
     measure(average_clustering_coefficient_in_max_CC, "avr cluster coef in max CC",[&]{ return analyzer.get_average_clustering_coefficient_max_CC(); });
-    measure(double_sweep_diameter, "double sweep diameter",                        [&] { return analyzer.estimate_diameter_of_max_CC_from_double_sweep(); });
-    measure(sample_diameter, "sample diameter",                                    [&] { return analyzer.estimate_diameter_of_max_CC_from_sample(); });
-    measure(snowball_diameter, "snowball diameter",                                [&] { return analyzer.estimate_diameter_of_max_CC_from_snowball(); });
-    measure(sample_90_percentile, "sample 90 percentile",                          [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_sample(); });
-    measure(snowball_90_percentile, "snowball 90 percentile",                      [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_snowball(); });
-    measure(fraction_of_vertexes_in_max_CC, "fraction of ver in max CC",           [&]{ return analyzer.get_fraction_of_vertexes_in_max_CC(); });
+    if (g.type == Undirected) {
+        measure(double_sweep_diameter, "double sweep diameter",                        [&] { return analyzer.estimate_diameter_of_max_CC_from_double_sweep(); });
+        measure(sample_diameter, "sample diameter",                                    [&] { return analyzer.estimate_diameter_of_max_CC_from_sample(); });
+        measure(snowball_diameter, "snowball diameter",                                [&] { return analyzer.estimate_diameter_of_max_CC_from_snowball(); });
+        measure(sample_90_percentile, "sample 90 percentile",                          [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_sample(); });
+        measure(snowball_90_percentile, "snowball 90 percentile",                      [&] { return analyzer.estimate_90th_percentile_of_max_CC_from_snowball(); });
+
+    }
+
     // SCC
     if (g.type == Directed) {
         measure(amount_of_SCCs, "amount of SCC",                                   [&] { return analyzer.get_amount_of_SCC(); });
         measure(fraction_of_vertexes_in_max_SCC, "fraction of ver in max SCC",     [&]{ return analyzer.get_fraction_of_vertexes_in_max_SCC(); });
     }
 
-    measure(probability_that_random_vertex_has_degree_less_than_some_degree, "probab. that v. has degree less",
-                [&] { return analyzer.get_probabilities_that_random_vertex_has_less_than_some_degree(); });
+
     // Warning! These functions break the graph
     graph g_copy = g;
     measure(sizes_of_max_CC_after_delete_x_percent_random_vertexes, "delete 0% - 100% random vertexes",
             [&] { return analyzer.get_sizes_of_max_CC_after_delete_x_percentage_vertexes(); });
-    measure(sizes_of_max_CC_after_delete_x_percent_max_degreed_vertexes, "delete 0% - 100% max degreed vertexes",
-            [&] { return graph_analyzer(g_copy).get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(); });
+
+    if (g.type == Undirected) {
+        measure(probability_that_random_vertex_has_degree_less_than_some_degree, "probab. that v. has degree less",
+                [&] { return analyzer.get_probabilities_that_random_vertex_has_less_than_some_degree(); });
+        measure(sizes_of_max_CC_after_delete_x_percent_max_degreed_vertexes, "delete 0% - 100% max degreed vertexes",
+                [&] { return graph_analyzer(g_copy).get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees(); });
+    }
 
     const auto end = std::chrono::steady_clock::now();
     const auto ms = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -147,21 +157,31 @@ void parse_example() {
 }
 
 int main() {
-    // Tests works only in DEBUG build
+    // Tests work only in DEBUG build
     analyzer_tests::tests();
     graph_tests::tests();
 
-    // string graph_path = project_path + "/datasets/directed/soc-wiki-Vote.mtx";
-    // string graph_path = project_path + "/datasets/directed/web-Stanford.txt";
-    // string graph_path = project_path + "/datasets/undirected/musae_git_edges.csv";
+    for (auto p : paths) {
+        bool is_skip = false;
+        if (filesystem::exists(get_summarized_path(p.first))) {
+            char c;
+            while (true) {
+                cout << "Graph " << p.second << " is already computed!" << endl;
+                cout << "Do you want to skip it?(y/n): ";
+                cin >> c;
+                if (c == 'y' || c == 'Y') {
+                    is_skip = true;
+                    break;
+                }
+                else if (c == 'n' || c == 'N') break;
+            }
+        }
+        if (is_skip) continue;
 
-    // string graph_path = project_path + "/datasets/undirected/Email-EuAll.txt";
-    // string summarized_path = project_path + "/summarized/" + filesystem::path(graph_path).filename().string() + ".json";
-
-    // summarizer::sum_up(graph_path, summarized_path);
-    // json_example();
-
-    parse_example();
+        output_json = json();
+        output_file = "";
+        parse_example(p.first);
+    }
 
     return 0;
 }
