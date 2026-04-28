@@ -52,14 +52,20 @@ async fn main() {
             let density = graph.density(num_vertices, num_edges);
             buffer_for_print.push(format!("Density of graph: {}", density));
             let weak_comps = find_weak_components(&graph);
+            println!("Number of weak components: {}", weak_comps.len());
             let num_weak_comps = get_number_of_comps(&weak_comps);
             buffer_for_print.push(format!("Number of weak components: {}", num_weak_comps));
             let largest_weak_comp = get_largest_comp(&weak_comps);
+            println!("Largest weak component size: {}", largest_weak_comp.len());
             let fraction_in_weak_comp =
+               
                 fraction_in_largest_component(&largest_weak_comp, num_vertices);
             buffer_for_print.push(format!(
+                
                 "Fraction in largest weak component: {}",
+               
                 fraction_in_weak_comp
+            
             ));
             if DirectedOrUndirected::Directed == graph_type {
                 let strong_comps = tarjan_scc(&graph);
