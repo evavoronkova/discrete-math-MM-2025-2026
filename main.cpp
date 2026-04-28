@@ -1,5 +1,6 @@
 #include <iostream>
 #include <filesystem>
+#include <thread>
 
 #include "src/analyzer.h"
 #include "src/parsers/parser.h"
@@ -8,36 +9,66 @@
 
 const string project_path = filesystem::current_path().parent_path();
 const string datasets_path = project_path + "/datasets/";
-map<string, string> datasets = {
-    {"socwiki",   datasets_path + "directed/soc-wiki-Vote.mtx"},
-    {"google",    datasets_path + "directed/google.txt"},
-    {"notredame", datasets_path + "directed/web-NotreDame.txt"},
-    {"stanford",  datasets_path + "directed/web-Stanford.txt"},
-    {"wiki",      datasets_path + "directed/Wiki-Vote.txt"},
 
-    {"astro",     datasets_path + "undirected/CA-AstroPh.txt"},
-    {"coauthors", datasets_path + "undirected/ca-coauthors-dblp.txt"},
-    {"grqc",      datasets_path + "undirected/CA-GrQc.txt"},
-    {"email",     datasets_path + "undirected/Email-EuAll.txt"},
-    {"git",       datasets_path + "undirected/musae_git_edges.csv"},
-
-    {"orkut",     datasets_path + "very_large_graphs/com-orkut.ungraph.txt"},
-    {"youtube",   datasets_path + "very_large_graphs/com-youtube.ungraph.txt"},
-    {"vk",        datasets_path + "very_large_graphs/vk.csv"}
+enum dataset {
+    socwiki, google, notredame, stanford,
+    wiki, astro, coauthors, grqc,
+    email, git, orkut, youtube, vk
 };
+map<dataset, string> datasets = {
+    {socwiki,   datasets_path + "directed/soc-wiki-Vote.mtx"},
+    {google,    datasets_path + "directed/google.txt"},
+    {notredame, datasets_path + "directed/web-NotreDame.txt"},
+    {stanford,  datasets_path + "directed/web-Stanford.txt"},
+    {wiki,      datasets_path + "directed/Wiki-Vote.txt"},
+
+    {astro,     datasets_path + "undirected/CA-AstroPh.txt"},
+    {coauthors, datasets_path + "undirected/ca-coauthors-dblp.txt"},
+    {grqc,      datasets_path + "undirected/CA-GrQc.txt"},
+    {email,     datasets_path + "undirected/Email-EuAll.txt"},
+    {git,       datasets_path + "undirected/musae_git_edges.csv"},
+
+    {orkut,     datasets_path + "very_large_graphs/com-orkut.ungraph.txt"},
+    {youtube,   datasets_path + "very_large_graphs/com-youtube.ungraph.txt"},
+    {vk,        datasets_path + "very_large_graphs/vk.csv"}
+};
+
+bool measure_is_finished;
+void print_measure_time(const string& name, const long ms, const auto& result = "") {
+    std::ostringstream oss;
+    oss << fixed << result;
+    cout << '\r' << left << std::setw(40) << name
+         << setw(30) << oss.str()
+         << setw(10) << (std::to_string(ms) + " ms");
+    flush(cout);
+}
+void loop_print_measure_time(const string& name) {
+    const auto start = std::chrono::steady_clock::now();
+    while (true) {
+        const auto end = std::chrono::steady_clock::now();
+        const auto ms = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+        print_measure_time<string>(name, ms);
+        if (measure_is_finished)
+            break;
+        this_thread::sleep_for(chrono::milliseconds(20));
+    }
+}
 
 template <typename Func>
 auto measure(const string& name, Func&& func) {
+    measure_is_finished = false;
+    thread t_print(loop_print_measure_time, name); // Запускаем отдельный поток с циклом
+
     const auto start = std::chrono::steady_clock::now();
     auto result = std::forward<Func>(func)();
     const auto end = std::chrono::steady_clock::now();
     const auto ms = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    std::ostringstream oss;
-    oss << fixed << result;
-    cout << left << std::setw(40) << name
-         << setw(30) << oss.str()
-         << setw(10) << (std::to_string(ms) + " ms") << endl;
+    measure_is_finished = true;
+    t_print.join();
+
+    print_measure_time(name, ms, result);
+    cout << endl;
     return result;
 }
 
@@ -45,12 +76,14 @@ void parse_example() {
     graph g;
     graph_analyzer analyzer(g);
 
-    const string graph_name = "vk"; // Chose one
+    const dataset graph_name = dataset::email; // Choose one
+    const auto start = std::chrono::steady_clock::now();
 
     measure("parsing", [&] { g = uni_parser::parse(datasets[graph_name]); return "----- start tests -----";});
 
     // Base graph data
-    measure("graph type",                [&]{ return g.type; });
+    measure("graph name",                [&]{ return filesystem::path(datasets[graph_name]).filename(); });
+    measure("graph type",                [&]{ return g.type == Directed ? "Directed" : "Undirected"; });
     measure("amount vertexes",           [&] { return g.amount_vertexes(); });
     measure("amount edges",              [&] { return g.amount_edges; });
     measure("min degree",                [&] { return analyzer.get_min_degree(); });
@@ -80,9 +113,14 @@ void parse_example() {
     // Все функции вероятности пропущены потому что там числа надо вставлять, сам добавишь
 
 
-    // Warring! Those functions break the graph when argument != 0
+    // Warning! Those functions break the graph when argument != 0
     measure("delete 0 percentage",       [&] { return analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(0); });
     measure("delete 0.9 percentage",     [&] { return analyzer.get_size_of_max_CC_after_delete_x_percentage_vertexes(0.9); });
+
+    const auto end = std::chrono::steady_clock::now();
+    const auto ms = chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    cout << endl; // для привлечения внимания, что следующая строка - не результат теста
+    measure("Total execution time",   [&]{ return to_string(ms) + " ms"; });
 }
 
 void json_example() { // Если что сломается - сорян
