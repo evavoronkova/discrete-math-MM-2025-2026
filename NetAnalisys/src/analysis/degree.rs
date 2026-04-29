@@ -5,16 +5,19 @@ pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
     let mut degrees = HashMap::default();
     match graph.kind() {
         DirectedOrUndirected::Directed => {
-            for (src, targets) in graph.adjacency_entries() {
-                *degrees.entry(src).or_insert(0) += targets.len() as u32;
+            for (src, targets) in graph.adjacency_entries_internal() {
+                let src_external = graph.internal_to_external(src).unwrap();
+                *degrees.entry(src_external).or_insert(0) += targets.len() as u32;
                 for &tgt in targets {
-                    *degrees.entry(tgt).or_insert(0) += 1;
+                    let tgt_external = graph.internal_to_external(tgt).unwrap();
+                    *degrees.entry(tgt_external).or_insert(0) += 1;
                 }
             }
         }
         DirectedOrUndirected::Undirected => {
-            for (src, targets) in graph.adjacency_entries() {
-                degrees.insert(src, targets.len() as u32);
+            for (src, targets) in graph.adjacency_entries_internal() {
+                let src_external = graph.internal_to_external(src).unwrap();
+                degrees.insert(src_external, targets.len() as u32);
             }
         }
     }

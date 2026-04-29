@@ -1,5 +1,5 @@
 use crate::graph::Graph;
-use crate::graph::traversal::{bfs_with_filter, bfs_with_parents};
+use crate::graph::traversal::{bfs_with_filter_internal, bfs_with_parents_internal};
 use rand::Rng;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
@@ -17,19 +17,26 @@ impl LandmarkBFS {
     }
 
     pub fn estimate(&self, graph: &Graph, s: u32, t: u32) -> Option<usize> {
+        let s = graph.external_to_internal(s)?;
+        let t = graph.external_to_internal(t)?;
         let nodes = self.collect_subgraph(s, t);
 
         if !nodes.contains(&s) || !nodes.contains(&t) {
             return None;
         }
 
-        let dist = bfs_with_filter(graph, s, Some(&nodes));
+        let mut mask = vec![false; graph.num_vertices()];
+        for &node in &nodes {
+            mask[node as usize] = true;
+        }
+
+        let dist = bfs_with_filter_internal(graph, s, Some(&mask));
         dist.get(&t).copied()
     }
 
     fn generate_landmarks(graph: &Graph, num_landmarks: usize) -> Vec<u32> {
         let mut rng = rand::thread_rng();
-        let vertices: Vec<u32> = graph.vertices().collect();
+        let vertices: Vec<u32> = graph.vertices_internal().collect();
 
         if vertices.is_empty() || num_landmarks == 0 {
             return Vec::new();
@@ -52,7 +59,7 @@ impl LandmarkBFS {
     ) -> HashMap<u32, HashMap<u32, (usize, Option<u32>)>> {
         landmarks
             .iter()
-            .map(|&l| (l, bfs_with_parents(graph, l)))
+            .map(|&l| (l, bfs_with_parents_internal(graph, l)))
             .collect()
     }
 

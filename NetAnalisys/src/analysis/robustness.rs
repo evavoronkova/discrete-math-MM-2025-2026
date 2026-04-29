@@ -13,21 +13,23 @@ use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
     let mut filtered_graph = Graph::new(graph.kind());
-    for (src, targets) in graph.adjacency_entries() {
-        if to_remove.contains(&src) {
+    for (src, targets) in graph.adjacency_entries_internal() {
+        let src_external = graph.internal_to_external(src).unwrap();
+        if to_remove.contains(&src_external) {
             continue;
         }
 
-        filtered_graph.add_vertex(src);
+        filtered_graph.add_vertex(src_external);
         for &target in targets {
-            if to_remove.contains(&target) {
+            let target_external = graph.internal_to_external(target).unwrap();
+            if to_remove.contains(&target_external) {
                 continue;
             }
 
             match graph.kind() {
-                DirectedOrUndirected::Directed => filtered_graph.add_edge(src, target),
+                DirectedOrUndirected::Directed => filtered_graph.add_edge(src_external, target_external),
                 DirectedOrUndirected::Undirected if src < target => {
-                    filtered_graph.add_edge(src, target)
+                    filtered_graph.add_edge(src_external, target_external)
                 }
                 DirectedOrUndirected::Undirected => {}
             }
@@ -70,7 +72,9 @@ fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
 
 fn lcc_after_random_removal(graph: &Graph, trials: usize) -> HashMap<u32, f64> {
     let num_vertices = graph.num_vertices();
-    let vertices: Vec<u32> = graph.vertices().collect();
+    let vertices: Vec<u32> = graph.vertices_internal()
+        .map(|vertex| graph.internal_to_external(vertex).unwrap())
+        .collect();
 
     (1..=20)
         .into_par_iter()

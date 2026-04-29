@@ -6,7 +6,7 @@ use rayon::prelude::*;
 use rustc_hash::FxHashSet as HashSet;
 
 fn calculate_mid_k(graph: &Graph) -> f64 {
-    let entries: Vec<_> = graph.adjacency_entries().collect();
+    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
     let sum: f64 = entries
         .par_iter()
         .map(|(_, neighbors)| {
@@ -21,7 +21,7 @@ fn calculate_mid_k(graph: &Graph) -> f64 {
 
             for i in 0..n {
                 for j in (i + 1)..n {
-                    if graph.has_edge(neighbors[i], neighbors[j]) {
+                    if graph.has_edge_internal(neighbors[i], neighbors[j]) {
                         actual_edges += 1;
                     }
                 }
@@ -35,7 +35,7 @@ fn calculate_mid_k(graph: &Graph) -> f64 {
 }
 
 fn triplet_counter(graph: &Graph) -> u32 {
-    let entries: Vec<_> = graph.adjacency_entries().collect();
+    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
 
     entries
         .par_iter()
@@ -70,13 +70,19 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
         }
         DirectedOrUndirected::Undirected => graph,
     };
+    let comp_internal: HashSet<u32> = comp
+        .iter()
+        .filter_map(|&vertex| working_graph.external_to_internal(vertex))
+        .collect();
 
     let mut component_graph = Graph::new(DirectedOrUndirected::Undirected);
-    for &v in comp {
-        component_graph.add_vertex(v);
-        for &u in working_graph.neighbors(v) {
-            if comp.contains(&u) && v < u {
-                component_graph.add_edge(v, u);
+    for &v in &comp_internal {
+        let v_external = working_graph.internal_to_external(v).unwrap();
+        component_graph.add_vertex(v_external);
+        for &u in working_graph.neighbors_internal(v) {
+            if comp_internal.contains(&u) && v < u {
+                let u_external = working_graph.internal_to_external(u).unwrap();
+                component_graph.add_edge(v_external, u_external);
             }
         }
     }

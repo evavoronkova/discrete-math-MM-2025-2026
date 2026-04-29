@@ -3,10 +3,10 @@ use crate::graph;
 pub fn find_triangles(graph: &graph::Graph) -> u32 {
     let mut triangles = 0;
 
-    for (node, neighbours) in graph.adjacency_entries() {
+    for (node, neighbours) in graph.adjacency_entries_internal() {
         for &neighbour in neighbours {
             if node < neighbour {
-                let neighbour_neighbours = graph.neighbors(neighbour);
+                let neighbour_neighbours = graph.neighbors_internal(neighbour);
                 let (small, big) = if neighbours.len() < neighbour_neighbours.len() {
                     (neighbours, neighbour_neighbours)
                 } else {
