@@ -22,38 +22,32 @@ class Solution:
                     if col > squares[i + 3]:
                         squares[i + 3] = col
 
-        dependencies = [[] for _ in range(61)]
+        dependencies = [set() for _ in range(61)]
         for colour in found_colours:
             i = colour * 4
-            for row in range(squares[i], squares[i + 1] + 1):
+            upper_row, lower_row, left_col, right_col = squares[i], squares[i + 1], squares[i + 2], squares[i + 3]
+            for row in range(upper_row, lower_row + 1):
                 row_cells = targetGrid[row]
-                for col in range(squares[i + 2], squares[i + 3] + 1):
+                for col in range(left_col, right_col + 1):
                     inner_colour = row_cells[col]
-                    if inner_colour != colour and inner_colour not in dependencies[colour]:
-                        dependencies[colour].append(inner_colour)
+                    if inner_colour != colour:
+                        dependencies[colour].add(inner_colour)
 
         cycle_state = [0] * 61
-
-        for colour in found_colours:
-            if not cycle_state[colour]:
-                stack = [(colour, 0)]
+        for color in found_colours:
+            if cycle_state[color] == 0:
+                stack = [(color, iter(dependencies[color]))]
+                cycle_state[color] = 1
                 while stack:
-                    inner_colour, i = stack[-1]
-                    if i == 0:
-                        cycle_state[inner_colour] = 1
-
-                    found_next = False
-                    for j in range(i, len(dependencies[inner_colour])):
-                        next = dependencies[inner_colour][j]
-                        if cycle_state[next] == 1:
+                    current, neighbors = stack[-1]
+                    try:
+                        nxt = next(neighbors)
+                        if cycle_state[nxt] == 1:
                             return False
-                        if not cycle_state[next]:
-                            stack[-1] = (inner_colour, j + 1)
-                            stack.append((next, 0))
-                            found_next = True
-                            break
-
-                    if not found_next:
-                        cycle_state[inner_colour] = 2
+                        if cycle_state[nxt] == 0:
+                            cycle_state[nxt] = 1
+                            stack.append((nxt, iter(dependencies[nxt])))
+                    except StopIteration:
+                        cycle_state[current] = 2
                         stack.pop()
         return True
