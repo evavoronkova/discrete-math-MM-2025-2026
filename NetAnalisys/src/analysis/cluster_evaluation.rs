@@ -3,7 +3,7 @@ use crate::{
     graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
 };
 use rayon::prelude::*;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet as HashSet;
 
 fn calculate_mid_k(graph: &Graph) -> f64 {
     let entries: Vec<_> = graph.adjacency_entries().collect();
@@ -85,7 +85,7 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
 }
 
 pub fn get_max_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
-    let mut max_comp: HashSet<u32> = HashSet::new();
+    let mut max_comp: HashSet<u32> = HashSet::default();
 
     for i in comps {
         if max_comp.len() < i.len() {

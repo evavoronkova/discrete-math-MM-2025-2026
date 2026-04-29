@@ -1,8 +1,8 @@
 use crate::{graph::Graph, parser::directed_or_undirected::DirectedOrUndirected};
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 
 pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
-    let mut degrees = HashMap::new();
+    let mut degrees = HashMap::default();
     match graph.kind() {
         DirectedOrUndirected::Directed => {
             for (src, targets) in graph.adjacency_entries() {
@@ -45,7 +45,7 @@ fn mid_degree(graph: &Graph) -> f64 {
 pub fn degree_probability(graph: &Graph) -> Vec<(f32, f32)> {
     let degrees = all_degrees(graph);
     let total_vertices = graph.num_vertices();
-    let mut hashmap: HashMap<u32, f32> = HashMap::new();
+    let mut hashmap: HashMap<u32, f32> = HashMap::default();
     for (k, v) in &degrees {
         *hashmap.entry(*v).or_insert(0.0) += 1.0 / total_vertices as f32;
     }

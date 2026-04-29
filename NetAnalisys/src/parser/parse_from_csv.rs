@@ -2,43 +2,64 @@ use std::error::Error;
 
 use super::directed_or_undirected::DirectedOrUndirected;
 use crate::graph::Graph;
-
+use rayon::prelude::*;
 use tokio::fs::File;
 use tokio::io::{AsyncBufReadExt, BufReader};
+use tokio::task;
 
 type DynError = Box<dyn Error + Send + Sync>;
 
-use rayon::prelude::*;
-use std::fs;
-
 pub async fn csv_parser(path: &str, graph_type: &DirectedOrUndirected) -> Result<Graph, DynError> {
-    let path = path.to_string();
-    let graph_type = graph_type.clone();
+    let file = File::open(path).await?;
+    let reader = BufReader::with_capacity(1 << 20, file);
 
-    let graph = tokio::task::spawn_blocking(move || {
-        let content = fs::read_to_string(path)?;
+    let mut lines = reader.lines();
+    let mut graph = Graph::new(*graph_type);
 
-        let edges: Vec<(u32, u32)> = content
-            .par_lines()
-            .filter_map(|line| {
-                let mut parts = line.split(',');
+    const CHUNK_SIZE: usize = 50_000;
+    let mut buffer = Vec::with_capacity(CHUNK_SIZE);
 
-                let u = parts.next()?.trim().parse().ok()?;
-                let v = parts.next()?.trim().parse().ok()?;
+    while let Some(line) = lines.next_line().await? {
+        let line = line.trim();
 
-                Some((u, v))
-            })
-            .collect();
-
-        let mut graph = Graph::new(graph_type);
-
-        for (u, v) in edges {
-            graph.add_edge(u, v);
+        if line.is_empty() || line.starts_with('#') {
+            continue;
         }
 
-        Ok::<_, DynError>(graph)
-    })
-    .await??;
+        buffer.push(line.to_string());
+
+        if buffer.len() >= CHUNK_SIZE {
+            process_chunk(&mut graph, std::mem::take(&mut buffer)).await?;
+        }
+    }
+
+    if !buffer.is_empty() {
+        process_chunk(&mut graph, buffer).await?;
+    }
 
     Ok(graph)
+}
+
+async fn process_chunk(graph: &mut Graph, chunk: Vec<String>) -> Result<(), DynError> {
+    let edges = task::spawn_blocking(move || {
+        chunk
+            .par_iter()
+            .filter_map(|line| parse_edge_fast(line))
+            .collect::<Vec<(u32, u32)>>()
+    })
+    .await?;
+
+    for (u, v) in edges {
+        graph.add_edge(u, v);
+    }
+
+    Ok(())
+}
+
+#[inline(always)]
+fn parse_edge_fast(line: &str) -> Option<(u32, u32)> {
+    let mut parts = line.split(',');
+    let u = parts.next()?.trim().parse().ok()?;
+    let v = parts.next()?.trim().parse().ok()?;
+    Some((u, v))
 }

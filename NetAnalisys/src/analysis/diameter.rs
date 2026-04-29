@@ -2,7 +2,8 @@ use crate::graph::Graph;
 use crate::graph::traversal::bfs_with_filter;
 use rand::Rng;
 use rand::seq::SliceRandom;
-use std::collections::{HashSet, VecDeque};
+use rustc_hash::FxHashSet as HashSet;
+use std::collections::VecDeque;
 
 pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
     let start = match component {
@@ -57,14 +58,14 @@ pub fn snowball_sampling(
     };
 
     if vertices.is_empty() {
-        return HashSet::new();
+        return HashSet::default();
     }
 
     let start1 = *vertices.choose(&mut rng).unwrap();
     let start2 = *vertices.choose(&mut rng).unwrap();
 
     let mut queue = VecDeque::new();
-    let mut sample = HashSet::new();
+    let mut sample = HashSet::default();
 
     queue.push_back(start1);
     sample.insert(start1);

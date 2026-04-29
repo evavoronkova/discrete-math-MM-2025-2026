@@ -9,7 +9,7 @@ use crate::{
 
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
     let mut filtered_graph = Graph::new(graph.kind());

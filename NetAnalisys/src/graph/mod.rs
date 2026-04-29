@@ -1,5 +1,5 @@
 use super::parser::directed_or_undirected::DirectedOrUndirected;
-use std::collections::HashMap;
+use rustc_hash::FxHashMap as HashMap;
 pub mod traversal;
 
 #[derive(Debug)]
@@ -11,7 +11,7 @@ pub struct Graph {
 impl Graph {
     pub fn new(graph_type: DirectedOrUndirected) -> Self {
         Self {
-            adjacency_list: HashMap::new(),
+            adjacency_list: HashMap::default(),
             graph_type,
         }
     }

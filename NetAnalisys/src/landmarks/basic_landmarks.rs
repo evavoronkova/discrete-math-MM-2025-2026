@@ -1,7 +1,7 @@
 use crate::graph::Graph;
 use crate::graph::traversal::bfs;
 use rand::Rng;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 pub struct LandmarkBasic {
     landmarks: Vec<u32>,
@@ -17,7 +17,7 @@ impl LandmarkBasic {
 
         let k = num_landmarks.min(vertices.len());
         let mut rng = rand::thread_rng();
-        let mut chosen = HashSet::new();
+        let mut chosen = HashSet::default();
 
         while chosen.len() < k {
             let v = vertices[rng.gen_range(0..vertices.len())];

@@ -1,7 +1,7 @@
 use crate::graph::Graph;
 use crate::graph::traversal::{bfs_with_filter, bfs_with_parents};
 use rand::Rng;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 pub struct LandmarkBFS {
     landmarks: Vec<u32>,
@@ -36,7 +36,7 @@ impl LandmarkBFS {
         }
 
         let k = num_landmarks.min(vertices.len());
-        let mut chosen = HashSet::new();
+        let mut chosen = HashSet::default();
 
         while chosen.len() < k {
             let v = vertices[rng.gen_range(0..vertices.len())];
@@ -79,7 +79,7 @@ impl LandmarkBFS {
     }
 
     fn collect_subgraph(&self, s: u32, t: u32) -> HashSet<u32> {
-        let mut subgraph = HashSet::new();
+        let mut subgraph = HashSet::default();
 
         for &u in &self.landmarks {
             subgraph.extend(self.path_to_landmark(s, u));

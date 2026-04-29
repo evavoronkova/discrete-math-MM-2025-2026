@@ -4,7 +4,7 @@ use crate::graph::Graph;
 use crate::graph::traversal::dfs_for_comps;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::prelude::*;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
 
 pub fn build_undirected(graph: &Graph) -> Graph {
@@ -29,12 +29,12 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
             &owned_graph
         }
     };
-    let mut visited = HashSet::new();
+    let mut visited = HashSet::default();
     let mut components = Vec::new();
 
     for vertex in graph_ref.vertices() {
         if !visited.contains(&vertex) {
-            let mut comp = HashSet::new();
+            let mut comp = HashSet::default();
             dfs_for_comps(graph_ref, vertex, &mut visited, &mut comp);
             components.push(comp);
         }
@@ -107,7 +107,7 @@ pub fn strong_connect(
         }
 
         if lowlinks[&frame.vertex] == indexes[&frame.vertex] {
-            let mut scc = HashSet::new();
+            let mut scc = HashSet::default();
             loop {
                 let w = stack.pop().unwrap();
                 on_stack.insert(w, false);
@@ -123,10 +123,10 @@ pub fn strong_connect(
 
 pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
     let mut index_counter = 0;
-    let mut indexes = HashMap::new();
-    let mut lowlinks = HashMap::new();
+    let mut indexes = HashMap::default();
+    let mut lowlinks = HashMap::default();
     let mut stack = Vec::new();
-    let mut on_stack = HashMap::new();
+    let mut on_stack = HashMap::default();
     let mut sccs = Vec::new();
 
     for v in graph.vertices() {

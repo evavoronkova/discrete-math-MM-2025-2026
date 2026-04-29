@@ -1,5 +1,6 @@
 use crate::graph::Graph;
-use std::collections::{HashMap, HashSet, VecDeque};
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use std::collections::VecDeque;
 
 pub fn dfs(graph: &Graph, start: u32, visited: &mut HashSet<u32>) {
     if !visited.insert(start) {
@@ -12,8 +13,8 @@ pub fn dfs(graph: &Graph, start: u32, visited: &mut HashSet<u32>) {
 }
 
 pub fn bfs(graph: &Graph, start: u32) -> HashMap<u32, usize> {
-    let mut visited = HashSet::new();
-    let mut dist = HashMap::new();
+    let mut visited = HashSet::default();
+    let mut dist = HashMap::default();
     let mut queue = VecDeque::new();
 
     visited.insert(start);
@@ -40,8 +41,8 @@ pub fn bfs_with_filter(
     start: u32,
     component: Option<&HashSet<u32>>,
 ) -> HashMap<u32, usize> {
-    let mut visited = HashSet::new();
-    let mut dist = HashMap::new();
+    let mut visited = HashSet::default();
+    let mut dist = HashMap::default();
     let mut queue = VecDeque::new();
 
     visited.insert(start);
@@ -69,8 +70,8 @@ pub fn bfs_with_filter(
 }
 
 pub fn bfs_with_parents(graph: &Graph, start: u32) -> HashMap<u32, (usize, Option<u32>)> {
-    let mut visited = HashSet::new();
-    let mut dist = HashMap::new();
+    let mut visited = HashSet::default();
+    let mut dist = HashMap::default();
     let mut queue = VecDeque::new();
 
     visited.insert(start);
