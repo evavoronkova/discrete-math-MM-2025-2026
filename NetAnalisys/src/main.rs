@@ -121,24 +121,25 @@ async fn main() {
 
             buffer_for_print.push(("Density of graph".to_string(), format!("{density:.6}")));
 
-            let weak_comps_handle = {
-                let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || find_weak_components(graph.as_ref()))
+            let (weak_comps, degree_data, strong_comps) = {
+                let g1 = Arc::clone(&graph);
+                let g2 = Arc::clone(&graph);
+                let g3 = Arc::clone(&graph);
+                tokio::try_join!(
+                    task::spawn_blocking(move || find_weak_components(g1.as_ref())),
+                    task::spawn_blocking(move || analysis::degree::degree_probability(g2.as_ref())),
+                    async move {
+                        Ok(if DirectedOrUndirected::Directed == graph_type {
+                            Some(task::spawn_blocking(move || tarjan_scc(g3.as_ref())).await?)
+                        } else {
+                            None
+                        })
+                    }
+                )
+                .unwrap()
             };
 
-            let degree_data_handle = {
-                let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || analysis::degree::degree_probability(graph.as_ref()))
-            };
-            let strong_comps_handle = if DirectedOrUndirected::Directed == graph_type {
-                let graph = Arc::clone(&graph);
-                Some(task::spawn_blocking(move || tarjan_scc(graph.as_ref())))
-            } else {
-                None
-            };
-
-            let weak_comps = Arc::new(weak_comps_handle.await.unwrap());
-            let degree_data: Vec<(f32, f32)> = degree_data_handle.await.unwrap();
+            let weak_comps = Arc::new(weak_comps);
 
             let num_handle = {
                 let weak_comps = Arc::clone(&weak_comps);
@@ -174,7 +175,7 @@ async fn main() {
                 ),
             ));
             if DirectedOrUndirected::Directed == graph_type {
-                let strong_comps = strong_comps_handle.unwrap().await.unwrap();
+                let strong_comps = strong_comps.unwrap();
                 let largest_strong_comp = strong_comps
                     .par_iter()
                     .max_by_key(|comp| comp.len())
@@ -203,31 +204,28 @@ async fn main() {
                 })
             };
 
-            let diameter = diameter_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "Diameter of largest weak component".to_string(),
-                diameter.to_string(),
-            ));
-
             let percentile_handle = {
                 let graph = Arc::clone(&graph);
                 task::spawn_blocking(move || percentile_90_distance(graph.as_ref(), None, 500))
             };
-
-            let percentile = percentile_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "90 percentile of distance of the graph".to_string(),
-                percentile.to_string(),
-            ));
 
             let num_triangles_handle = {
                 let graph = Arc::clone(&graph);
                 task::spawn_blocking(move || find_triangles(graph.as_ref()))
             };
 
-            let num_triangles = num_triangles_handle.await.unwrap();
+            let (diameter, percentile, num_triangles) =
+                tokio::try_join!(diameter_handle, percentile_handle, num_triangles_handle).unwrap();
+
+            buffer_for_print.push((
+                "Diameter of largest weak component".to_string(),
+                diameter.to_string(),
+            ));
+
+            buffer_for_print.push((
+                "90 percentile of distance of the graph".to_string(),
+                percentile.to_string(),
+            ));
 
             buffer_for_print.push((
                 "Number of triangles in graph".to_string(),
@@ -239,24 +237,15 @@ async fn main() {
                 task::spawn_blocking(move || calculate_mid_k(graph.as_ref(), num_vertices))
             };
 
-            let mid_k_graph = mid_k_graph_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "Average cluster coefficient of the graph".to_string(),
-                format!("{mid_k_graph:.6}"),
-            ));
-
             let global_k_handle = {
                 let graph = Arc::clone(&graph);
                 task::spawn_blocking(move || calculate_global_k(graph.as_ref(), num_triangles))
             };
 
-            let global_k = global_k_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "Global cluster coefficient of the graph".to_string(),
-                format!("{global_k:.6}"),
-            ));
+            let all_degrees_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || all_degrees(graph.as_ref()))
+            };
 
             let mid_k_component_handle = {
                 let graph = Arc::clone(&graph);
@@ -266,54 +255,62 @@ async fn main() {
                 })
             };
 
-            let mid_k_component = mid_k_component_handle.await.unwrap();
+            let (mid_k_graph, global_k, all_degrees, mid_k_component) = tokio::try_join!(
+                mid_k_graph_handle,
+                global_k_handle,
+                all_degrees_handle,
+                mid_k_component_handle
+            )
+            .unwrap();
+
+            buffer_for_print.push((
+                "Average cluster coefficient of the graph".to_string(),
+                format!("{mid_k_graph:.6}"),
+            ));
+
+            buffer_for_print.push((
+                "Global cluster coefficient of the graph".to_string(),
+                format!("{global_k:.6}"),
+            ));
 
             buffer_for_print.push((
                 "Average cluster coefficient of the largest component".to_string(),
                 format!("{mid_k_component:.6}"),
             ));
 
-            let all_degrees_handle = {
-                let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || all_degrees(graph.as_ref()))
-            };
-
-            let all_degrees = Arc::new(all_degrees_handle.await.unwrap());
+            let all_degrees = Arc::new(all_degrees);
 
             let max_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
                 task::spawn_blocking(move || max_degree(degrees.as_ref()))
             };
 
-            let max_degree = max_degree_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "Maximal degree of the graph".to_string(),
-                max_degree.to_string(),
-            ));
-
             let min_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
                 task::spawn_blocking(move || min_degree(degrees.as_ref()))
             };
-
-            let min_degree = min_degree_handle.await.unwrap();
-
-            buffer_for_print.push((
-                "Minimal degree of the graph".to_string(),
-                min_degree.to_string(),
-            ));
 
             let mid_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
                 task::spawn_blocking(move || mid_degree(degrees.as_ref(), num_vertices))
             };
 
-            let mid_degree = mid_degree_handle.await.unwrap();
+            let (max_degree, min_degree, mid_degree) =
+                tokio::try_join!(max_degree_handle, min_degree_handle, mid_degree_handle).unwrap();
+
+            buffer_for_print.push((
+                "Maximal degree of the graph".to_string(),
+                max_degree.to_string(),
+            ));
+
+            buffer_for_print.push((
+                "Minimal degree of the graph".to_string(),
+                min_degree.to_string(),
+            ));
 
             buffer_for_print.push((
                 "Average degree of the graph".to_string(),
-                mid_degree.to_string(),
+                format!("{mid_degree:.6}"),
             ));
 
             stop_animation.store(true, Ordering::Relaxed);
