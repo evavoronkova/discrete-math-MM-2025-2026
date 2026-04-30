@@ -72,9 +72,7 @@ fn print_table(data: &Vec<(String, String)>) {
 #[tokio::main]
 async fn main() {
     let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
-    let mut graph: Arc<graph::Graph> = Arc::new(graph::Graph::new(
-        parser::directed_or_undirected::DirectedOrUndirected::Undirected,
-    ));
+    let graph: Arc<graph::Graph>;
     match file_name {
         Some(path) => {
             let start_point = time::Instant::now();

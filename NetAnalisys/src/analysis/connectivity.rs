@@ -1,7 +1,6 @@
-use rayon::iter::IntoParallelIterator;
-
 use crate::graph::Graph;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
+use rayon::iter::IntoParallelIterator;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
