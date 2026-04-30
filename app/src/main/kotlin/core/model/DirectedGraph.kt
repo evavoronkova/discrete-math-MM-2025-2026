@@ -1,4 +1,4 @@
-package core
+package core.model
 
 interface DirectedGraph {
     fun outNeighbors(vertex: Int): Set<Int>

@@ -1,6 +1,6 @@
-package core
+package core.model
 
-interface MutableVertexGraph : Graph{
+interface MutableVertexGraph : Graph {
     fun markDeleted(vertices: List<Int>)
 
     fun clearDeleted()

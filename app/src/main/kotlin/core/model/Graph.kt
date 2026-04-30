@@ -1,4 +1,4 @@
-package core
+package core.model
 
 interface Graph{
     val vertexCount: Int
