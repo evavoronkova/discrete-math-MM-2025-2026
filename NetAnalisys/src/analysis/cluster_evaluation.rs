@@ -1,11 +1,13 @@
 use crate::{
-    analysis::connectivity::{build_undirected, get_largest_comp}, analysis::triangle_counter::find_triangles,
-    graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
+    analysis::connectivity::{build_undirected, get_largest_comp},
+    analysis::triangle_counter::find_triangles,
+    graph::Graph,
+    parser::directed_or_undirected::DirectedOrUndirected,
 };
 use rayon::prelude::*;
 use rustc_hash::FxHashSet as HashSet;
 
-fn calculate_mid_k(graph: &Graph) -> f64 {
+pub fn calculate_mid_k(graph: &Graph, num_vertices: usize) -> f64 {
     let entries: Vec<_> = graph.adjacency_entries_internal().collect();
     let sum: f64 = entries
         .par_iter()
@@ -31,7 +33,7 @@ fn calculate_mid_k(graph: &Graph) -> f64 {
         })
         .sum();
 
-    sum / graph.num_vertices() as f64
+    sum / num_vertices as f64
 }
 
 fn triplet_counter(graph: &Graph) -> u32 {
@@ -46,19 +48,18 @@ fn triplet_counter(graph: &Graph) -> u32 {
         .sum()
 }
 
-fn calculate_global_k(graph: &Graph) -> f64 {
-    let triangles = find_triangles(graph);
+pub fn calculate_global_k(graph: &Graph, num_triangles: u32) -> f64 {
     let triplets = triplet_counter(graph);
     if triplets == 0 {
         return 0.0;
     }
-    (3 * triangles) as f64 / triplets as f64
+    (3 * num_triangles) as f64 / triplets as f64
 }
 
-fn calculate_mid_k_for_weak_component(graph: &Graph, comps: &Vec<HashSet<u32>>) -> f64 {
-    let max_comp = get_largest_comp(comps);
-    let new_graph = create_graph_on_weak_component(graph, &max_comp);
-    calculate_mid_k(&new_graph)
+pub fn calculate_mid_k_for_weak_component(graph: &Graph, comp: &HashSet<u32>) -> f64 {
+    let new_graph = create_graph_on_weak_component(graph, comp);
+    let num_vertices = new_graph.num_vertices();
+    calculate_mid_k(&new_graph, num_vertices)
 }
 
 fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {

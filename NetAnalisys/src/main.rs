@@ -5,11 +5,16 @@ mod landmarks;
 mod parser;
 mod ui;
 
+use crate::analysis::cluster_evaluation::{
+    calculate_global_k, calculate_mid_k, calculate_mid_k_for_weak_component,
+};
 use crate::analysis::connectivity::{
     find_weak_components, fraction_in_largest_component, get_largest_comp, get_number_of_comps,
     tarjan_scc,
 };
-use crate::analysis::diameter::approximate_diameter;
+use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
+use crate::analysis::diameter::{self, approximate_diameter, percentile_90_distance};
+use crate::analysis::triangle_counter::{self, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::prelude::*;
 use std::sync::Arc;
@@ -95,6 +100,9 @@ async fn main() {
             );
             let mut buffer_for_print: Vec<(String, String)> = Vec::new();
             let graph_type = graph.kind();
+
+            buffer_for_print.push(("Type of the graph".to_string(), graph_type.to_string()));
+
             let num_vertices = graph.num_vertices();
 
             buffer_for_print.push((
@@ -115,16 +123,16 @@ async fn main() {
 
             let weak_comps_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || find_weak_components(&graph))
+                task::spawn_blocking(move || find_weak_components(graph.as_ref()))
             };
 
             let degree_data_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || analysis::degree::degree_probability(&graph))
+                task::spawn_blocking(move || analysis::degree::degree_probability(graph.as_ref()))
             };
             let strong_comps_handle = if DirectedOrUndirected::Directed == graph_type {
                 let graph = Arc::clone(&graph);
-                Some(task::spawn_blocking(move || tarjan_scc(&graph)))
+                Some(task::spawn_blocking(move || tarjan_scc(graph.as_ref())))
             } else {
                 None
             };
@@ -134,15 +142,21 @@ async fn main() {
 
             let num_handle = {
                 let weak_comps = Arc::clone(&weak_comps);
-                task::spawn_blocking(move || get_number_of_comps(&weak_comps))
+                task::spawn_blocking(move || get_number_of_comps(weak_comps.as_ref()))
             };
 
             let largest_handle = {
                 let weak_comps = Arc::clone(&weak_comps);
-                task::spawn_blocking(move || get_largest_comp(&weak_comps))
+                task::spawn_blocking(move || get_largest_comp(weak_comps.as_ref()))
             };
 
             let num_weak_comps = num_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Number of weak components".to_string(),
+                num_weak_comps.to_string(),
+            ));
+
             let largest_weak_comp = largest_handle.await.unwrap();
 
             let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);
@@ -179,15 +193,127 @@ async fn main() {
                     ),
                 ));
             }
-            let diameter = {
+            let largest_weak_comp = Arc::new(largest_weak_comp);
+
+            let diameter_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || approximate_diameter(&graph, Some(&largest_weak_comp)))
-                    .await
-                    .unwrap()
+                let largest_weak_comp = Arc::clone(&largest_weak_comp);
+                task::spawn_blocking(move || {
+                    approximate_diameter(graph.as_ref(), Some(largest_weak_comp.as_ref()))
+                })
             };
+
+            let diameter = diameter_handle.await.unwrap();
+
             buffer_for_print.push((
                 "Diameter of largest weak component".to_string(),
                 diameter.to_string(),
+            ));
+
+            let percentile_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || percentile_90_distance(graph.as_ref(), None, 500))
+            };
+
+            let percentile = percentile_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "90 percentile of distance of the graph".to_string(),
+                percentile.to_string(),
+            ));
+
+            let num_triangles_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || find_triangles(graph.as_ref()))
+            };
+
+            let num_triangles = num_triangles_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Number of triangles in graph".to_string(),
+                num_triangles.to_string(),
+            ));
+
+            let mid_k_graph_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || calculate_mid_k(graph.as_ref(), num_vertices))
+            };
+
+            let mid_k_graph = mid_k_graph_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Average cluster coefficient of the graph".to_string(),
+                format!("{mid_k_graph:.6}"),
+            ));
+
+            let global_k_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || calculate_global_k(graph.as_ref(), num_triangles))
+            };
+
+            let global_k = global_k_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Global cluster coefficient of the graph".to_string(),
+                format!("{global_k:.6}"),
+            ));
+
+            let mid_k_component_handle = {
+                let graph = Arc::clone(&graph);
+                let largest_weak_comp = Arc::clone(&largest_weak_comp);
+                task::spawn_blocking(move || {
+                    calculate_mid_k_for_weak_component(graph.as_ref(), largest_weak_comp.as_ref())
+                })
+            };
+
+            let mid_k_component = mid_k_component_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Average cluster coefficient of the largest component".to_string(),
+                format!("{mid_k_component:.6}"),
+            ));
+
+            let all_degrees_handle = {
+                let graph = Arc::clone(&graph);
+                task::spawn_blocking(move || all_degrees(graph.as_ref()))
+            };
+
+            let all_degrees = Arc::new(all_degrees_handle.await.unwrap());
+
+            let max_degree_handle = {
+                let degrees = Arc::clone(&all_degrees);
+                task::spawn_blocking(move || max_degree(degrees.as_ref()))
+            };
+
+            let max_degree = max_degree_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Maximal degree of the graph".to_string(),
+                max_degree.to_string(),
+            ));
+
+            let min_degree_handle = {
+                let degrees = Arc::clone(&all_degrees);
+                task::spawn_blocking(move || min_degree(degrees.as_ref()))
+            };
+
+            let min_degree = min_degree_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Minimal degree of the graph".to_string(),
+                min_degree.to_string(),
+            ));
+
+            let mid_degree_handle = {
+                let degrees = Arc::clone(&all_degrees);
+                task::spawn_blocking(move || mid_degree(degrees.as_ref(), num_vertices))
+            };
+
+            let mid_degree = mid_degree_handle.await.unwrap();
+
+            buffer_for_print.push((
+                "Average degree of the graph".to_string(),
+                mid_degree.to_string(),
             ));
 
             stop_animation.store(true, Ordering::Relaxed);

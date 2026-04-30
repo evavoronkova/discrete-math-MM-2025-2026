@@ -114,7 +114,9 @@ impl Graph {
 
     pub fn has_edge(&self, source: u32, target: u32) -> bool {
         match (self.get_internal_id(source), self.get_internal_id(target)) {
-            (Some(source_id), Some(target_id)) => self.adjacency_list[source_id as usize].contains(&target_id),
+            (Some(source_id), Some(target_id)) => {
+                self.adjacency_list[source_id as usize].contains(&target_id)
+            }
             _ => false,
         }
     }

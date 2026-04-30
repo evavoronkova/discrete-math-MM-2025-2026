@@ -5,7 +5,6 @@ use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::prelude::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 
-
 pub fn build_undirected(graph: &Graph) -> Graph {
     let mut undirected_graph = Graph::new(DirectedOrUndirected::Undirected);
 
@@ -124,15 +123,15 @@ pub fn strong_connect(
         }
 
         if lowlinks[&frame.vertex] == indexes[&frame.vertex] {
-                let mut scc = HashSet::default();
-                loop {
-                    let w = stack.pop().unwrap();
-                    on_stack.insert(w, false);
-                    scc.insert(graph.internal_to_external(w).unwrap());
-                    if w == frame.vertex {
-                        break;
-                    }
+            let mut scc = HashSet::default();
+            loop {
+                let w = stack.pop().unwrap();
+                on_stack.insert(w, false);
+                scc.insert(graph.internal_to_external(w).unwrap());
+                if w == frame.vertex {
+                    break;
                 }
+            }
             sccs.push(scc);
         }
     }
@@ -200,8 +199,7 @@ pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
             }
 
             if let Some(parent) = frame.parent {
-                let parent_lowlink =
-                    lowlinks[parent as usize].min(lowlinks[frame.vertex as usize]);
+                let parent_lowlink = lowlinks[parent as usize].min(lowlinks[frame.vertex as usize]);
                 lowlinks[parent as usize] = parent_lowlink;
             }
 

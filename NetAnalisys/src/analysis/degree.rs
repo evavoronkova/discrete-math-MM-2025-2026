@@ -24,36 +24,21 @@ pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
     degrees
 }
 
-fn min_degree_from_degrees(degrees: &HashMap<u32, u32>) -> u32 {
+pub fn min_degree(degrees: &HashMap<u32, u32>) -> u32 {
     degrees.values().copied().min().unwrap_or(0)
 }
 
-fn min_degree(graph: &Graph) -> u32 {
-    let degrees = all_degrees(graph);
-    min_degree_from_degrees(&degrees)
-}
-
-fn max_degree_from_degrees(degrees: &HashMap<u32, u32>) -> u32 {
+pub fn max_degree(degrees: &HashMap<u32, u32>) -> u32 {
     degrees.values().copied().max().unwrap_or(0)
 }
 
-fn max_degree(graph: &Graph) -> u32 {
-    let degrees = all_degrees(graph);
-    max_degree_from_degrees(&degrees)
-}
-
-fn mid_degree_from_degrees(degrees: &HashMap<u32, u32>, total_vertices: usize) -> f64 {
+pub fn mid_degree(degrees: &HashMap<u32, u32>, total_vertices: usize) -> f64 {
     if total_vertices == 0 {
         return 0.0;
     }
 
     let sum: u32 = degrees.values().sum();
     sum as f64 / total_vertices as f64
-}
-
-fn mid_degree(graph: &Graph) -> f64 {
-    let degrees = all_degrees(graph);
-    mid_degree_from_degrees(&degrees, graph.num_vertices())
 }
 
 fn degree_probability_from_degrees(

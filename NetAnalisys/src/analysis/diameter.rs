@@ -17,7 +17,9 @@ pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> 
     });
 
     let start = match component {
-        Some(comp) => graph.external_to_internal(*comp.iter().next().unwrap()).unwrap(),
+        Some(comp) => graph
+            .external_to_internal(*comp.iter().next().unwrap())
+            .unwrap(),
         None => graph.vertices_internal().next().unwrap(),
     };
 
@@ -25,7 +27,8 @@ pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> 
 
     let (&farthest_node, _) = dist.iter().max_by_key(|&(_, &d)| d).unwrap();
 
-    let dist_from_farthest = bfs_with_filter_internal(graph, farthest_node, allowed_mask.as_deref());
+    let dist_from_farthest =
+        bfs_with_filter_internal(graph, farthest_node, allowed_mask.as_deref());
 
     *dist_from_farthest.values().max().unwrap()
 }
@@ -136,7 +139,7 @@ pub fn snowball_sampling(
         .collect()
 }
 
-fn percentile_90_distance(
+pub fn percentile_90_distance(
     graph: &Graph,
     component: Option<&HashSet<u32>>,
     iterations: usize,
@@ -171,11 +174,11 @@ fn percentile_90_distance(
         if let Some(&dist) = dist_map.get(&v) {
             distances.push(dist);
         }
-        if distances.is_empty() {
-            return 0;
-        }
-        distances.sort_unstable();
     }
+    if distances.is_empty() {
+        return 0;
+    }
+    distances.sort_unstable();
     let index = (0.9 * distances.len() as f64).ceil() as usize - 1;
     distances[index]
 }

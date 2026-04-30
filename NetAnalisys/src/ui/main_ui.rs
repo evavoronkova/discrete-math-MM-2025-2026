@@ -189,7 +189,7 @@ fn choose_file(stdout: &mut std::io::Stdout) -> Option<String> {
     let mut selected = 0usize;
 
     loop {
-        let (width, height) = size().unwrap();
+        let (_width, height) = size().unwrap();
 
         execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
         write!(stdout, "Select file:\n").unwrap();

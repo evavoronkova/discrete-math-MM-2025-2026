@@ -1,6 +1,8 @@
 use crate::{
     analysis::{
-        connectivity::{find_weak_components, fraction_from_component_size, largest_component_size},
+        connectivity::{
+            find_weak_components, fraction_from_component_size, largest_component_size,
+        },
         degree::all_degrees,
     },
     graph::Graph,
@@ -27,7 +29,9 @@ fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
             }
 
             match graph.kind() {
-                DirectedOrUndirected::Directed => filtered_graph.add_edge(src_external, target_external),
+                DirectedOrUndirected::Directed => {
+                    filtered_graph.add_edge(src_external, target_external)
+                }
                 DirectedOrUndirected::Undirected if src < target => {
                     filtered_graph.add_edge(src_external, target_external)
                 }
@@ -63,7 +67,8 @@ fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
             let new_graph = remove_vertices(graph, &to_remove);
             let comps = find_weak_components(&new_graph);
             let largest_comp_size = largest_component_size(&comps);
-            let fraction = fraction_from_component_size(largest_comp_size, new_graph.num_vertices());
+            let fraction =
+                fraction_from_component_size(largest_comp_size, new_graph.num_vertices());
 
             (percent as u32, fraction)
         })
@@ -72,7 +77,8 @@ fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
 
 fn lcc_after_random_removal(graph: &Graph, trials: usize) -> HashMap<u32, f64> {
     let num_vertices = graph.num_vertices();
-    let vertices: Vec<u32> = graph.vertices_internal()
+    let vertices: Vec<u32> = graph
+        .vertices_internal()
         .map(|vertex| graph.internal_to_external(vertex).unwrap())
         .collect();
 

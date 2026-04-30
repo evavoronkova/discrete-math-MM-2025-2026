@@ -1,6 +1,6 @@
-use crate::graph;
+use crate::graph::Graph;
 
-pub fn find_triangles(graph: &graph::Graph) -> u32 {
+pub fn find_triangles(graph: &Graph) -> u32 {
     let mut triangles = 0;
 
     for (node, neighbours) in graph.adjacency_entries_internal() {
