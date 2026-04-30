@@ -1,15 +1,20 @@
+use rayon::iter::IntoParallelIterator;
+
 use crate::graph::Graph;
-use crate::graph::traversal::dfs_for_comps;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
-use std::collections::{HashMap, HashSet};
+use rayon::prelude::*;
+use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+
 
 pub fn build_undirected(graph: &Graph) -> Graph {
     let mut undirected_graph = Graph::new(DirectedOrUndirected::Undirected);
 
-    for (u, neighbors) in graph.adjacency_entries() {
-        undirected_graph.add_vertex(u);
+    for (u, neighbors) in graph.adjacency_entries_internal() {
+        let u_external = graph.internal_to_external(u).unwrap();
+        undirected_graph.add_vertex(u_external);
         for &v in neighbors {
-            undirected_graph.add_edge(u, v);
+            let v_external = graph.internal_to_external(v).unwrap();
+            undirected_graph.add_edge(u_external, v_external);
         }
     }
 
@@ -25,13 +30,29 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
             &owned_graph
         }
     };
-    let mut visited = HashSet::new();
+    let mut visited = vec![false; graph_ref.num_vertices()];
     let mut components = Vec::new();
 
-    for vertex in graph_ref.vertices() {
-        if !visited.contains(&vertex) {
-            let mut comp = HashSet::new();
-            dfs_for_comps(graph_ref, vertex, &mut visited, &mut comp);
+    for vertex in graph_ref.vertices_internal() {
+        if !visited[vertex as usize] {
+            let mut comp = HashSet::default();
+            let mut stack = vec![vertex];
+
+            while let Some(node) = stack.pop() {
+                if visited[node as usize] {
+                    continue;
+                }
+
+                visited[node as usize] = true;
+                comp.insert(graph_ref.internal_to_external(node).unwrap());
+
+                for &neighbor in graph_ref.neighbors_internal(node) {
+                    if !visited[neighbor as usize] {
+                        stack.push(neighbor);
+                    }
+                }
+            }
+
             components.push(comp);
         }
     }
@@ -69,7 +90,7 @@ pub fn strong_connect(
     }];
 
     while let Some(mut frame) = frames.pop() {
-        let neighbors = graph.neighbors(frame.vertex);
+        let neighbors = graph.neighbors_internal(frame.vertex);
 
         if frame.next_neighbor_idx < neighbors.len() {
             let current_vertex = frame.vertex;
@@ -103,42 +124,102 @@ pub fn strong_connect(
         }
 
         if lowlinks[&frame.vertex] == indexes[&frame.vertex] {
-            let mut scc = HashSet::new();
-            loop {
-                let w = stack.pop().unwrap();
-                on_stack.insert(w, false);
-                scc.insert(w);
-                if w == frame.vertex {
-                    break;
+                let mut scc = HashSet::default();
+                loop {
+                    let w = stack.pop().unwrap();
+                    on_stack.insert(w, false);
+                    scc.insert(graph.internal_to_external(w).unwrap());
+                    if w == frame.vertex {
+                        break;
+                    }
                 }
-            }
             sccs.push(scc);
         }
     }
 }
 
 pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
-    let mut index_counter = 0;
-    let mut indexes = HashMap::new();
-    let mut lowlinks = HashMap::new();
+    let mut index_counter: u32 = 0;
+    let mut indexes = vec![0_u32; graph.num_vertices()];
+    let mut lowlinks = vec![0_u32; graph.num_vertices()];
     let mut stack = Vec::new();
-    let mut on_stack = HashMap::new();
+    let mut on_stack = vec![false; graph.num_vertices()];
     let mut sccs = Vec::new();
 
-    for v in graph.vertices() {
-        if !indexes.contains_key(&v) {
-            strong_connect(
-                v,
-                graph,
-                &mut index_counter,
-                &mut indexes,
-                &mut lowlinks,
-                &mut stack,
-                &mut on_stack,
-                &mut sccs,
-            );
+    struct Frame {
+        vertex: u32,
+        next_neighbor_idx: usize,
+        parent: Option<u32>,
+    }
+
+    for start in graph.vertices_internal() {
+        if indexes[start as usize] != 0 {
+            continue;
+        }
+
+        index_counter += 1;
+        indexes[start as usize] = index_counter;
+        lowlinks[start as usize] = index_counter;
+        stack.push(start);
+        on_stack[start as usize] = true;
+
+        let mut frames = vec![Frame {
+            vertex: start,
+            next_neighbor_idx: 0,
+            parent: None,
+        }];
+
+        while let Some(mut frame) = frames.pop() {
+            let neighbors = graph.neighbors_internal(frame.vertex);
+
+            if frame.next_neighbor_idx < neighbors.len() {
+                let current_vertex = frame.vertex;
+                let neighbor = neighbors[frame.next_neighbor_idx];
+                frame.next_neighbor_idx += 1;
+                frames.push(frame);
+
+                if indexes[neighbor as usize] == 0 {
+                    index_counter += 1;
+                    indexes[neighbor as usize] = index_counter;
+                    lowlinks[neighbor as usize] = index_counter;
+                    stack.push(neighbor);
+                    on_stack[neighbor as usize] = true;
+
+                    frames.push(Frame {
+                        vertex: neighbor,
+                        next_neighbor_idx: 0,
+                        parent: Some(current_vertex),
+                    });
+                } else if on_stack[neighbor as usize] {
+                    let new_lowlink =
+                        lowlinks[current_vertex as usize].min(indexes[neighbor as usize]);
+                    lowlinks[current_vertex as usize] = new_lowlink;
+                }
+
+                continue;
+            }
+
+            if let Some(parent) = frame.parent {
+                let parent_lowlink =
+                    lowlinks[parent as usize].min(lowlinks[frame.vertex as usize]);
+                lowlinks[parent as usize] = parent_lowlink;
+            }
+
+            if lowlinks[frame.vertex as usize] == indexes[frame.vertex as usize] {
+                let mut scc = HashSet::default();
+                loop {
+                    let w = stack.pop().unwrap();
+                    on_stack[w as usize] = false;
+                    scc.insert(graph.internal_to_external(w).unwrap());
+                    if w == frame.vertex {
+                        break;
+                    }
+                }
+                sccs.push(scc);
+            }
         }
     }
+
     sccs
 }
 
@@ -152,13 +233,18 @@ pub fn fraction_in_largest_component(comp: &HashSet<u32>, num_vertices: usize) -
     comp.len() as f64 / num_vertices as f64
 }
 
-pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
-    let mut largest: HashSet<u32> = HashSet::new();
-    for comp in comps {
-        if comp.len() > largest.len() {
-            largest = comp.clone();
-        }
-    }
+pub fn fraction_from_component_size(component_size: usize, num_vertices: usize) -> f64 {
+    component_size as f64 / num_vertices as f64
+}
 
-    largest
+pub fn largest_component_size(comps: &[HashSet<u32>]) -> usize {
+    comps.par_iter().map(HashSet::len).max().unwrap_or(0)
+}
+
+pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+    comps
+        .par_iter()
+        .max_by_key(|comp| comp.len())
+        .cloned()
+        .unwrap_or_default()
 }

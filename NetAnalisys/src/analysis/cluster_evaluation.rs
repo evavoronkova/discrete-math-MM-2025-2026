@@ -2,41 +2,48 @@ use crate::{
     analysis::connectivity::{build_undirected, get_largest_comp}, analysis::triangle_counter::find_triangles,
     graph::Graph, parser::directed_or_undirected::DirectedOrUndirected,
 };
-use std::collections::HashSet;
+use rayon::prelude::*;
+use rustc_hash::FxHashSet as HashSet;
 
-#[allow(dead_code)]
 fn calculate_mid_k(graph: &Graph) -> f64 {
-    let mut local_k = Vec::new();
-    for (_, neighbors) in graph.adjacency_entries() {
-        let neighbor_count = neighbors.len();
-        let mut actual_edges = 0;
-        let max_edges = neighbor_count * (neighbor_count - 1) / 2;
-        if max_edges == 0 {
-            local_k.push(0.0);
-            continue;
-        }
-        for first_neighbor in neighbors.iter() {
-            for second_neighbor in neighbors.iter() {
-                if first_neighbor < second_neighbor
-                    && graph.has_edge(*first_neighbor, *second_neighbor)
-                {
-                    actual_edges += 1;
+    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
+    let sum: f64 = entries
+        .par_iter()
+        .map(|(_, neighbors)| {
+            let n = neighbors.len();
+            let max_edges = n * (n - 1) / 2;
+
+            if max_edges == 0 {
+                return 0.0;
+            }
+
+            let mut actual_edges = 0;
+
+            for i in 0..n {
+                for j in (i + 1)..n {
+                    if graph.has_edge_internal(neighbors[i], neighbors[j]) {
+                        actual_edges += 1;
+                    }
                 }
             }
-        }
-        local_k.push(actual_edges as f64 / max_edges as f64);
-    }
-    local_k.iter().sum::<f64>() / graph.num_vertices() as f64
+
+            actual_edges as f64 / max_edges as f64
+        })
+        .sum();
+
+    sum / graph.num_vertices() as f64
 }
 
-#[allow(dead_code)]
 fn triplet_counter(graph: &Graph) -> u32 {
-    let mut triplets_count = 0;
-    for (_, neighbors) in graph.adjacency_entries() {
-        let node_degree = neighbors.len();
-        triplets_count += (node_degree * (node_degree - 1) / 2) as u32;
-    }
-    triplets_count
+    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
+
+    entries
+        .par_iter()
+        .map(|(_, neighbors)| {
+            let n = neighbors.len() as u32;
+            n * (n - 1) / 2
+        })
+        .sum()
 }
 
 fn calculate_global_k(graph: &Graph) -> f64 {
@@ -63,13 +70,19 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
         }
         DirectedOrUndirected::Undirected => graph,
     };
+    let comp_internal: HashSet<u32> = comp
+        .iter()
+        .filter_map(|&vertex| working_graph.external_to_internal(vertex))
+        .collect();
 
     let mut component_graph = Graph::new(DirectedOrUndirected::Undirected);
-    for &v in comp {
-        component_graph.add_vertex(v);
-        for &u in working_graph.neighbors(v) {
-            if comp.contains(&u) && v < u {
-                component_graph.add_edge(v, u);
+    for &v in &comp_internal {
+        let v_external = working_graph.internal_to_external(v).unwrap();
+        component_graph.add_vertex(v_external);
+        for &u in working_graph.neighbors_internal(v) {
+            if comp_internal.contains(&u) && v < u {
+                let u_external = working_graph.internal_to_external(u).unwrap();
+                component_graph.add_edge(v_external, u_external);
             }
         }
     }
