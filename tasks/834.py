@@ -1,39 +1,38 @@
 from typing import List
-from collections import deque
+import sys
 
 class Solution:
     def sumOfDistancesInTree(self, n: int, edges: List[List[int]]) -> List[int]:
+        sys.setrecursionlimit(10 ** 6)
+
         graph = [[] for _ in range(n)]
 
         for a, b in edges:
             graph[a].append(b)
             graph[b].append(a)
 
-        answer = []
+        count = [1] * n
+        answer = [0] * n
 
-        for start in range(n):
-            distance_sum = self.bfs(start, n, graph)
-            answer.append(distance_sum)
+        def dfs1(node: int, parent: int) -> None:
+            for child in graph[node]:
+                if child == parent:
+                    continue
+
+                dfs1(child, node)
+
+                count[node] += count[child]
+                answer[node] += answer[child] + count[child]
+
+        def dfs2(node: int, parent: int) -> None:
+            for child in graph[node]:
+                if child == parent:
+                    continue
+
+                answer[child] = answer[node] - count[child] + (n - count[child])
+                dfs2(child, node)
+
+        dfs1(0, -1)
+        dfs2(0, -1)
 
         return answer
-
-    def bfs(self, start: int, n: int, graph: List[List[int]]) -> int:
-        visited = [False] * n
-        distance = [0] * n
-
-        visited[start] = True
-        queue = deque([start])
-
-        total = 0
-
-        while queue:
-            current = queue.popleft()
-
-            for neighbor in graph[current]:
-                if not visited[neighbor]:
-                    visited[neighbor] = True
-                    distance[neighbor] = distance[current] + 1
-                    total += distance[neighbor]
-                    queue.append(neighbor)
-
-        return total
