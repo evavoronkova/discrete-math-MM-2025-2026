@@ -6,15 +6,15 @@ mod parser;
 mod ui;
 
 use crate::analysis::cluster_evaluation::{
-    calculate_global_k, calculate_mid_k, calculate_mid_k_for_weak_component,
+    calculate_global_k_from_stats, calculate_mid_k_from_stats, calculate_mid_k_from_stats_for_component,
 };
+use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::analysis::connectivity::{
     find_weak_components, fraction_in_largest_component, get_largest_comp, get_number_of_comps,
     tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
 use crate::analysis::diameter::{approximate_diameter, percentile_90_distance};
-use crate::analysis::triangle_counter::find_triangles;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::prelude::*;
 use std::fs::OpenOptions;
@@ -297,17 +297,10 @@ async fn main() {
                 num_triangles.to_string(),
             ));
 
-            let mid_k_graph_handle = {
+            let triangle_stats_handle = {
                 let graph = Arc::clone(&graph);
-                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_mid_k", move || {
-                    calculate_mid_k(graph.as_ref(), num_vertices)
-                })
-            };
-
-            let global_k_handle = {
-                let graph = Arc::clone(&graph);
-                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_global_k", move || {
-                    calculate_global_k(graph.as_ref(), num_triangles)
+                spawn_blocking_logged(Arc::clone(&perf_log), "compute_triangle_stats", move || {
+                    compute_triangle_stats(graph.as_ref(), None)
                 })
             };
 
@@ -318,23 +311,46 @@ async fn main() {
                 })
             };
 
-            let mid_k_component_handle = {
-                let graph = Arc::clone(&graph);
+            let (triangle_stats, all_degrees) =
+                tokio::try_join!(triangle_stats_handle, all_degrees_handle).unwrap();
+
+            let triangle_stats = Arc::new(triangle_stats);
+
+            let mid_k_graph = {
+                let triangle_stats = Arc::clone(&triangle_stats);
+                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_mid_k", move || {
+                    calculate_mid_k_from_stats(&triangle_stats, num_vertices)
+                })
+            };
+
+            let global_k = {
+                let triangle_stats = Arc::clone(&triangle_stats);
+                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_global_k", move || {
+                    calculate_global_k_from_stats(&triangle_stats, num_triangles)
+                })
+            };
+
+            let mid_k_component = {
+                let triangle_stats = Arc::clone(&triangle_stats);
                 let largest_weak_comp = Arc::clone(&largest_weak_comp);
+                let graph = Arc::clone(&graph);
                 spawn_blocking_logged(
                     Arc::clone(&perf_log),
                     "calculate_mid_k_for_weak_component",
                     move || {
-                        calculate_mid_k_for_weak_component(graph.as_ref(), largest_weak_comp.as_ref())
+                        calculate_mid_k_from_stats_for_component(
+                            &triangle_stats,
+                            graph.as_ref(),
+                            largest_weak_comp.as_ref(),
+                        )
                     },
                 )
             };
 
-            let (mid_k_graph, global_k, all_degrees, mid_k_component) = tokio::try_join!(
-                mid_k_graph_handle,
-                global_k_handle,
-                all_degrees_handle,
-                mid_k_component_handle
+            let (mid_k_graph, global_k, mid_k_component) = tokio::try_join!(
+                mid_k_graph,
+                global_k,
+                mid_k_component
             )
             .unwrap();
 
