@@ -1,68 +1,63 @@
 use crate::{
-    analysis::connectivity::{build_undirected, get_largest_comp},
-    analysis::triangle_counter::find_triangles,
+    analysis::connectivity::build_undirected,
+    analysis::triangle_counter::compute_triangle_stats,
     graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
 };
-use rayon::prelude::*;
 use rustc_hash::FxHashSet as HashSet;
 
-pub fn calculate_mid_k(graph: &Graph, num_vertices: usize) -> f64 {
-    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
-    let sum: f64 = entries
-        .par_iter()
-        .map(|(_, neighbors)| {
-            let n = neighbors.len();
-            let max_edges = n * (n - 1) / 2;
+fn choose_2(n: u32) -> f64 {
+    if n < 2 {
+        0.0
+    } else {
+        (n as f64 * (n as f64 - 1.0)) / 2.0
+    }
+}
 
-            if max_edges == 0 {
-                return 0.0;
+fn calculate_mid_k_with_mask(graph: &Graph, num_vertices: usize, allowed_mask: Option<&[bool]>) -> f64 {
+    if num_vertices == 0 {
+        return 0.0;
+    }
+
+    // Оба коэффициента теперь считаются из одного и того же быстрого движка
+    // перечисления треугольников, без отдельного двойного обхода по парам соседей.
+    let stats = compute_triangle_stats(graph, allowed_mask);
+    let sum: f64 = graph
+        .vertices_internal()
+        .filter(|&v| allowed_mask.is_none_or(|mask| mask[v as usize]))
+        .map(|v| {
+            let triplets = choose_2(stats.degrees[v as usize]);
+            if triplets == 0.0 {
+                0.0
+            } else {
+                stats.triangles_per_vertex[v as usize] as f64 / triplets
             }
-
-            let mut actual_edges = 0;
-
-            for i in 0..n {
-                for j in (i + 1)..n {
-                    if graph.has_edge_internal(neighbors[i], neighbors[j]) {
-                        actual_edges += 1;
-                    }
-                }
-            }
-
-            actual_edges as f64 / max_edges as f64
         })
         .sum();
 
     sum / num_vertices as f64
 }
 
-fn triplet_counter(graph: &Graph) -> u32 {
-    let entries: Vec<_> = graph.adjacency_entries_internal().collect();
-
-    entries
-        .par_iter()
-        .map(|(_, neighbors)| {
-            let n = neighbors.len() as u32;
-            n * (n - 1) / 2
-        })
-        .sum()
+pub fn calculate_mid_k(graph: &Graph, num_vertices: usize) -> f64 {
+    calculate_mid_k_with_mask(graph, num_vertices, None)
 }
 
 pub fn calculate_global_k(graph: &Graph, num_triangles: u32) -> f64 {
-    let triplets = triplet_counter(graph);
-    if triplets == 0 {
+    let stats = compute_triangle_stats(graph, None);
+    if stats.triplets_total == 0 {
         return 0.0;
     }
-    (3 * num_triangles) as f64 / triplets as f64
+
+    // Сигнатуру оставляем как есть, чтобы не трогать остальной код.
+    let triangles = if num_triangles == 0 {
+        stats.total_triangles
+    } else {
+        num_triangles as u64
+    };
+    (3 * triangles) as f64 / stats.triplets_total as f64
 }
 
 pub fn calculate_mid_k_for_weak_component(graph: &Graph, comp: &HashSet<u32>) -> f64 {
-    let new_graph = create_graph_on_weak_component(graph, comp);
-    let num_vertices = new_graph.num_vertices();
-    calculate_mid_k(&new_graph, num_vertices)
-}
-
-fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
     let undirected_graph: Graph;
     let working_graph = match graph.kind() {
         DirectedOrUndirected::Directed => {
@@ -71,22 +66,16 @@ fn create_graph_on_weak_component(graph: &Graph, comp: &HashSet<u32>) -> Graph {
         }
         DirectedOrUndirected::Undirected => graph,
     };
+
     let comp_internal: HashSet<u32> = comp
         .iter()
         .filter_map(|&vertex| working_graph.external_to_internal(vertex))
         .collect();
 
-    let mut component_graph = Graph::new(DirectedOrUndirected::Undirected);
-    for &v in &comp_internal {
-        let v_external = working_graph.internal_to_external(v).unwrap();
-        component_graph.add_vertex(v_external);
-        for &u in working_graph.neighbors_internal(v) {
-            if comp_internal.contains(&u) && v < u {
-                let u_external = working_graph.internal_to_external(u).unwrap();
-                component_graph.add_edge(v_external, u_external);
-            }
-        }
+    let mut allowed_mask = vec![false; working_graph.num_vertices()];
+    for &vertex in &comp_internal {
+        allowed_mask[vertex as usize] = true;
     }
 
-    component_graph
+    calculate_mid_k_with_mask(working_graph, comp_internal.len(), Some(&allowed_mask))
 }

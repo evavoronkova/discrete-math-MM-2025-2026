@@ -13,13 +13,17 @@ use crate::analysis::connectivity::{
     tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
-use crate::analysis::diameter::{self, approximate_diameter, percentile_90_distance};
-use crate::analysis::triangle_counter::{self, find_triangles};
+use crate::analysis::diameter::{approximate_diameter, percentile_90_distance};
+use crate::analysis::triangle_counter::find_triangles;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::prelude::*;
+use std::fs::OpenOptions;
+use std::future::Future;
+use std::io::Write;
+use std::sync::Mutex;
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
-use std::time;
+use std::time::{Duration, Instant};
 use tokio::task;
 
 fn print_table(data: &Vec<(String, String)>) {
@@ -69,17 +73,60 @@ fn print_table(data: &Vec<(String, String)>) {
     println!("{bottom}");
 }
 
+fn open_perf_log() -> Arc<Mutex<std::fs::File>> {
+    let file = OpenOptions::new()
+        .create(true)
+        .append(true)
+        .open("performance.log")
+        .expect("Failed to open performance.log");
+
+    Arc::new(Mutex::new(file))
+}
+
+fn log_duration(log: &Arc<Mutex<std::fs::File>>, label: &str, elapsed: Duration) {
+    let mut file = log.lock().unwrap();
+    writeln!(file, "{label}\t{elapsed:.6?}").unwrap();
+}
+
+async fn time_async<T, F>(log: &Arc<Mutex<std::fs::File>>, label: &'static str, fut: F) -> T
+where
+    F: Future<Output = T>,
+{
+    let start = Instant::now();
+    let out = fut.await;
+    log_duration(log, label, start.elapsed());
+    out
+}
+
+fn spawn_blocking_logged<T, F>(
+    log: Arc<Mutex<std::fs::File>>,
+    label: &'static str,
+    job: F,
+) -> tokio::task::JoinHandle<T>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+{
+    task::spawn_blocking(move || {
+        let start = Instant::now();
+        let result = job();
+        log_duration(&log, label, start.elapsed());
+        result
+    })
+}
+
 #[tokio::main]
 async fn main() {
+    let perf_log = open_perf_log();
     let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
     let graph: Arc<graph::Graph>;
     match file_name {
         Some(path) => {
-            let start_point = time::Instant::now();
+            let start_point = Instant::now();
             let (stop_animation, animation_handle) =
                 ui::main_ui::spawn_cat_loading_animation(0, 0, Some(start_point));
 
-            let parse_result = parser::parse::parse_file(&path).await;
+            let parse_result = time_async(&perf_log, "parse_file", parser::parse::parse_file(&path)).await;
 
             graph = match parse_result {
                 Ok(graph) => Arc::new(graph),
@@ -123,12 +170,24 @@ async fn main() {
                 let g1 = Arc::clone(&graph);
                 let g2 = Arc::clone(&graph);
                 let g3 = Arc::clone(&graph);
+                let perf_log_weak = Arc::clone(&perf_log);
+                let perf_log_degree = Arc::clone(&perf_log);
+                let perf_log_tarjan = Arc::clone(&perf_log);
                 tokio::try_join!(
-                    task::spawn_blocking(move || find_weak_components(g1.as_ref())),
-                    task::spawn_blocking(move || analysis::degree::degree_probability(g2.as_ref())),
+                    spawn_blocking_logged(perf_log_weak, "find_weak_components", move || {
+                        find_weak_components(g1.as_ref())
+                    }),
+                    spawn_blocking_logged(perf_log_degree, "degree_probability", move || {
+                        analysis::degree::degree_probability(g2.as_ref())
+                    }),
                     async move {
                         Ok(if DirectedOrUndirected::Directed == graph_type {
-                            Some(task::spawn_blocking(move || tarjan_scc(g3.as_ref())).await?)
+                            Some(
+                                spawn_blocking_logged(perf_log_tarjan, "tarjan_scc", move || {
+                                    tarjan_scc(g3.as_ref())
+                                })
+                                .await?,
+                            )
                         } else {
                             None
                         })
@@ -141,12 +200,16 @@ async fn main() {
 
             let num_handle = {
                 let weak_comps = Arc::clone(&weak_comps);
-                task::spawn_blocking(move || get_number_of_comps(weak_comps.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "get_number_of_comps", move || {
+                    get_number_of_comps(weak_comps.as_ref())
+                })
             };
 
             let largest_handle = {
                 let weak_comps = Arc::clone(&weak_comps);
-                task::spawn_blocking(move || get_largest_comp(weak_comps.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "get_largest_comp", move || {
+                    get_largest_comp(weak_comps.as_ref())
+                })
             };
 
             let num_weak_comps = num_handle.await.unwrap();
@@ -197,19 +260,23 @@ async fn main() {
             let diameter_handle = {
                 let graph = Arc::clone(&graph);
                 let largest_weak_comp = Arc::clone(&largest_weak_comp);
-                task::spawn_blocking(move || {
+                spawn_blocking_logged(Arc::clone(&perf_log), "approximate_diameter", move || {
                     approximate_diameter(graph.as_ref(), Some(largest_weak_comp.as_ref()))
                 })
             };
 
             let percentile_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || percentile_90_distance(graph.as_ref(), None, 500))
+                spawn_blocking_logged(Arc::clone(&perf_log), "percentile_90_distance", move || {
+                    percentile_90_distance(graph.as_ref(), None, 500)
+                })
             };
 
             let num_triangles_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || find_triangles(graph.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "find_triangles", move || {
+                    find_triangles(graph.as_ref())
+                })
             };
 
             let (diameter, percentile, num_triangles) =
@@ -232,25 +299,35 @@ async fn main() {
 
             let mid_k_graph_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || calculate_mid_k(graph.as_ref(), num_vertices))
+                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_mid_k", move || {
+                    calculate_mid_k(graph.as_ref(), num_vertices)
+                })
             };
 
             let global_k_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || calculate_global_k(graph.as_ref(), num_triangles))
+                spawn_blocking_logged(Arc::clone(&perf_log), "calculate_global_k", move || {
+                    calculate_global_k(graph.as_ref(), num_triangles)
+                })
             };
 
             let all_degrees_handle = {
                 let graph = Arc::clone(&graph);
-                task::spawn_blocking(move || all_degrees(graph.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "all_degrees", move || {
+                    all_degrees(graph.as_ref())
+                })
             };
 
             let mid_k_component_handle = {
                 let graph = Arc::clone(&graph);
                 let largest_weak_comp = Arc::clone(&largest_weak_comp);
-                task::spawn_blocking(move || {
-                    calculate_mid_k_for_weak_component(graph.as_ref(), largest_weak_comp.as_ref())
-                })
+                spawn_blocking_logged(
+                    Arc::clone(&perf_log),
+                    "calculate_mid_k_for_weak_component",
+                    move || {
+                        calculate_mid_k_for_weak_component(graph.as_ref(), largest_weak_comp.as_ref())
+                    },
+                )
             };
 
             let (mid_k_graph, global_k, all_degrees, mid_k_component) = tokio::try_join!(
@@ -280,17 +357,23 @@ async fn main() {
 
             let max_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
-                task::spawn_blocking(move || max_degree(degrees.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "max_degree", move || {
+                    max_degree(degrees.as_ref())
+                })
             };
 
             let min_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
-                task::spawn_blocking(move || min_degree(degrees.as_ref()))
+                spawn_blocking_logged(Arc::clone(&perf_log), "min_degree", move || {
+                    min_degree(degrees.as_ref())
+                })
             };
 
             let mid_degree_handle = {
                 let degrees = Arc::clone(&all_degrees);
-                task::spawn_blocking(move || mid_degree(degrees.as_ref(), num_vertices))
+                spawn_blocking_logged(Arc::clone(&perf_log), "mid_degree", move || {
+                    mid_degree(degrees.as_ref(), num_vertices)
+                })
             };
 
             let (max_degree, min_degree, mid_degree) =
@@ -314,20 +397,41 @@ async fn main() {
             stop_animation.store(true, Ordering::Relaxed);
             let _ = animation_handle.join();
 
-            ui::degree_graphic_printing::print_graph(degree_data.clone());
-            ui::degree_graphic_saving_in_png::save_graph_plotters(
-                degree_data,
-                Some("degree_data1"),
-            )
-            .expect("Failed to save graph as PNG");
-            ui::degree_graphic_printing::print_graph(log_degree_data.clone());
-            ui::degree_graphic_saving_in_png::save_graph_plotters(
-                log_degree_data,
-                Some("log_degree_data"),
-            )
-            .expect("Failed to save graph as PNG");
+            {
+                let start = Instant::now();
+                ui::degree_graphic_printing::print_graph(degree_data.clone());
+                log_duration(&perf_log, "print_degree_graph", start.elapsed());
+            }
+            {
+                let start = Instant::now();
+                ui::degree_graphic_saving_in_png::save_graph_plotters(
+                    degree_data,
+                    Some("degree_data1"),
+                )
+                .expect("Failed to save graph as PNG");
+                log_duration(&perf_log, "save_degree_graph_png", start.elapsed());
+            }
+            {
+                let start = Instant::now();
+                ui::degree_graphic_printing::print_graph(log_degree_data.clone());
+                log_duration(&perf_log, "print_log_degree_graph", start.elapsed());
+            }
+            {
+                let start = Instant::now();
+                ui::degree_graphic_saving_in_png::save_graph_plotters(
+                    log_degree_data,
+                    Some("log_degree_data"),
+                )
+                .expect("Failed to save graph as PNG");
+                log_duration(&perf_log, "save_log_degree_graph_png", start.elapsed());
+            }
             println!("\nGraph Analysis Results");
-            print_table(&buffer_for_print);
+            {
+                let start = Instant::now();
+                print_table(&buffer_for_print);
+                log_duration(&perf_log, "print_result_table", start.elapsed());
+            }
+            log_duration(&perf_log, "total_runtime", start_point.elapsed());
             println!("Time: {:.2?}", start_point.elapsed());
         }
         None => println!("No file selected. Exiting."),

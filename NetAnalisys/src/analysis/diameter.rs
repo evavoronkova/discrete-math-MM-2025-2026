@@ -5,6 +5,40 @@ use rand::seq::SliceRandom;
 use rustc_hash::FxHashSet as HashSet;
 use std::collections::VecDeque;
 
+fn bfs_distances_internal(
+    graph: &Graph,
+    start: u32,
+    allowed_mask: Option<&[bool]>,
+) -> Vec<usize> {
+    let n = graph.num_vertices();
+    let mut dist = vec![usize::MAX; n];
+
+    if start as usize >= n {
+        return dist;
+    }
+
+    let mut queue = VecDeque::with_capacity(n.min(1024));
+    dist[start as usize] = 0;
+    queue.push_back(start);
+
+    while let Some(node) = queue.pop_front() {
+        let current_dist = dist[node as usize];
+
+        for &neighbor in graph.neighbors_internal(node) {
+            if allowed_mask.is_some_and(|mask| !mask[neighbor as usize]) {
+                continue;
+            }
+
+            if dist[neighbor as usize] == usize::MAX {
+                dist[neighbor as usize] = current_dist + 1;
+                queue.push_back(neighbor);
+            }
+        }
+    }
+
+    dist
+}
+
 pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
     let allowed_mask = component.map(|comp| {
         let mut mask = vec![false; graph.num_vertices()];
@@ -166,15 +200,43 @@ pub fn percentile_90_distance(
         return 0;
     }
 
+    let source_budget = iterations
+        .max(1)
+        .min(vertices.len())
+        .min((iterations as f64).sqrt().ceil() as usize + 1)
+        .max(1);
+    let sources: Vec<u32> = vertices
+        .choose_multiple(&mut rng, source_budget)
+        .cloned()
+        .collect();
+
     let mut distances = Vec::with_capacity(iterations);
-    for _ in 0..iterations {
-        let u = vertices[rng.gen_range(0..vertices.len())];
-        let dist_map = bfs_with_filter_internal(graph, u, allowed_mask.as_deref());
-        let v = vertices[rng.gen_range(0..vertices.len())];
-        if let Some(&dist) = dist_map.get(&v) {
-            distances.push(dist);
+    let mut remaining_pairs = iterations;
+
+    for &source in &sources {
+        if remaining_pairs == 0 {
+            break;
+        }
+
+        let dist = bfs_distances_internal(graph, source, allowed_mask.as_deref());
+
+        let batches_left = sources.len().min(remaining_pairs);
+        let pairs_for_source = (remaining_pairs + batches_left - 1) / batches_left;
+        let pairs_for_source = pairs_for_source.min(remaining_pairs);
+
+        for _ in 0..pairs_for_source {
+            let target = vertices[rng.gen_range(0..vertices.len())];
+            let target_dist = dist[target as usize];
+            if target_dist != usize::MAX {
+                distances.push(target_dist);
+            }
+            remaining_pairs -= 1;
+            if remaining_pairs == 0 {
+                break;
+            }
         }
     }
+
     if distances.is_empty() {
         return 0;
     }
