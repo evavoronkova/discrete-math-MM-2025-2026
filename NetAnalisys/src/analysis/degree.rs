@@ -1,23 +1,39 @@
 use crate::{graph::Graph, parser::directed_or_undirected::DirectedOrUndirected};
+use rayon::prelude::*;
 use rustc_hash::FxHashMap as HashMap;
 
 pub fn all_degrees(graph: &Graph) -> HashMap<u32, u32> {
     let mut degrees = HashMap::default();
     match graph.kind() {
         DirectedOrUndirected::Directed => {
-            for (src, targets) in graph.adjacency_entries_internal() {
-                let src_external = graph.internal_to_external(src).unwrap();
-                *degrees.entry(src_external).or_insert(0) += targets.len() as u32;
-                for &tgt in targets {
-                    let tgt_external = graph.internal_to_external(tgt).unwrap();
-                    *degrees.entry(tgt_external).or_insert(0) += 1;
-                }
+            let entries = graph.adjacency_entries_internal().collect::<Vec<_>>();
+            let mut local_degrees: Vec<(u32, u32)> = entries
+                .par_iter()
+                .flat_map(|(src, targets)| {
+                    let src_external = graph.internal_to_external(*src).unwrap();
+                    let mut result = vec![(src_external, targets.len() as u32)];
+                    for &tgt in *targets {
+                        let tgt_external = graph.internal_to_external(tgt).unwrap();
+                        result.push((tgt_external, 1));
+                    }
+                    result
+                })
+                .collect();
+            for (vertex, delta) in local_degrees {
+                *degrees.entry(vertex).or_insert(0) += delta;
             }
         }
         DirectedOrUndirected::Undirected => {
-            for (src, targets) in graph.adjacency_entries_internal() {
-                let src_external = graph.internal_to_external(src).unwrap();
-                degrees.insert(src_external, targets.len() as u32);
+            let entries = graph.adjacency_entries_internal().collect::<Vec<_>>();
+            let local_degrees: Vec<(u32, u32)> = entries
+                .par_iter()
+                .flat_map(|(src, targets)| {
+                    let src_external = graph.internal_to_external(*src).unwrap();
+                    vec![(src_external, targets.len() as u32)]
+                })
+                .collect();
+            for (vertex, degree) in local_degrees {
+                *degrees.entry(vertex).or_insert(0) += degree;
             }
         }
     }
