@@ -30,6 +30,3 @@ def removeStones(stones):
             groups += 1
 
     return len(stones) - groups
-
-
-print(removeStones([[0,0],[0,1],[1,0],[1,2],[2,1],[2,2]]))
