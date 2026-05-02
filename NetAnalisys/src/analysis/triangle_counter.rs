@@ -33,8 +33,6 @@ pub fn compute_triangle_stats(graph: &Graph, allowed_mask: Option<&[bool]>) -> T
         degrees[v as usize] = degree;
     }
 
-    // Ориентируем каждое неориентированное ребро только в одну сторону по
-    // ordering (degree, id). Это резко уменьшает размеры списков пересечения.
     let mut forward = vec![Vec::new(); n];
     for u in graph.vertices_internal() {
         if allowed_mask.is_some_and(|mask| !mask[u as usize]) {
@@ -75,8 +73,6 @@ pub fn compute_triangle_stats(graph: &Graph, allowed_mask: Option<&[bool]>) -> T
             let mut i = 0;
             let mut j = 0;
 
-            // Два указателя по уже отсортированным forward-спискам дают
-            // пересечение без вложенного contains по большим adjacency.
             while i < left.len() && j < right.len() {
                 match left[i].cmp(&right[j]) {
                     std::cmp::Ordering::Less => i += 1,
