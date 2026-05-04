@@ -14,6 +14,63 @@ fn component_mask(graph: &Graph, component: Option<&HashSet<u32>>) -> Option<Vec
     })
 }
 
+pub fn bfs_to_target(graph: &Graph, start: u32, target: &[u32]) -> HashMap<u32, usize> {
+    let Some(start_internal) = graph.external_to_internal(start) else {
+        return HashMap::default();
+    };
+
+    let target_set: HashSet<u32> = target
+        .iter()
+        .filter_map(|&t| graph.external_to_internal(t))
+        .collect();
+
+    let mut distances = HashMap::default();
+    let mut remaining = target_set.len();
+    if remaining == 0 {
+        return distances;
+    }
+
+    let mut visited = vec![false; graph.num_vertices()];
+    let mut dist = vec![0usize; graph.num_vertices()];
+    let mut queue = VecDeque::new();
+
+    visited[start_internal as usize] = true;
+    queue.push_back(start_internal);
+
+    if target_set.contains(&start_internal) {
+        distances.insert(start, 0);
+        remaining -= 1;
+    }
+
+    while let Some(node) = queue.pop_front() {
+        if remaining == 0 {
+            break;
+        }
+
+        let current_dist = dist[node as usize];
+
+        for &neighbor in graph.neighbors_internal(node) {
+            if !visited[neighbor as usize] {
+                visited[neighbor as usize] = true;
+                dist[neighbor as usize] = current_dist + 1;
+
+                if target_set.contains(&neighbor) {
+                    let external = graph.internal_to_external(neighbor).unwrap();
+                    distances.insert(external, current_dist + 1);
+                    remaining -= 1;
+                    if remaining == 0 {
+                        break;
+                    }
+                }
+
+                queue.push_back(neighbor);
+            }
+        }
+    }
+
+    distances
+}
+
 pub fn bfs_internal(graph: &Graph, start: u32) -> HashMap<u32, usize> {
     let mut visited = vec![false; graph.num_vertices()];
     let mut dist = vec![None; graph.num_vertices()];
