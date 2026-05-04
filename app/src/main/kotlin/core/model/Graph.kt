@@ -11,7 +11,7 @@ interface Graph{
 
     fun density(vertex: Int): Double
 
-    fun vertices(): Collection<Int>
+    fun vertices(): Array<Int>
 
     fun hasEdge(from: Int, to: Int): Boolean
 }
