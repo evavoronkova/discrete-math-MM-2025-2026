@@ -1,6 +1,6 @@
 use textplots::{Chart, Plot, Shape};
 
-pub fn print_graph(data: Vec<(f32, f32)>) {
+pub fn print_graph(data: &[(f32, f32)]) {
     if data.is_empty() {
         return;
     }

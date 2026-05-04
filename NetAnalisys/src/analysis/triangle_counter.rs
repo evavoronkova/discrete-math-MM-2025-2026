@@ -19,6 +19,7 @@ fn choose_2(n: u32) -> u64 {
 pub fn compute_triangle_stats(graph: &Graph, allowed_mask: Option<&[bool]>) -> TriangleStats {
     let n = graph.num_vertices();
     let mut degrees = vec![0_u32; n];
+    let mut triplets_total = 0_u64;
 
     for v in graph.vertices_internal() {
         if allowed_mask.is_some_and(|mask| !mask[v as usize]) {
@@ -31,6 +32,7 @@ pub fn compute_triangle_stats(graph: &Graph, allowed_mask: Option<&[bool]>) -> T
             .filter(|&&u| allowed_mask.is_none_or(|mask| mask[u as usize]))
             .count() as u32;
         degrees[v as usize] = degree;
+        triplets_total += choose_2(degree);
     }
 
     let mut forward = vec![Vec::new(); n];
@@ -90,12 +92,6 @@ pub fn compute_triangle_stats(graph: &Graph, allowed_mask: Option<&[bool]>) -> T
             }
         }
     }
-
-    let triplets_total = graph
-        .vertices_internal()
-        .filter(|&v| allowed_mask.is_none_or(|mask| mask[v as usize]))
-        .map(|v| choose_2(degrees[v as usize]))
-        .sum();
 
     TriangleStats {
         total_triangles,

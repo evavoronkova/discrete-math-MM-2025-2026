@@ -235,12 +235,12 @@ pub fn fraction_from_component_size(component_size: usize, num_vertices: usize) 
 }
 
 pub fn largest_component_size(comps: &[HashSet<u32>]) -> usize {
-    comps.par_iter().map(HashSet::len).max().unwrap_or(0)
+    comps.iter().map(HashSet::len).max().unwrap_or(0)
 }
 
-pub fn get_largest_comp(comps: &Vec<HashSet<u32>>) -> HashSet<u32> {
+pub fn get_largest_comp(comps: &[HashSet<u32>]) -> HashSet<u32> {
     comps
-        .par_iter()
+        .iter()
         .max_by_key(|comp| comp.len())
         .cloned()
         .unwrap_or_default()

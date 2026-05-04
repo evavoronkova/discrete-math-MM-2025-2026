@@ -1,5 +1,4 @@
 use super::parser::directed_or_undirected::DirectedOrUndirected;
-use rayon::prelude::*;
 use rustc_hash::FxHashMap as HashMap;
 pub mod traversal;
 
@@ -133,7 +132,7 @@ impl Graph {
     }
 
     pub fn num_edges(&self) -> usize {
-        let total: usize = self.adjacency_list.par_iter().map(|v| v.len()).sum();
+        let total: usize = self.adjacency_list.iter().map(|v| v.len()).sum();
         match self.kind() {
             DirectedOrUndirected::Undirected => total / 2,
             DirectedOrUndirected::Directed => total,

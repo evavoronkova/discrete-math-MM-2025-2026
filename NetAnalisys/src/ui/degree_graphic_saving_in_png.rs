@@ -1,7 +1,7 @@
 use plotters::prelude::*;
 
 pub fn save_graph_plotters(
-    data: Vec<(f32, f32)>,
+    data: &[(f32, f32)],
     name: Option<&str>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if data.is_empty() {
@@ -11,11 +11,10 @@ pub fn save_graph_plotters(
     let x_min = data.first().unwrap().0;
     let x_max = data.last().unwrap().0;
 
-    let y_min = data.iter().map(|(_, y)| *y).fold(f32::INFINITY, f32::min);
-    let y_max = data
+    let (y_min, y_max) = data
         .iter()
         .map(|(_, y)| *y)
-        .fold(f32::NEG_INFINITY, f32::max);
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(mn, mx), y| (mn.min(y), mx.max(y)));
 
     let name = format!("{}.png", name.unwrap_or("graph"));
     let root = BitMapBackend::new(&name, (1280, 720)).into_drawing_area();
@@ -34,7 +33,7 @@ pub fn save_graph_plotters(
         .y_desc("Percent")
         .draw()?;
 
-    chart.draw_series(LineSeries::new(data.clone(), &BLUE))?;
+    chart.draw_series(LineSeries::new(data.to_vec(), &BLUE))?;
 
     chart.draw_series(
         data.iter()

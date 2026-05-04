@@ -10,13 +10,12 @@ use crate::analysis::cluster_evaluation::{
 };
 use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::analysis::connectivity::{
-    find_weak_components, fraction_in_largest_component, get_largest_comp, get_number_of_comps,
-    tarjan_scc,
+    find_weak_components, fraction_from_component_size, fraction_in_largest_component,
+    get_largest_comp, get_number_of_comps, tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
 use crate::analysis::diameter::{approximate_diameter, percentile_90_distance};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
-use rayon::prelude::*;
 use std::fs::OpenOptions;
 use std::future::Future;
 use std::io::Write;
@@ -237,11 +236,11 @@ async fn main() {
             ));
             if DirectedOrUndirected::Directed == graph_type {
                 let strong_comps = strong_comps.unwrap();
-                let largest_strong_comp = strong_comps
-                    .par_iter()
-                    .max_by_key(|comp| comp.len())
-                    .unwrap()
-                    .clone();
+                let largest_strong_comp_size = strong_comps
+                    .iter()
+                    .map(|comp| comp.len())
+                    .max()
+                    .unwrap_or(0);
                 let num_strong_comps = get_number_of_comps(&strong_comps);
                 buffer_for_print.push((
                     "Number of strong components".to_string(),
@@ -251,7 +250,7 @@ async fn main() {
                     "Fraction in largest strong component".to_string(),
                     format!(
                         "{:.6}",
-                        fraction_in_largest_component(&largest_strong_comp, num_vertices)
+                        fraction_from_component_size(largest_strong_comp_size, num_vertices)
                     ),
                 ));
             }
@@ -415,13 +414,13 @@ async fn main() {
 
             {
                 let start = Instant::now();
-                ui::degree_graphic_printing::print_graph(degree_data.clone());
+                ui::degree_graphic_printing::print_graph(&degree_data);
                 log_duration(&perf_log, "print_degree_graph", start.elapsed());
             }
             {
                 let start = Instant::now();
                 ui::degree_graphic_saving_in_png::save_graph_plotters(
-                    degree_data,
+                    &degree_data,
                     Some("degree_data1"),
                 )
                 .expect("Failed to save graph as PNG");
@@ -429,13 +428,13 @@ async fn main() {
             }
             {
                 let start = Instant::now();
-                ui::degree_graphic_printing::print_graph(log_degree_data.clone());
+                ui::degree_graphic_printing::print_graph(&log_degree_data);
                 log_duration(&perf_log, "print_log_degree_graph", start.elapsed());
             }
             {
                 let start = Instant::now();
                 ui::degree_graphic_saving_in_png::save_graph_plotters(
-                    log_degree_data,
+                    &log_degree_data,
                     Some("log_degree_data"),
                 )
                 .expect("Failed to save graph as PNG");
