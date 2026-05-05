@@ -2,6 +2,7 @@ package core.storage
 
 import core.model.Graph
 import core.algoritms.quickSort
+import java.io.File
 
 class CSRUndirectedGraph(
     private val prevVertNumbers: IntArray,
@@ -123,4 +124,21 @@ class CSRUndirectedGraph(
         }
         return CSRUndirectedGraph(previousVertexArray, offs, neighs)
     }
+
+    fun fromFileToListOfEdges(filename: String): List<Pair<Int, Int>> =
+        File(filename).useLines { lines ->
+            lines.mapNotNull { line ->
+                val parts = line.split(' ')
+                if (parts.size == 2) {
+                    val u = parts[0].toIntOrNull()
+                    val w = parts[1].toIntOrNull()
+                    if (u != null && w != null) u to w
+                    else null
+                }else null
+            }.toList()
+        }
+
+
+    fun fromFileToCSRUndirectedGraph(filename: String): CSRUndirectedGraph = fromEdges(fromFileToListOfEdges(filename))
+
 }
