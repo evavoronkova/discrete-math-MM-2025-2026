@@ -85,60 +85,56 @@ class CSRUndirectedGraph(
     }
 
     fun activeVertexCount(): Int = deleted.count(){ it }
-
-    fun fromEdges(edges: List<Pair<Int, Int>>): CSRUndirectedGraph{
-        val previousVertexSet = hashSetOf<Int>()
-        for(edge in edges){
-            previousVertexSet.add(edge.first)
-            previousVertexSet.add(edge.second)
+    
+    fun fromFileToCSRUndirectedGraph(filename: String): CSRUndirectedGraph{
+        val vertexSet = mutableSetOf<Int>()
+        File(filename).useLines { lines ->
+            lines.forEach { line ->
+                if(line.isBlank()) throw IllegalStateException("Line $line is empty")
+                val parts = line.trim().split(' ')
+                if(parts.size != 2) throw IllegalStateException("Invalid line: $line")
+                val u = parts[0].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+                val v = parts[1].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+                vertexSet.add(u); vertexSet.add(v)
+            }
         }
-        val vertexCount = previousVertexSet.size
-        val previousVertexArray = previousVertexSet.toIntArray()
+        val vertexCount = vertexSet.size
+        val previousVertexArray = vertexSet.toIntArray()
         quickSort(previousVertexArray, 0, vertexCount - 1)
         val vertexToIndexMap = mutableMapOf<Int, Int>()
         for(i in 0 until vertexCount){
             vertexToIndexMap[previousVertexArray[i]] = i
         }
-        val degreeOfVertexArray = IntArray(vertexCount)
-        for(edge in edges){
-            degreeOfVertexArray[vertexToIndexMap[edge.first]!!]++
-            degreeOfVertexArray[vertexToIndexMap[edge.second]!!]++
+
+        var edgeCount = 0
+        val vertexDegreeArray = IntArray(vertexCount)
+        File(filename).useLines { lines ->
+            lines.forEach { line ->
+                val (u, v) = line.trim().split(' ').map{ it.toInt() }
+                edgeCount++
+                vertexDegreeArray[vertexToIndexMap[u]!!]++
+                vertexDegreeArray[vertexToIndexMap[v]!!]++
+            }
         }
         val offs = IntArray(vertexCount + 1)
-        offs[0] = 0
-        for(i in 1 .. vertexCount){
-            offs[i] = offs[i - 1] + degreeOfVertexArray[i - 1]
+        for(i in 1..vertexCount){
+            offs[i] = offs[i - 1] + vertexDegreeArray[i - 1]
         }
-        val edgeCount = edges.size
-        val neighs = IntArray(2 * edgeCount)
-        val currentPositionOfNeighs = IntArray(vertexCount)
-        var indexOfFirstVert = 0
-        var indexOfSecondVert = 0
-        for(edge in edges){
-            indexOfFirstVert = vertexToIndexMap[edge.first]!!
-            indexOfSecondVert = vertexToIndexMap[edge.second]!!
-            neighs[offs[indexOfFirstVert] + currentPositionOfNeighs[indexOfFirstVert]] = indexOfSecondVert
-            currentPositionOfNeighs[indexOfFirstVert]++
-            neighs[offs[indexOfSecondVert] + currentPositionOfNeighs[indexOfSecondVert]] = indexOfFirstVert
-            currentPositionOfNeighs[indexOfSecondVert]++
+
+        val neighs = IntArray(edgeCount * 2)
+        val currentPosition = IntArray(vertexCount)
+        File(filename).useLines { lines ->
+            lines.forEach { line ->
+                val (u, v) = line.trim().split(' ').map { it.toInt() }
+                val indexOfFirstVert = vertexToIndexMap[u]!!
+                val indexOfSecondVert = vertexToIndexMap[v]!!
+                neighs[offs[indexOfFirstVert] + currentPosition[indexOfFirstVert]] = indexOfSecondVert
+                currentPosition[indexOfFirstVert]++
+                neighs[offs[indexOfSecondVert] + currentPosition[indexOfSecondVert]] = indexOfFirstVert
+                currentPosition[indexOfSecondVert]++
+            }
         }
         return CSRUndirectedGraph(previousVertexArray, offs, neighs)
     }
-
-    fun fromFileToListOfEdges(filename: String): List<Pair<Int, Int>> =
-        File(filename).useLines { lines ->
-            lines.mapNotNull { line ->
-                val parts = line.split(' ')
-                if (parts.size == 2) {
-                    val u = parts[0].toIntOrNull()
-                    val w = parts[1].toIntOrNull()
-                    if (u != null && w != null) u to w
-                    else null
-                }else null
-            }.toList()
-        }
-
-
-    fun fromFileToCSRUndirectedGraph(filename: String): CSRUndirectedGraph = fromEdges(fromFileToListOfEdges(filename))
-
 }
+
