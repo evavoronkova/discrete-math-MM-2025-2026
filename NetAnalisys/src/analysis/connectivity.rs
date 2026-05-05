@@ -245,3 +245,65 @@ pub fn get_largest_comp(comps: &[HashSet<u32>]) -> HashSet<u32> {
         .cloned()
         .unwrap_or_default()
 }
+
+pub fn find_weak_components_masked(
+    graph: &Graph,
+    allowed_mask: Option<&[bool]>,
+    num_vertices: usize,
+) -> Vec<HashSet<u32>> {
+    let owned_graph: Graph;
+    let graph_ref = match graph.kind() {
+        DirectedOrUndirected::Undirected => graph,
+        DirectedOrUndirected::Directed => {
+            owned_graph = build_undirected(graph);
+            &owned_graph
+        }
+    };
+
+    let mut visited = vec![false; num_vertices];
+    let mut components = Vec::new();
+
+    for vertex in graph_ref.vertices_internal() {
+        if let Some(mask) = allowed_mask {
+            if !mask[vertex as usize] {
+                continue;
+            }
+        }
+        if visited[vertex as usize] {
+            continue;
+        }
+
+        let mut comp = HashSet::default();
+        let mut stack = vec![vertex];
+
+        while let Some(node) = stack.pop() {
+            if visited[node as usize] {
+                continue;
+            }
+            if let Some(mask) = allowed_mask {
+                if !mask[node as usize] {
+                    continue;
+                }
+            }
+
+            visited[node as usize] = true;
+            comp.insert(graph_ref.internal_to_external(node).unwrap());
+
+            for &neighbor in graph_ref.neighbors_internal(node) {
+                if !visited[neighbor as usize] {
+                    if let Some(mask) = allowed_mask {
+                        if !mask[neighbor as usize] {
+                            continue;
+                        }
+                    }
+                    stack.push(neighbor);
+                }
+            }
+        }
+
+        if !comp.is_empty() {
+            components.push(comp);
+        }
+    }
+    components
+}
