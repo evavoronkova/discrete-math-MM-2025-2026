@@ -6,21 +6,23 @@ mod parser;
 mod ui;
 
 use crate::analysis::cluster_evaluation::{
-    calculate_global_k_from_stats, calculate_mid_k_from_stats, calculate_mid_k_from_stats_for_component,
+    calculate_global_k_from_stats, calculate_mid_k_from_stats,
+    calculate_mid_k_from_stats_for_component,
 };
-use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::analysis::connectivity::{
     find_weak_components, fraction_from_component_size, fraction_in_largest_component,
     get_largest_comp, get_number_of_comps, tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
 use crate::analysis::diameter::{approximate_diameter, percentile_90_distance};
+use crate::analysis::robustness::{lcc_after_hub_removal, lcc_after_random_removal};
+use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use std::fs::OpenOptions;
 use std::future::Future;
 use std::io::Write;
-use std::sync::Mutex;
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 use tokio::task;
@@ -125,7 +127,8 @@ async fn main() {
             let (stop_animation, animation_handle) =
                 ui::main_ui::spawn_cat_loading_animation(0, 0, Some(start_point));
 
-            let parse_result = time_async(&perf_log, "parse_file", parser::parse::parse_file(&path)).await;
+            let parse_result =
+                time_async(&perf_log, "parse_file", parser::parse::parse_file(&path)).await;
 
             graph = match parse_result {
                 Ok(graph) => Arc::new(graph),
@@ -142,28 +145,30 @@ async fn main() {
                 graph.num_vertices(),
                 graph.num_edges()
             );
-            let mut buffer_for_print: Vec<(String, String)> = Vec::new();
+            let mut buffer_for_print_default_info: Vec<(String, String)> = Vec::new();
             let graph_type = graph.kind();
 
-            buffer_for_print.push(("Type of the graph".to_string(), graph_type.to_string()));
+            buffer_for_print_default_info
+                .push(("Type of the graph".to_string(), graph_type.to_string()));
 
             let num_vertices = graph.num_vertices();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Number of vertices in graph".to_string(),
                 num_vertices.to_string(),
             ));
 
             let num_edges = graph.num_edges();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Number of edges in graph".to_string(),
                 num_edges.to_string(),
             ));
 
             let density = graph.density(num_vertices, num_edges);
 
-            buffer_for_print.push(("Density of graph".to_string(), format!("{density:.6}")));
+            buffer_for_print_default_info
+                .push(("Density of graph".to_string(), format!("{density:.6}")));
 
             let (weak_comps, degree_data, strong_comps) = {
                 let g1 = Arc::clone(&graph);
@@ -213,7 +218,7 @@ async fn main() {
 
             let num_weak_comps = num_handle.await.unwrap();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Number of weak components".to_string(),
                 num_weak_comps.to_string(),
             ));
@@ -227,7 +232,7 @@ async fn main() {
                 "[DEBUG] Largest weak component size: {}",
                 largest_weak_comp.len()
             );
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Fraction in largest weak component".to_string(),
                 format!(
                     "{:.6}",
@@ -242,11 +247,11 @@ async fn main() {
                     .max()
                     .unwrap_or(0);
                 let num_strong_comps = get_number_of_comps(&strong_comps);
-                buffer_for_print.push((
+                buffer_for_print_default_info.push((
                     "Number of strong components".to_string(),
                     num_strong_comps.to_string(),
                 ));
-                buffer_for_print.push((
+                buffer_for_print_default_info.push((
                     "Fraction in largest strong component".to_string(),
                     format!(
                         "{:.6}",
@@ -281,17 +286,17 @@ async fn main() {
             let (diameter, percentile, num_triangles) =
                 tokio::try_join!(diameter_handle, percentile_handle, num_triangles_handle).unwrap();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Diameter of largest weak component".to_string(),
                 diameter.to_string(),
             ));
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "90 percentile of distance of the graph".to_string(),
                 percentile.to_string(),
             ));
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Number of triangles in graph".to_string(),
                 num_triangles.to_string(),
             ));
@@ -346,25 +351,21 @@ async fn main() {
                 )
             };
 
-            let (mid_k_graph, global_k, mid_k_component) = tokio::try_join!(
-                mid_k_graph,
-                global_k,
-                mid_k_component
-            )
-            .unwrap();
+            let (mid_k_graph, global_k, mid_k_component) =
+                tokio::try_join!(mid_k_graph, global_k, mid_k_component).unwrap();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Average cluster coefficient of the graph".to_string(),
                 format!("{mid_k_graph:.6}"),
             ));
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Global cluster coefficient of the graph".to_string(),
                 format!("{global_k:.6}"),
             ));
 
-            buffer_for_print.push((
-                "Average cluster coefficient of the largest component".to_string(),
+            buffer_for_print_default_info.push((
+                "Average cluster coefficient of the largest weak component".to_string(),
                 format!("{mid_k_component:.6}"),
             ));
 
@@ -394,20 +395,53 @@ async fn main() {
             let (max_degree, min_degree, mid_degree) =
                 tokio::try_join!(max_degree_handle, min_degree_handle, mid_degree_handle).unwrap();
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Maximal degree of the graph".to_string(),
                 max_degree.to_string(),
             ));
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Minimal degree of the graph".to_string(),
                 min_degree.to_string(),
             ));
 
-            buffer_for_print.push((
+            buffer_for_print_default_info.push((
                 "Average degree of the graph".to_string(),
                 format!("{mid_degree:.6}"),
             ));
+
+            let mut buffer_for_print_random_removes: Vec<(String, String)> = Vec::new();
+            let mut buffer_for_print_removes_of_largest: Vec<(String, String)> = Vec::new();
+
+            let lcc_random_removes_handle = {
+                let graph = Arc::clone(&graph);
+                spawn_blocking_logged(
+                    Arc::clone(&perf_log),
+                    "lcc_after_random_removal",
+                    move || lcc_after_random_removal(graph.as_ref(), num_vertices, 10),
+                )
+            };
+
+            let lcc_hub_removes_handle = {
+                let graph = Arc::clone(&graph);
+                let degrees = Arc::clone(&all_degrees);
+                spawn_blocking_logged(Arc::clone(&perf_log), "lcc_after_hub_removal", move || {
+                    lcc_after_hub_removal(graph.as_ref(), num_vertices, degrees.as_ref())
+                })
+            };
+
+            let (lcc_random_removes, lcc_hub_removes) =
+                tokio::try_join!(lcc_random_removes_handle, lcc_hub_removes_handle).unwrap();
+
+            for i in 1..=20 as u32 {
+                let percent = i * 5;
+                let fraction_random = lcc_random_removes[&percent];
+                let fraction_hub = lcc_hub_removes[&percent];
+                buffer_for_print_random_removes
+                    .push((format!("{percent}%"), fraction_random.to_string()));
+                buffer_for_print_removes_of_largest
+                    .push((format!("{percent}%"), fraction_hub.to_string()));
+            }
 
             stop_animation.store(true, Ordering::Relaxed);
             let _ = animation_handle.join();
@@ -443,7 +477,13 @@ async fn main() {
             println!("\nGraph Analysis Results");
             {
                 let start = Instant::now();
-                print_table(&buffer_for_print);
+                print_table(&buffer_for_print_default_info);
+                println!("\nFraction of largest weak component after remove random n% vertices");
+                print_table(&buffer_for_print_random_removes);
+                println!(
+                    "\nFraction of largest weak component after remove n% vertices with largest degree"
+                );
+                print_table(&buffer_for_print_removes_of_largest);
                 log_duration(&perf_log, "print_result_table", start.elapsed());
             }
             log_duration(&perf_log, "total_runtime", start_point.elapsed());

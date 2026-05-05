@@ -11,7 +11,7 @@ use crate::{
 
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::{FxBuildHasher, FxHashMap as HashMap, FxHashSet as HashSet};
 
 fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
     let mut filtered_graph = Graph::new(graph.kind());
@@ -43,9 +43,13 @@ fn remove_vertices(graph: &Graph, to_remove: &HashSet<u32>) -> Graph {
     filtered_graph
 }
 
-fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
-    let num_vertices = graph.num_vertices();
-    let degrees = all_degrees(graph);
+pub fn lcc_after_hub_removal(
+    graph: &Graph,
+    num_vertices: usize,
+    degrees: &HashMap<u32, u32>,
+) -> HashMap<u32, f64> {
+    // let num_vertices = graph.num_vertices();
+    // let degrees = all_degrees(graph);
     let mut sorted_vertices: Vec<u32> = degrees.keys().cloned().collect();
     sorted_vertices.sort_by(|a, b| degrees[b].cmp(&degrees[a]));
 
@@ -75,8 +79,12 @@ fn lcc_after_hub_removal(graph: &Graph) -> HashMap<u32, f64> {
         .collect()
 }
 
-fn lcc_after_random_removal(graph: &Graph, trials: usize) -> HashMap<u32, f64> {
-    let num_vertices = graph.num_vertices();
+pub fn lcc_after_random_removal(
+    graph: &Graph,
+    num_vertices: usize,
+    trials: usize,
+) -> HashMap<u32, f64> {
+    // let num_vertices = graph.num_vertices();
     let vertices: Vec<u32> = graph
         .vertices_internal()
         .map(|vertex| graph.internal_to_external(vertex).unwrap())

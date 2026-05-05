@@ -1,6 +1,6 @@
 use crate::{
     analysis::connectivity::build_undirected,
-    analysis::triangle_counter::{compute_triangle_stats, TriangleStats},
+    analysis::triangle_counter::{TriangleStats, compute_triangle_stats},
     graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
 };
@@ -80,7 +80,11 @@ pub fn calculate_mid_k_from_stats_for_component(
     sum / comp_internal.len() as f64
 }
 
-fn calculate_mid_k_with_mask(graph: &Graph, num_vertices: usize, allowed_mask: Option<&[bool]>) -> f64 {
+fn calculate_mid_k_with_mask(
+    graph: &Graph,
+    num_vertices: usize,
+    allowed_mask: Option<&[bool]>,
+) -> f64 {
     if num_vertices == 0 {
         return 0.0;
     }

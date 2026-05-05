@@ -14,7 +14,9 @@ pub fn save_graph_plotters(
     let (y_min, y_max) = data
         .iter()
         .map(|(_, y)| *y)
-        .fold((f32::INFINITY, f32::NEG_INFINITY), |(mn, mx), y| (mn.min(y), mx.max(y)));
+        .fold((f32::INFINITY, f32::NEG_INFINITY), |(mn, mx), y| {
+            (mn.min(y), mx.max(y))
+        });
 
     let name = format!("{}.png", name.unwrap_or("graph"));
     let root = BitMapBackend::new(&name, (1280, 720)).into_drawing_area();
