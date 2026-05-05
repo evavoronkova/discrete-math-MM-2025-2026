@@ -3,11 +3,15 @@ class Solution:
         n = len(isConnected)
         visited = [False] * n
         
-        def dfs(node):
-            visited[node] = True
-            for neighbor in range(n):
-                if isConnected[node][neighbor] == 1 and not visited[neighbor]:
-                    dfs(neighbor)
+        def dfs(start):
+            visited[start] = True
+            stack = [start]
+            while stack:
+                node = stack.pop()
+                for neighbour in range(n):
+                    if isConnected[node][neighbour] == 1 and not visited[node][neighbour]:
+                        visited[neighbour] = True
+                        stack.append(neighbour)
         
         provinces = 0
         for i in range(n):
