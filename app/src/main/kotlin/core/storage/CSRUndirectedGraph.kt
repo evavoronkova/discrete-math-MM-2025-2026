@@ -25,6 +25,9 @@ class CSRUndirectedGraph(
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
+        if(deleted[vertex]){
+            throw IllegalStateException("Vertex is deleted")
+        }
         val result: MutableSet<Int> = mutableSetOf()
         val countOfNeighbors = offsets[vertex + 1] - offsets[vertex]
         for (i in 0 until countOfNeighbors){
@@ -37,12 +40,18 @@ class CSRUndirectedGraph(
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
+        if(deleted[vertex]){
+            throw IllegalStateException("Vertex is deleted")
+        }
         return neighbors[vertex + 1] - neighbors[vertex]
     }
 
     override fun density(vertex: Int): Double {
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
+        }
+        if(deleted[vertex]){
+            throw IllegalStateException("Vertex is deleted")
         }
         return 2 * edgeCount.toDouble() /
                 (vertexCount.toDouble() * (vertexCount.toDouble() - 1.0))
@@ -51,6 +60,9 @@ class CSRUndirectedGraph(
     override fun hasEdge(from: Int, to: Int): Boolean {
         if(from !in 0 until vertexCount || to !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
+        }
+        if(deleted[from] || deleted[to]){
+            throw IllegalStateException("Vertex is deleted")
         }
 
         val vertexWithFewerNeighbors = if(offsets[from + 1] - offsets[from]
@@ -85,7 +97,7 @@ class CSRUndirectedGraph(
     }
 
     fun activeVertexCount(): Int = deleted.count(){ it }
-    
+
     fun fromFileToCSRUndirectedGraph(filename: String): CSRUndirectedGraph{
         val vertexSet = mutableSetOf<Int>()
         File(filename).useLines { lines ->
