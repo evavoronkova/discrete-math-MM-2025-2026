@@ -22,6 +22,35 @@ class _GraphIndex:
         self.neighbors = [tuple(self.node_to_idx[v] for v in graph.neighbors(u)) for u in self.nodes]
         self.degrees = [len(nb) for nb in self.neighbors]
 
+        def bfs(self, source_idx: int, need_parent: bool = False, need_farthest: bool = False):
+            dist = array("i", [-1]) * self.n
+            parent = array("i", [-1]) * self.n if need_parent else None
+
+            q = deque([source_idx])
+            dist[source_idx] = 0
+            farthest = source_idx
+
+            while q:
+                u = q.popleft()
+                du = dist[u]
+                if need_farthest and du > dist[farthest]:
+                    farthest = u
+
+                for v in self.neighbors[u]:
+                    if dist[v] == -1:
+                        dist[v] = du + 1
+                        if parent is not None:
+                            parent[v] = u
+                        q.append(v)
+
+            if need_parent and need_farthest:
+                return dist, parent, farthest
+            if need_parent:
+                return dist, parent
+            if need_farthest:
+                return dist, farthest
+            return dist
+
 class LandmarksBasic:
     """
     Базовая оценка расстояний методом ориентиров
