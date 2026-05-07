@@ -276,40 +276,26 @@ def select_degree_landmarks(index: _GraphIndex, count: int) -> List[int]:
     best = nlargest(count, range(index.n), key=lambda i: (index.degrees[i], -i))
     return [index.idx_to_node[i] for i in best]
 
-def select_best_coverage_landmarks(graph: Graph, k: int, M: int = 500, **kwargs) -> List[int]:
     """
-    Выбор k ориентиров по стратегии Best-Coverage (алгоритм 4 из статьи).
+    Выбор k ориентиров по стратегии Best-Coverage (оптимизированная версия алгоритма из статьи: выбираются вершины, часто встречающиеся в BFS-деревьях).
     M - количество случайных пар для построения пулов кратчайших путей.
     """
-    nodes = list(graph.nodes())
-    N = len(nodes)
-    if k >= N:
-        return nodes
+def select_best_coverage_landmarks(index: _GraphIndex, k: int, M: int = 500, seed: int = 42) -> List[int]:
+    rng = random.Random(seed)
+    if k >= index.n:
+        return index.nodes[:]
 
-    # собираем все вершины, участвующие в кратчайших путях
-    # и считаем счётчик покрытия для каждой вершины
-    cover_count = defaultdict(int)
+    counts = [0] * index.n
+    sources = rng.sample(range(index.n), min(M, index.n))
 
-    # генерируем M случайных пар (s,t)
-    for _ in range(M):
-        s = random.choice(nodes)
-        t = random.choice(nodes)
-        if s == t:
-            continue
-        # используем bfs_with_parents, чтобы восстановить путь
-        dist, parent = bfs_with_parents(graph, s)
-        if t not in dist:  # недостижима
-            continue
-        # восстанавливаем путь от t к s
-        path = []
-        cur = t
+    for s in sources:
+        dist, parent, farthest = index.bfs(s, need_parent=True, need_farthest=True)
+        cur = farthest
         while cur != -1:
-            path.append(cur)
+            counts[cur] += 1
+            if cur == s:
+                break
             cur = parent[cur]
-        # увеличиваем счётчик для каждой вершины пути
-        for v in path:
-            cover_count[v] += 1
 
-    # отбираем k вершин с наибольшим покрытием, разрешая произвольный выбор при равных счётчиках
-    sorted_vertices = sorted(cover_count.keys(), key=lambda v: (cover_count[v], v), reverse=True)
-    return sorted_vertices[:k]
+    best = nlargest(k, range(index.n), key=lambda i: (counts[i], -i))
+    return [index.idx_to_node[i] for i in best]
