@@ -259,15 +259,15 @@ class LandmarksSC:
 
 
 # стратегии выбора ориентиров
-def select_random_landmarks(graph: Graph, count: int) -> List[int]:
     """
     Выбрать случайные вершины без повторений
     """
-    nodes = list(graph.nodes())
-    if count >= len(nodes):
-        return nodes
-    return random.sample(nodes, count)
-
+def select_random_landmarks(index: _GraphIndex, count: int, seed: int = 42) -> List[int]:
+    rng = random.Random(seed)
+    if count >= index.n:
+        return index.nodes[:]
+    idxs = rng.sample(range(index.n), count)
+    return [index.idx_to_node[i] for i in idxs]
 
 def select_degree_landmarks(graph: Graph, count: int) -> List[int]:
     """
