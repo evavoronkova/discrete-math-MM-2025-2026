@@ -114,16 +114,20 @@ class ShortestPathTree:
     Дерево кратчайших путей от одного ориентира
     """
 
-    def __init__(self, graph: Graph, root: int):
+    __slots__ = ("graph", "_index", "root", "root_idx", "dist", "parent", "depth", "up", "log", "neighbors")
+
+    def __init__(self, graph: Graph, root: int, _index: _GraphIndex):
         self.graph = graph
+        self._index = _index
         self.root = root
-        dist, parent = bfs_with_parents(graph, root)
+        self.root_idx = _index.node_to_idx[root]
+        self.neighbors = _index.neighbors
 
-        self.dist: Dict[int, int] = dist
-        self.parent: Dict[int, int] = parent  # parent[root] = -1
+        self.dist, self.parent = self._build_tree()
+        self.depth = self._build_depth()
+        self.log = max(1, _index.n.bit_length())
+        self.up = self._build_lifting()
 
-        # подготовка структур для LCA
-        self._prepare_lca()
 
     def _prepare_lca(self):
         """
