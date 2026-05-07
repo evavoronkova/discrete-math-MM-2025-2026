@@ -61,7 +61,6 @@ class CSRUndirectedGraph(
     override fun vertices(): IntArray = previousVertexNumbers.copyOf()
 
     fun markDeleted(vertices: Collection<Int>){
-        val numberOfVertices = vertices.size
         for (vertex in vertices){
             if (vertex !in 0 until vertexCount){
                 throw IndexOutOfBoundsException()

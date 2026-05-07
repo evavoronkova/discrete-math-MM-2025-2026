@@ -1,6 +1,6 @@
 package core.model
 
-interface DirectedGraph {
+interface DirectedGraph: Graph {
     fun outNeighbors(vertex: Int): Set<Int>
 
     fun inNeighbors(vertex: Int): Set<Int>

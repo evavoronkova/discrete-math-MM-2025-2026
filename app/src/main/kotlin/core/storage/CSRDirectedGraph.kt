@@ -1,8 +1,7 @@
 package core.storage
 
-import core.model.Graph
+import core.algoritms.quickSort
 import core.model.DirectedGraph
-import java.time.ZoneOffset
 
 class CSRDirectedGraph(
     private val prevVertNumbers: IntArray,
@@ -10,7 +9,7 @@ class CSRDirectedGraph(
     private val outNeighs: IntArray,
     private val inOffs: IntArray,
     private val inNeighs: IntArray
-): Graph, DirectedGraph{
+): DirectedGraph{
     val previousVertexNumbers = prevVertNumbers
 
     val outOffsets = outOffs
@@ -98,9 +97,44 @@ class CSRDirectedGraph(
         return (outOffsets[from] until outOffsets[from + 1]).any{ outNeighbors[it] == to }
     }
 
-    
+    override fun density(): Double = 2 * edgeCount.toDouble() /
+            (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
+
+    override fun vertices(): IntArray = previousVertexNumbers.copyOf()
+
+    fun markDeleted(vertices: Collection<Int>){
+        for(vertex in vertices){
+            if(vertex !in 0 until vertexCount){
+                throw IndexOutOfBoundsException()
+            }
+            deleted[vertex] = true
+        }
+    }
+
+    fun clearDeleted() = deleted.fill(false)
 
     fun isDeleted(vertex: Int): Boolean{
+        if(vertex !in 0 until vertexCount){
+            throw IndexOutOfBoundsException()
+        }
+        return deleted[vertex]
+    }
 
+    fun activeVertexCount(): Int = deleted.count{ !it }
+
+    fun toUndirected(): CSRUndirectedGraph{
+        val offsets = IntArray(vertexCount + 1){ i -> inOffsets[i] + outOffsets[i] }
+        val neighbors = IntArray(edgeCount * 2)
+        for(i in 1 .. vertexCount){
+            val leftIndexOfIn = inOffsets[i - 1]
+            val rightIndexOfIn = inOffsets[i]
+            val leftIndexOfOut = outOffsets[i - 1]
+            val rightIndexOfOut = outOffsets[i]
+            val neighborsOfVertex = inNeighbors.sliceArray(leftIndexOfIn until rightIndexOfIn) +
+                    outNeighbors.sliceArray(leftIndexOfOut until rightIndexOfOut)
+            quickSort(neighborsOfVertex, 0, neighborsOfVertex.size - 1)
+            neighborsOfVertex.copyInto(neighbors, destinationOffset = offsets[i - 1])
+        }
+        return CSRUndirectedGraph(previousVertexNumbers, offsets, neighbors)
     }
 }
