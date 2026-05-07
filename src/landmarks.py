@@ -269,14 +269,12 @@ def select_random_landmarks(index: _GraphIndex, count: int, seed: int = 42) -> L
     idxs = rng.sample(range(index.n), count)
     return [index.idx_to_node[i] for i in idxs]
 
-def select_degree_landmarks(graph: Graph, count: int) -> List[int]:
     """
     Выбрать вершины с наибольшей степенью
     """
-    nodes = list(graph.nodes())
-    nodes.sort(key=lambda v: graph.degree(v), reverse=True)
-    return nodes[:count]
-
+def select_degree_landmarks(index: _GraphIndex, count: int) -> List[int]:
+    best = nlargest(count, range(index.n), key=lambda i: (index.degrees[i], -i))
+    return [index.idx_to_node[i] for i in best]
 
 def select_best_coverage_landmarks(graph: Graph, k: int, M: int = 500, **kwargs) -> List[int]:
     """
