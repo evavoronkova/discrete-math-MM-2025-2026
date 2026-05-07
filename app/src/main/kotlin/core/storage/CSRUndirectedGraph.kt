@@ -55,11 +55,7 @@ class CSRUndirectedGraph(
         val vertexWithFewerNeighbors = if(offsets[from + 1] - offsets[from]
             < offsets[to + 1] - offsets[to]) from else to
         val vertexWithMoreNeighbors = if(vertexWithFewerNeighbors == from) to else from
-        val numberOfNeighbors = offsets[vertexWithFewerNeighbors + 1] - offsets[vertexWithFewerNeighbors]
-        for(i in 0 until  numberOfNeighbors){
-            if(neighbors[offsets[vertexWithFewerNeighbors] + i] == vertexWithMoreNeighbors) return true
-        }
-        return false
+        return (offsets[vertexWithFewerNeighbors] until offsets[vertexWithFewerNeighbors + 1]).any{ neighbors[it] == vertexWithMoreNeighbors }
     }
 
     override fun vertices(): IntArray = previousVertexNumbers.copyOf()
