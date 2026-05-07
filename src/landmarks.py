@@ -55,13 +55,18 @@ class LandmarksBasic:
     """
     Базовая оценка расстояний методом ориентиров
     """
+    __slots__ = ("graph", "_index", "landmarks", "landmark_indices", "dist")
 
-    def __init__(self, graph: Graph, landmarks: List[int]):
-        self.graph = graph
-        self.landmarks = landmarks
-        self.dist = {}
-        for lm in landmarks:
-            self.dist[lm] = bfs(graph, lm)
+        def __init__(self, graph: Graph, landmarks: List[int], _index: _GraphIndex | None = None):
+            self.graph = graph
+            self._index = _index if _index is not None else _GraphIndex(graph)
+            self.landmarks = landmarks
+            self.landmark_indices = [self._index.node_to_idx[lm] for lm in landmarks]
+
+            self.dist = []
+            for lm_idx in self.landmark_indices:
+                self.dist.append(self._index.bfs(lm_idx))
+
 
     @classmethod
     def from_strategy(cls, graph: Graph, k: int, strategy: str = "random", **kwargs):
@@ -82,16 +87,23 @@ class LandmarksBasic:
         return cls(graph, landmarks)
 
     def estimate(self, u: int, v: int) -> float:
-        # min u∈U (du[s] + du[t])
-        best = float("inf")
-        for lm in self.landmarks:
-            du = self.dist[lm].get(u)
-            dv = self.dist[lm].get(v)
-            if du is not None and dv is not None:
-                d = du + dv
-                if d < best:
-                    best = d
-        return best if best != float("inf") else -1.0
+        iu = self._index.node_to_idx.get(u)
+        iv = self._index.node_to_idx.get(v)
+        if iu is None or iv is None:
+            return -1.0
+        if iu == iv:
+            return 0.0
+
+        best = 10**18
+        for dist in self.dist:
+            du = dist[iu]
+            dv = dist[iv]
+            if du != -1 and dv != -1:
+                cand = du + dv
+                if cand < best:
+                    best = cand
+
+        return float(best) if best != 10**18 else -1.0
 
     def estimate_batch(self, pairs: List[Tuple[int, int]]) -> List[float]:
         return [self.estimate(u, v) for u, v in pairs]
