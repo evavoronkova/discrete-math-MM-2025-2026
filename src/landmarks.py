@@ -1,10 +1,26 @@
+from __future__ import annotations
+
 import random
-from collections import defaultdict
+from array import array
+from collections import deque
+from heapq import nlargest
+from time import perf_counter
 from typing import Dict, List, Tuple
 
 from src.graph import Graph
-from src.utils import bfs, bfs_with_parents
 
+class _GraphIndex:
+    __slots__ = ("graph", "nodes", "node_to_idx", "idx_to_node", "neighbors", "degrees", "n")
+
+    def __init__(self, graph: Graph):
+        self.graph = graph
+        self.nodes = list(graph.nodes())
+        self.n = len(self.nodes)
+        self.node_to_idx = {node: i for i, node in enumerate(self.nodes)}
+        self.idx_to_node = self.nodes[:]
+
+        self.neighbors = [tuple(self.node_to_idx[v] for v in graph.neighbors(u)) for u in self.nodes]
+        self.degrees = [len(nb) for nb in self.neighbors]
 
 class LandmarksBasic:
     """
