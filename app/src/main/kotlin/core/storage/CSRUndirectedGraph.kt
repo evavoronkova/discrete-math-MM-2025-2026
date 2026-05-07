@@ -25,22 +25,17 @@ class CSRUndirectedGraph(
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
-        if(deleted[vertex]){
+        if(isDeleted(vertex)){
             throw IllegalStateException("Vertex is deleted")
         }
-        val result: MutableSet<Int> = mutableSetOf()
-        val countOfNeighbors = offsets[vertex + 1] - offsets[vertex]
-        for (i in 0 until countOfNeighbors){
-            result.add(neighbors[offsets[vertex] + i])
-        }
-        return result
+        return neighbors.sliceArray(offsets[vertex] until offsets[vertex + 1]).toSet()
     }
 
     override fun degree(vertex: Int): Int {
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
-        if(deleted[vertex]){
+        if(isDeleted(vertex)){
             throw IllegalStateException("Vertex is deleted")
         }
         return offsets[vertex + 1] - offsets[vertex]
@@ -53,7 +48,7 @@ class CSRUndirectedGraph(
         if(from !in 0 until vertexCount || to !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
-        if(deleted[from] || deleted[to]){
+        if(isDeleted(from) || isDeleted(to)){
             throw IllegalStateException("Vertex is deleted")
         }
 

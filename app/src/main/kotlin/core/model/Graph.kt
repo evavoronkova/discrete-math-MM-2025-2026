@@ -9,9 +9,9 @@ interface Graph{
 
     fun degree(vertex: Int): Int
 
-    fun density(vertex: Int): Double
+    fun density(): Double
 
-    fun vertices(): Array<Int>
+    fun vertices(): IntArray
 
     fun hasEdge(from: Int, to: Int): Boolean
 }
