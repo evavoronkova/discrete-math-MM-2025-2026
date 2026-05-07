@@ -227,7 +227,7 @@ class LandmarksSC:
     """
     Оценка расстояний через SPT и LCA
     """
-
+    __slots__ = ("graph", "_index", "landmarks", "landmark_indices", "trees")
     def __init__(self, graph: Graph, landmarks: List[int]):
         self.graph = graph
         self.landmarks = landmarks
