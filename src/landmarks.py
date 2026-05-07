@@ -4,10 +4,10 @@ import random
 from array import array
 from collections import deque
 from heapq import nlargest
-from time import perf_counter
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 from src.graph import Graph
+
 
 class _GraphIndex:
     __slots__ = ("graph", "nodes", "node_to_idx", "idx_to_node", "neighbors", "degrees", "n")
@@ -19,54 +19,58 @@ class _GraphIndex:
         self.node_to_idx = {node: i for i, node in enumerate(self.nodes)}
         self.idx_to_node = self.nodes[:]
 
-        self.neighbors = [tuple(self.node_to_idx[v] for v in graph.neighbors(u)) for u in self.nodes]
+        self.neighbors = [
+            tuple(self.node_to_idx[v] for v in graph.neighbors(u))
+            for u in self.nodes
+        ]
         self.degrees = [len(nb) for nb in self.neighbors]
 
-        def bfs(self, source_idx: int, need_parent: bool = False, need_farthest: bool = False):
-            dist = array("i", [-1]) * self.n
-            parent = array("i", [-1]) * self.n if need_parent else None
+    def bfs(self, source_idx: int, need_parent: bool = False, need_farthest: bool = False):
+        dist = array("i", [-1]) * self.n
+        parent = array("i", [-1]) * self.n if need_parent else None
 
-            q = deque([source_idx])
-            dist[source_idx] = 0
-            farthest = source_idx
+        q = deque([source_idx])
+        dist[source_idx] = 0
+        farthest = source_idx
 
-            while q:
-                u = q.popleft()
-                du = dist[u]
-                if need_farthest and du > dist[farthest]:
-                    farthest = u
+        while q:
+            u = q.popleft()
+            du = dist[u]
+            if need_farthest and du > dist[farthest]:
+                farthest = u
 
-                for v in self.neighbors[u]:
-                    if dist[v] == -1:
-                        dist[v] = du + 1
-                        if parent is not None:
-                            parent[v] = u
-                        q.append(v)
+            for v in self.neighbors[u]:
+                if dist[v] == -1:
+                    dist[v] = du + 1
+                    if parent is not None:
+                        parent[v] = u
+                    q.append(v)
 
-            if need_parent and need_farthest:
-                return dist, parent, farthest
-            if need_parent:
-                return dist, parent
-            if need_farthest:
-                return dist, farthest
-            return dist
+        if need_parent and need_farthest:
+            return dist, parent, farthest
+        if need_parent:
+            return dist, parent
+        if need_farthest:
+            return dist, farthest
+        return dist
+
 
 class LandmarksBasic:
     """
-    Базовая оценка расстояний методом ориентиров
+    Базовая оценка расстояний методом ориентиров.
     """
+
     __slots__ = ("graph", "_index", "landmarks", "landmark_indices", "dist")
 
-        def __init__(self, graph: Graph, landmarks: List[int], _index: _GraphIndex | None = None):
-            self.graph = graph
-            self._index = _index if _index is not None else _GraphIndex(graph)
-            self.landmarks = landmarks
-            self.landmark_indices = [self._index.node_to_idx[lm] for lm in landmarks]
+    def __init__(self, graph: Graph, landmarks: List[int], _index: _GraphIndex | None = None):
+        self.graph = graph
+        self._index = _index if _index is not None else _GraphIndex(graph)
+        self.landmarks = landmarks
+        self.landmark_indices = [self._index.node_to_idx[lm] for lm in landmarks]
 
-            self.dist = []
-            for lm_idx in self.landmark_indices:
-                self.dist.append(self._index.bfs(lm_idx))
-
+        self.dist = []
+        for lm_idx in self.landmark_indices:
+            self.dist.append(self._index.bfs(lm_idx))
 
     @classmethod
     def from_strategy(cls, graph: Graph, k: int, strategy: str = "random", **kwargs):
@@ -75,16 +79,20 @@ class LandmarksBasic:
         strategy: 'random', 'degree', 'coverage'.
         kwargs: доп параметр (M для coverage).
         """
+        index = _GraphIndex(graph)
+        seed = kwargs.get("seed", 42)
+
         if strategy == "random":
-            landmarks = select_random_landmarks(graph, k)
+            landmarks = select_random_landmarks(index, k, seed=seed)
         elif strategy == "degree":
-            landmarks = select_degree_landmarks(graph, k)
+            landmarks = select_degree_landmarks(index, k)
         elif strategy == "coverage":
             M = kwargs.get("M", 500)
-            landmarks = select_best_coverage_landmarks(graph, k, M=M)
+            landmarks = select_best_coverage_landmarks(index, k, M=M, seed=seed)
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
-        return cls(graph, landmarks)
+
+        return cls(graph, landmarks, _index=index)
 
     def estimate(self, u: int, v: int) -> float:
         iu = self._index.node_to_idx.get(u)
@@ -111,7 +119,7 @@ class LandmarksBasic:
 
 class ShortestPathTree:
     """
-    Дерево кратчайших путей от одного ориентира
+    Дерево кратчайших путей от одного ориентира.
     """
 
     __slots__ = ("graph", "_index", "root", "root_idx", "dist", "parent", "depth", "up", "log", "neighbors")
@@ -128,86 +136,69 @@ class ShortestPathTree:
         self.log = max(1, _index.n.bit_length())
         self.up = self._build_lifting()
 
+    def _build_tree(self):
+        n = self._index.n
+        dist = array("i", [-1]) * n
+        parent = array("i", [-1]) * n
 
-    def _prepare_lca(self):
-        """
-        Препроцессинг для LCA.
-        Строит массив up[v][k] - предок v на расстоянии 2^k,
-        а также времена входа/выхода для проверки на предка.
-        """
-        nodes = list(self.dist.keys())
-        n = len(nodes)
+        q = deque([self.root_idx])
+        dist[self.root_idx] = 0
+        parent[self.root_idx] = -1
 
-        # времена входа/выхода для проверки is_ancestor
-        self.tin = {v: 0 for v in nodes}
-        self.tout = {v: 0 for v in nodes}
-        self.timer = 0
+        while q:
+            u = q.popleft()
+            du = dist[u]
+            for v in self.neighbors[u]:
+                if dist[v] == -1:
+                    dist[v] = du + 1
+                    parent[v] = u
+                    q.append(v)
 
-        # максимальная степень двойки, не превосходящая n
-        self.LOG = max(1, (n.bit_length()))
-        # up[k][v] - предок v на расстоянии 2^k
-        # используем словари: up[k] - словарь {v: ancestor}
-        self.up: List[Dict[int, int]] = [{} for _ in range(self.LOG)]
+        return dist, parent
 
-        # запускаем dfs из корня для заполнения tin/tout и up[0]
-        self._dfs(self.root, -1)
+    def _build_depth(self):
+        return self.dist
 
-        # заполняем остальные уровни up
-        for k in range(1, self.LOG):
-            for v in nodes:
-                mid = self.up[k - 1].get(v, v)
-                self.up[k][v] = self.up[k - 1].get(mid, mid)
+    def _build_lifting(self):
+        n = self._index.n
+        up = [array("i", [-1]) * n for _ in range(self.log)]
+        up[0] = self.parent[:]
+        for level in range(1, self.log):
+            prev = up[level - 1]
+            cur = up[level]
+            for v in range(n):
+                p = prev[v]
+                cur[v] = -1 if p == -1 else prev[p]
+        return up
 
-    def _dfs(self, v: int, p: int):
-        """
-        Обход в глубину для заполнения tin/tout и первого уровня up
-        """
-        self.tin[v] = self.timer
-        self.timer += 1
-        self.up[0][v] = p if p != -1 else v  # родитель или сам узел (для корня)
-        for child, parent_of_child in self.parent.items():
-            if parent_of_child == v:
-                self._dfs(child, v)
-        self.tout[v] = self.timer
-        self.timer += 1
-
-    def _is_ancestor(self, a: int, b: int) -> bool:
-        """
-        Проверяет, является ли вершина a предком вершины b
-        """
-        return self.tin[a] <= self.tin[b] and self.tout[a] >= self.tout[b]
+    def _lift(self, v: int, steps: int) -> int:
+        bit = 0
+        while steps > 0 and v != -1:
+            if steps & 1:
+                v = self.up[bit][v]
+            steps >>= 1
+            bit += 1
+        return v
 
     def lca(self, u: int, v: int) -> int:
-        """
-        Возвращает наименьшего общего предка вершин u и v в этом дереве
-        """
-        if self._is_ancestor(u, v):
+        if u == -1 or v == -1:
+            return -1
+        if self.depth[u] < self.depth[v]:
+            u, v = v, u
+
+        u = self._lift(u, self.depth[u] - self.depth[v])
+        if u == v:
             return u
-        if self._is_ancestor(v, u):
-            return v
-        # поднимаем u, пока не найдём предка v
-        for k in range(self.LOG - 1, -1, -1):
-            if not self._is_ancestor(self.up[k].get(u, u), v):
-                u = self.up[k][u]
-        return self.up[0][u]
 
-    def _path_to_ancestor(self, v: int, ancestor: int) -> List[int]:
-        """
-        Возвращает список вершин на пути от v до ancestor
-        """
-        if v == ancestor:
-            return [v]
-        path = []
-        cur = v
-        while cur != ancestor:
-            path.append(cur)
-            cur = self.parent[cur]
-        path.append(ancestor)
-        return path
+        for level in range(self.log - 1, -1, -1):
+            uu = self.up[level][u]
+            vv = self.up[level][v]
+            if uu != vv:
+                u = uu
+                v = vv
 
-        """
-        Оценка расстояния между u и v (алгоритм Distance-SC)
-        """
+        return self.parent[u]
+
     def distance_sc(self, u: int, v: int) -> float:
         iu = self._index.node_to_idx.get(u)
         iv = self._index.node_to_idx.get(v)
@@ -225,42 +216,44 @@ class ShortestPathTree:
 
 class LandmarksSC:
     """
-    Оценка расстояний через SPT и LCA
+    Оценка расстояний через SPT и LCA.
     """
+
     __slots__ = ("graph", "_index", "landmarks", "landmark_indices", "trees")
-    def __init__(self, graph: Graph, landmarks: List[int]):
+
+    def __init__(self, graph: Graph, landmarks: List[int], _index: _GraphIndex | None = None):
         self.graph = graph
+        self._index = _index if _index is not None else _GraphIndex(graph)
         self.landmarks = landmarks
-        self.trees = {}
-        for lm in landmarks:
-            self.trees[lm] = ShortestPathTree(graph, lm)
+        self.landmark_indices = [self._index.node_to_idx[lm] for lm in landmarks]
+        self.trees = [ShortestPathTree(graph, lm, self._index) for lm in landmarks]
 
     @classmethod
     def from_strategy(cls, graph: Graph, k: int, strategy: str = "random", **kwargs):
+        index = _GraphIndex(graph)
+        seed = kwargs.get("seed", 42)
+
         if strategy == "random":
-            landmarks = select_random_landmarks(graph, k)
+            landmarks = select_random_landmarks(index, k, seed=seed)
         elif strategy == "degree":
-            landmarks = select_degree_landmarks(graph, k)
+            landmarks = select_degree_landmarks(index, k)
         elif strategy == "coverage":
             M = kwargs.get("M", 500)
-            landmarks = select_best_coverage_landmarks(graph, k, M=M)
+            landmarks = select_best_coverage_landmarks(index, k, M=M, seed=seed)
         else:
             raise ValueError(f"Unknown strategy: {strategy}")
-        return cls(graph, landmarks)
+
+        return cls(graph, landmarks, _index=index)
 
     def estimate(self, u: int, v: int) -> float:
         best = float("inf")
-        for tree in self.trees.values():
+        for tree in self.trees:
             d = tree.distance_sc(u, v)
             if d < best:
                 best = d
         return best if best != float("inf") else -1.0
 
 
-# стратегии выбора ориентиров
-    """
-    Выбрать случайные вершины без повторений
-    """
 def select_random_landmarks(index: _GraphIndex, count: int, seed: int = 42) -> List[int]:
     rng = random.Random(seed)
     if count >= index.n:
@@ -268,17 +261,12 @@ def select_random_landmarks(index: _GraphIndex, count: int, seed: int = 42) -> L
     idxs = rng.sample(range(index.n), count)
     return [index.idx_to_node[i] for i in idxs]
 
-    """
-    Выбрать вершины с наибольшей степенью
-    """
+
 def select_degree_landmarks(index: _GraphIndex, count: int) -> List[int]:
     best = nlargest(count, range(index.n), key=lambda i: (index.degrees[i], -i))
     return [index.idx_to_node[i] for i in best]
 
-    """
-    Выбор k ориентиров по стратегии Best-Coverage (оптимизированная версия алгоритма из статьи: выбираются вершины, часто встречающиеся в BFS-деревьях).
-    M - количество случайных пар для построения пулов кратчайших путей.
-    """
+
 def select_best_coverage_landmarks(index: _GraphIndex, k: int, M: int = 500, seed: int = 42) -> List[int]:
     rng = random.Random(seed)
     if k >= index.n:
@@ -288,7 +276,7 @@ def select_best_coverage_landmarks(index: _GraphIndex, k: int, M: int = 500, see
     sources = rng.sample(range(index.n), min(M, index.n))
 
     for s in sources:
-        dist, parent, farthest = index.bfs(s, need_parent=True, need_farthest=True)
+        _, parent, farthest = index.bfs(s, need_parent=True, need_farthest=True)
         cur = farthest
         while cur != -1:
             counts[cur] += 1
