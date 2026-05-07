@@ -205,27 +205,22 @@ class ShortestPathTree:
         path.append(ancestor)
         return path
 
-    def distance_sc(self, u: int, v: int) -> float:
         """
         Оценка расстояния между u и v (алгоритм Distance-SC)
         """
-        if u not in self.dist or v not in self.dist:
+    def distance_sc(self, u: int, v: int) -> float:
+        iu = self._index.node_to_idx.get(u)
+        iv = self._index.node_to_idx.get(v)
+        if iu is None or iv is None:
+            return float("inf")
+        if iu == iv:
+            return 0.0
+
+        w = self.lca(iu, iv)
+        if w == -1:
             return float("inf")
 
-        w = self.lca(u, v)
-        # базовое расстояние через lca
-        best = self.dist[u] + self.dist[v] - 2 * self.dist[w]
-
-        path_u = self._path_to_ancestor(u, w)
-        path_v = self._path_to_ancestor(v, w)
-
-        for x in path_u:
-            for y in path_v:
-                if self.graph.has_edge(x, y):
-                    cand = (self.dist[u] - self.dist[x]) + 1 + (self.dist[v] - self.dist[y])
-                    if cand < best:
-                        best = cand
-        return best
+        return float(self.dist[iu] + self.dist[iv] - 2 * self.dist[w])
 
 
 class LandmarksSC:
