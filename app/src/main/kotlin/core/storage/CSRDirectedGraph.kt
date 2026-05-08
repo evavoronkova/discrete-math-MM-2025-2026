@@ -2,7 +2,7 @@ package core.storage
 
 import core.algoritms.quickSort
 import core.model.DirectedGraph
-
+import java.io.File
 class CSRDirectedGraph(
     private val prevVertNumbers: IntArray,
     private val outOffs: IntArray,
@@ -136,5 +136,62 @@ class CSRDirectedGraph(
             neighborsOfVertex.copyInto(neighbors, destinationOffset = offsets[i - 1])
         }
         return CSRUndirectedGraph(previousVertexNumbers, offsets, neighbors)
+    }
+
+    fun fromFileToCSRDirectedGraph(fileName: String): CSRDirectedGraph{
+        val vertexSet = mutableSetOf<Int>()
+        File(fileName).useLines { lines ->
+            lines.forEach { line ->
+                if(line.isBlank()) throw IllegalStateException("Line $line is empty")
+                val parts = line.trim().split(' ')
+                if(parts.size != 2) throw IllegalStateException("Invalid line: $line")
+                val u = parts[0].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+                val v = parts[1].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+                vertexSet.add(u); vertexSet.add(v)
+            }
+        }
+        val vertexCount = vertexSet.size
+        val prevVertNumbers = vertexSet.toIntArray()
+        quickSort(prevVertNumbers, 0, vertexCount - 1)
+        val vertexToIndexMap = mutableMapOf<Int, Int>()
+        for(i in 0 until vertexCount){
+            vertexToIndexMap[prevVertNumbers[i]] = i
+        }
+
+        var edgeCount = 0
+        val inDegree = IntArray(vertexCount)
+        val outDegree = IntArray(vertexCount)
+        File(fileName).useLines { lines ->
+            lines.forEach { line ->
+                val (u, v) = line.trim().split(' ').map{ it.toInt() }
+                outDegree[vertexToIndexMap[u]!!]++
+                inDegree[vertexToIndexMap[v]!!]++
+                edgeCount++
+            }
+        }
+        val inOffs = IntArray(vertexCount + 1)
+        val outOffs = IntArray(vertexCount + 1)
+        for(i in 1 .. vertexCount){
+            inOffs[i] = inOffs[i - 1] + inDegree[i - 1]
+            outOffs[i] = outOffs[i - 1] + outOffs[i - 1]
+        }
+
+        val inNeighs = IntArray(edgeCount)
+        val outNeighs = IntArray(edgeCount)
+        val inCurrentPosition = IntArray(edgeCount)
+        val outCurrentPosition = IntArray(edgeCount)
+        File(fileName).useLines { lines ->
+            lines.forEach { line ->
+                val (u, v) = line.trim().split(' ').map { it.toInt() }
+                val indexOfFirstVert = vertexToIndexMap[u]!!
+                val indexOfSecondVert = vertexToIndexMap[v]!!
+                outNeighs[indexOfFirstVert + outCurrentPosition[indexOfFirstVert]] = indexOfSecondVert
+                inNeighs[indexOfSecondVert + inCurrentPosition[indexOfSecondVert]] = indexOfFirstVert
+                inCurrentPosition[indexOfSecondVert]++
+                outCurrentPosition[indexOfFirstVert]++
+            }
+        }
+
+        return CSRDirectedGraph(prevVertNumbers, outOffs, outNeighs, inOffs, inNeighs)
     }
 }
