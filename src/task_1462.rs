@@ -1,11 +1,20 @@
 impl Solution {
-    fn check_reachability(graph: &Vec<Vec<i32>>, start: i32, reach_status: &mut Vec<Vec<bool>>) {
-        for &i in &graph[start as usize] {
-            reach_status[start as usize][i as usize] = true;
-            Self::check_reachability(graph, i, reach_status);
+    fn check_reachability(
+        graph: &Vec<Vec<i32>>,
+        start: usize,
+        reach_status: &mut Vec<Vec<bool>>,
+        done: &mut Vec<bool>,
+    ) {
+        if done[start] {
+            return;
+        }
+        done[start] = true;
+        for &i in &graph[start] {
+            reach_status[start][i as usize] = true;
+            Self::check_reachability(graph, i as usize, reach_status, done);
             for u in 0..reach_status.len() {
                 if reach_status[i as usize][u] == true {
-                    reach_status[start as usize][u] = reach_status[i as usize][u];
+                    reach_status[start][u] = reach_status[i as usize][u];
                 }
             }
         }
@@ -22,8 +31,9 @@ impl Solution {
 
         let mut reach_status: Vec<Vec<bool>> =
             vec![vec![false; num_courses as usize]; num_courses as usize];
+        let mut done: Vec<bool> = vec![false; num_courses as usize];
         for i in 0..num_courses {
-            Self::check_reachability(&graph, i, &mut reach_status);
+            Self::check_reachability(&graph, i as usize, &mut reach_status, &mut done);
         }
         let mut answer: Vec<bool> = Vec::new();
         for pair in &queries {
