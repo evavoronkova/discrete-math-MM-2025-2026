@@ -28,6 +28,9 @@ impl Solution {
             Self::dfs(&graph, &mut answer, &mut visited, i as usize);
         }
 
+        if answer.len() != num_courses as usize {
+            return vec![];
+        }
         answer.reverse();
         answer
     }
