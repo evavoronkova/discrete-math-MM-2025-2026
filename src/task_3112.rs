@@ -29,13 +29,9 @@ struct Edge {
 }
 
 impl Solution {
-    fn dijkstra(
-        adj_list: &Vec<Vec<Edge>>,
-        start: usize,
-        goal: usize,
-        disappear: &Vec<i32>,
-    ) -> Option<usize> {
-        let mut dists: Vec<_> = (0..adj_list.len()).map(|_| usize::MAX).collect();
+    fn dijkstra(adj_list: &Vec<Vec<Edge>>, start: usize, disappear: &Vec<i32>) -> Vec<usize> {
+        let n = adj_list.len();
+        let mut dists: Vec<_> = (0..n).map(|_| usize::MAX).collect();
         let mut heap = BinaryHeap::new();
 
         dists[start] = 0;
@@ -45,9 +41,6 @@ impl Solution {
         });
 
         while let Some(State { cost, position }) = heap.pop() {
-            if position == goal {
-                return Some(cost);
-            }
             if cost > dists[position] {
                 continue;
             }
@@ -64,28 +57,27 @@ impl Solution {
                 }
             }
         }
-        None
+        dists
     }
+
     pub fn minimum_time(n: i32, edges: Vec<Vec<i32>>, disappear: Vec<i32>) -> Vec<i32> {
         let mut graph: Vec<Vec<Edge>> = vec![vec![]; n as usize];
         for edge in &edges {
-            graph[edge[0] as usize].push(Edge {
-                node: edge[1] as usize,
-                cost: edge[2] as usize,
-            });
-
-            graph[edge[1] as usize].push(Edge {
-                node: edge[0] as usize,
-                cost: edge[2] as usize,
-            });
+            let u = edge[0] as usize;
+            let v = edge[1] as usize;
+            let cost = edge[2] as usize;
+            graph[u].push(Edge { node: v, cost });
+            graph[v].push(Edge { node: u, cost });
         }
 
-        let mut answer: Vec<i32> = Vec::new();
-        for index in 0..n as usize {
-            answer.push(match Self::dijkstra(&graph, 0, index, &disappear) {
-                Some(res) => res as i32,
-                None => -1,
-            });
+        let dists = Self::dijkstra(&graph, 0, &disappear);
+        let mut answer: Vec<i32> = Vec::with_capacity(n as usize);
+        for d in &dists {
+            if *d == usize::MAX {
+                answer.push(-1);
+            } else {
+                answer.push(*d as i32);
+            }
         }
 
         answer
