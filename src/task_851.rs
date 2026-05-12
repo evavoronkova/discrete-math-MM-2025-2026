@@ -1,66 +1,40 @@
-use std::collections::HashMap;
-
 impl Solution {
-    fn bfs_for_min(graph: &HashMap<i32, Vec<i32>>, start: &i32, quiet: &Vec<i32>) -> Option<i32> {
-        let mut best_idx: Option<i32> = None;
-        if !(graph.contains_key(start)) {
-            return None;
+    fn bfs_for_min(
+        graph: &Vec<Vec<i32>>,
+        start: i32,
+        quiet: &Vec<i32>,
+        memo: &mut Vec<Option<i32>>,
+    ) -> i32 {
+        let u = start as usize;
+        if let Some(cached) = memo[u] {
+            return cached;
         }
-        for neighbour in &graph[start] {
-            let val = Self::bfs_for_min(graph, neighbour, quiet);
-            if let Some(res_idx) = val {
-                best_idx = match best_idx {
-                    None => Some(res_idx),
-                    Some(current) => {
-                        if quiet[res_idx as usize] < quiet[current as usize] {
-                            Some(res_idx)
-                        } else {
-                            Some(current)
-                        }
-                    }
-                };
+
+        let mut best_idx = start;
+        for &neighbour in &graph[u] {
+            let candidate = Self::bfs_for_min(graph, neighbour, quiet, memo);
+            if quiet[candidate as usize] < quiet[best_idx as usize] {
+                best_idx = candidate;
             }
-            best_idx = match best_idx {
-                None => Some(*neighbour),
-                Some(current) => {
-                    if quiet[*neighbour as usize] < quiet[current as usize] {
-                        Some(*neighbour)
-                    } else {
-                        Some(current)
-                    }
-                }
-            };
         }
+
+        memo[u] = Some(best_idx);
         best_idx
     }
 
     pub fn loud_and_rich(richer: Vec<Vec<i32>>, quiet: Vec<i32>) -> Vec<i32> {
-        let mut graph: HashMap<i32, Vec<i32>> = HashMap::new();
+        let n = quiet.len();
+        let mut graph: Vec<Vec<i32>> = vec![Vec::new(); n];
         for link in &richer {
-            let a = link[0];
-            let b = link[1];
-            let mut vector = match graph.contains_key(&b) {
-                true => graph[&b].clone(),
-                false => Vec::new(),
-            };
-
-            vector.push(a);
-            graph.insert(b, vector);
+            let a = link[0] as usize;
+            let b = link[1] as usize;
+            graph[b].push(a as i32);
         }
 
-        let mut answer: Vec<i32> = Vec::new();
-        let n = quiet.len() as i32;
+        let mut memo: Vec<Option<i32>> = vec![None; n];
+        let mut answer: Vec<i32> = Vec::with_capacity(n);
         for index in 0..n {
-            let y = match Self::bfs_for_min(&graph, &index, &quiet) {
-                Some(idx) => {
-                    if quiet[idx as usize] < quiet[index as usize] {
-                        idx
-                    } else {
-                        index
-                    }
-                }
-                None => index,
-            };
+            let y = Self::bfs_for_min(&graph, index as i32, &quiet, &mut memo);
             answer.push(y);
         }
 
