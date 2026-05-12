@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "discrete-math-MM-2025-2026"
+name = "discrete_math_mm_2025_2026"
 version = "0.1.0"

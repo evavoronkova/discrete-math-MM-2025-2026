@@ -4,16 +4,14 @@ impl Solution {
         for &to in &graph[v] {
             if colors[to as usize] == -1 {
                 if !Self::dfs(to as usize, 1 - color, graph, colors) {
-                    return false
+                    return false;
                 }
             } else if colors[to as usize] == color {
-                    return false
+                return false;
             }
         }
-        return true
+        return true;
     }
-
-
 
     pub fn possible_bipartition(n: i32, dislikes: Vec<Vec<i32>>) -> bool {
         let mut graph: Vec<Vec<i32>> = vec![vec![]; n as usize];
@@ -28,12 +26,12 @@ impl Solution {
         for i in 0..(n as usize) {
             if colors[i] == -1 {
                 if !Self::dfs(i, 0, &graph, &mut colors) {
-                    return false
+                    return false;
                 }
             }
         }
 
-        return true
+        return true;
     }
 }
 
