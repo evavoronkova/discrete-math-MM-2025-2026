@@ -3,6 +3,11 @@ impl Solution {
         for &i in &graph[start as usize] {
             reach_status[start as usize][i as usize] = true;
             Self::check_reachability(graph, i, reach_status);
+            for u in 0..reach_status.len() {
+                if reach_status[i as usize][u] == true {
+                    reach_status[start as usize][u] = reach_status[i as usize][u];
+                }
+            }
         }
     }
     pub fn check_if_prerequisite(
