@@ -73,6 +73,11 @@ impl Solution {
                 node: edge[1] as usize,
                 cost: edge[2] as usize,
             });
+
+            graph[edge[1] as usize].push(Edge {
+                node: edge[0] as usize,
+                cost: edge[2] as usize,
+            });
         }
 
         let mut answer: Vec<i32> = Vec::new();
