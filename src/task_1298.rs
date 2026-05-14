@@ -8,37 +8,48 @@ impl Solution {
         contained_boxes: Vec<Vec<i32>>,
         initial_boxes: Vec<i32>,
     ) -> i32 {
-        let mut queue_boxes: VecDeque<i32> = initial_boxes.iter().map(|x| *x).collect();
+        let n = status.len();
         let mut status = status;
         let mut candies = candies;
-        let keys = keys;
-        let contained_boxes = contained_boxes;
+        let mut queue_boxes: VecDeque<i32> = VecDeque::new();
+        let mut skipped = vec![false; n];
+        let mut found_keys = vec![false; n];
         let mut counter = 0;
-        let mut skipped: Vec<i32> = Vec::new();
+
+        for b in initial_boxes {
+            let b = b as usize;
+            if status[b] == 1 || found_keys[b] {
+                status[b] = 1;
+                queue_boxes.push_back(b as i32);
+            } else {
+                skipped[b] = true;
+            }
+        }
 
         while let Some(b) = queue_boxes.pop_front() {
-            println!("{}", b);
-            if status[b as usize] == 0 {
-                skipped.push(b);
-                continue;
+            let b = b as usize;
+            counter += candies[b];
+            candies[b] = 0;
+
+            for &key in &keys[b] {
+                let key = key as usize;
+                found_keys[key] = true;
+                if skipped[key] {
+                    skipped[key] = false;
+                    status[key] = 1;
+                    queue_boxes.push_back(key as i32);
+                }
             }
-            println!("ok");
-            for i in &skipped {
-                queue_boxes.push_back(*i);
+
+            for &i in &contained_boxes[b] {
+                let i = i as usize;
+                if status[i] == 1 || found_keys[i] {
+                    status[i] = 1;
+                    queue_boxes.push_back(i as i32);
+                } else {
+                    skipped[i] = true;
+                }
             }
-            skipped = Vec::new();
-            counter += candies[b as usize];
-            candies[b as usize] = 0;
-            for key in &keys[b as usize] {
-                print!("{} ", key);
-                status[*key as usize] = 1;
-            }
-            println!();
-            for i in &contained_boxes[b as usize] {
-                print!("{} ", i);
-                queue_boxes.push_back(*i);
-            }
-            println!();
         }
 
         counter
