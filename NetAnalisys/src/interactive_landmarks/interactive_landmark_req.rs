@@ -1,14 +1,13 @@
+use crate::print_table;
 use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
 use crate::landmarks::LandmarkStrategy;
 use crate::landmarks::basic_landmarks::LandmarkBasic;
 use crate::landmarks::bfs_landmarks::LandmarkBFS;
 use crossterm::{cursor::*, event::*, execute, style::*, terminal::*};
-use std::fs;
+use rand::Rng;
 use std::io::{Stdout, Write, stdout};
-use std::sync::Mutex;
 use std::time::{Duration, Instant};
-use tokio::task;
 struct TerminalGuard;
 use std::sync::Arc;
 
@@ -128,9 +127,9 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                 KeyCode::Char('2') => {
                     accuracy_benchmark(
                         &mut stdout,
-                        graph.clone(),
-                        cur_basic.clone(),
-                        cur_bfs.clone(),
+                        &graph,
+                        &cur_basic,
+                        &cur_bfs,
                         &mut cached_bench,
                     );
                 }
@@ -178,12 +177,11 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     1 => {
                         accuracy_benchmark(
                             &mut stdout,
-                            graph.clone(),
-                            cur_basic.clone(),
-                            cur_bfs.clone(),
+                            &graph,
+                            &cur_basic,
+                            &cur_bfs,
                             &mut cached_bench,
                         )
-                        .await
                     }
                     2 => speed_benchmark(
                         &mut stdout,
@@ -403,68 +401,109 @@ async fn distance_query(
     }
 }
 #[allow(unused_variables)]
-async fn accuracy_benchmark(
+fn accuracy_benchmark(
     stdout: &mut Stdout,
-    graph: Arc<Graph>,
-    basic: Arc<LandmarkBasic>,
-    bfs: Arc<LandmarkBFS>,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
     cached_bench: &mut Option<Vec<BenchResult>>,
 ) {
-    let stdout_arc = Arc::new(Mutex::new(std::io::stdout()));
+    let num_pairs = match read_u32_at(stdout, "Enter number of pairs (10-100): ", 0, 2) {
+        Some(n) if (10..=100).contains(&n) => n as usize,
+        Some(_) => {
+            let _ = write!(stdout, "  Defaulting to 50\n");
+            stdout.flush();
+            50
+        }
+        None => {
+            return;
+        }
+    };
 
-    let stdout_1 = stdout_arc.clone();
-    let stdout_2 = stdout_arc.clone();
-    let stdout_3 = stdout_arc.clone();
+    let vertices: Vec<u32> = graph.vertices().collect();
+    if vertices.len() < 2 {
+        return;
+    }
+    let mut rng = rand::thread_rng();
+    for _ in 0..num_pairs {
+        let idx1 = rng.gen_range(0..vertices.len());
+        let idx2 = rng.gen_range(0..vertices.len());
 
-    let g1 = Arc::clone(&graph);
-    let g2 = Arc::clone(&graph);
-    let g3 = Arc::clone(&graph);
+        let s = vertices[idx1];
+        let t = vertices[idx2];
 
-    let l_basic_1 = Arc::clone(&basic);
-    let l_basic_2 = Arc::clone(&basic);
-    let l_basic_3 = Arc::clone(&basic);
+        let res = compute_distances(graph, basic, bfs, s, t);
 
-    let l_bfs_1 = Arc::clone(&bfs);
-    let l_bfs_2 = Arc::clone(&bfs);
-    let l_bfs_3 = Arc::clone(&bfs);
+        match cached_bench {
+            Some(v) => v.push(res),
+            None => {*cached_bench = Some(vec![res])}
+        }
+    }
+    
+    let mut count_basic_nice = 0;
+    let mut count_bfs_nice = 0;
+    let mut sum_time_basic: Duration = Duration::ZERO;
+    let mut sum_time_bfs: Duration = Duration::ZERO;
+    let mut sum_time_exact: Duration = Duration::ZERO;
 
-    let rt = tokio::runtime::Handle::current();
-
-    tokio::try_join!(
-        task::spawn_blocking({
-            let rt = rt.clone();
-            move || {
-                let mut stdout = stdout_1.lock().unwrap();
-                rt.block_on(distance_query(&mut *stdout, g1, l_basic_1, l_bfs_1))
+    if let Some(res) = cached_bench {
+        for info in res {
+            if info.exact == info.basic {
+                count_basic_nice += 1;
             }
-        }),
-        task::spawn_blocking({
-            let rt = rt.clone();
-            move || {
-                let mut stdout = stdout_2.lock().unwrap();
-                rt.block_on(distance_query(&mut *stdout, g2, l_basic_2, l_bfs_2))
-            }
-        }),
-        task::spawn_blocking({
-            let rt = rt.clone();
-            move || {
-                let mut stdout = stdout_3.lock().unwrap();
-                rt.block_on(distance_query(&mut *stdout, g3, l_basic_3, l_bfs_3))
-            }
-        })
-    ).unwrap();
-    let mut stdout = stdout_arc.lock().unwrap();
 
-    let _ = writeln!(
-        stdout,
-        "\n  [stub] accuracy_benchmark — not implemented yet"
-    );
-    let _ = write!(
-        stdout,
-        "  Would benchmark {} landmarks",
-        cached_bench.as_ref().map_or(0, |v| v.len())
-    );
+            if info.exact == info.bfs {
+                count_bfs_nice += 1;
+            }
+            sum_time_basic += info.basic_time;
+            sum_time_bfs += info.bfs_time;
+            sum_time_exact += info.exact_time;
+        }
+    }
+    let average_time_basic = (sum_time_basic) / num_pairs as u32;
+    let average_time_bfs = (sum_time_bfs) / num_pairs as u32;
+    let average_time_exact = (sum_time_exact) / num_pairs as u32;
+    let percent_basic = count_basic_nice * 100 / num_pairs;
+    let percent_bfs = count_bfs_nice * 100 / num_pairs;
+
+    let mut table_data: Vec<(String, String)> = Vec::new();
+    table_data.push(("Total pairs".to_string(), num_pairs.to_string()));
+    table_data.push((
+        "Exact vs Basic matches".to_string(),
+        format!("{:.2}% ({}/{})", percent_basic, count_basic_nice, num_pairs)
+    ));
+    table_data.push((
+        "Exact vs BFS matches".to_string(),
+        format!("{:.2}% ({}/{})", percent_bfs, count_bfs_nice, num_pairs)
+    ));
+    table_data.push((
+        "Average exact BFS time".to_string(),
+        format!("{:?}", average_time_exact)
+    ));
+    table_data.push((
+        "Average Basic LM time".to_string(),
+        format!("{:?}", average_time_basic)
+    ));
+    table_data.push((
+        "Average BFS LM time".to_string(),
+        format!("{:?}", average_time_bfs)
+    ));
+
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = write!(stdout, "  ─── Accuracy Benchmark Results ───\r\n\r\n");
     let _ = stdout.flush();
+
+    print_table(&table_data);
+
+    let _ = write!(stdout, "\r\n  Press Enter to continue...");
+    let _ = stdout.flush();
+
+    loop {
+        match read().unwrap() {
+            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => break,
+            _ => {}
+        }
+    }
 }
 
 #[allow(unused_variables)]
@@ -502,66 +541,4 @@ fn landmark_info(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs:
     let _ = write!(stdout, "\n  [stub] landmark_info — not implemented yet");
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
-}
-
-fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<(String, u64)>, prefix: &str) {
-    let skip_names = [
-        "target",
-        "src",
-        ".git",
-        "node_modules",
-        ".vscode",
-        ".idea",
-        "target",
-        ".DS_Store",
-        "Cargo.lock",
-        "Cargo.toml",
-        "degree_data1.png",
-        "log_degree_data.png",
-        "performance.log",
-    ];
-    let entries = match fs::read_dir(dir) {
-        Ok(e) => e,
-        Err(_) => return,
-    };
-
-    for entry in entries.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        let name = entry.file_name().to_string_lossy().to_string();
-
-        if skip_names.contains(&name.as_str()) {
-            continue;
-        }
-
-        if path.is_dir() {
-            let new_prefix = if prefix.is_empty() {
-                name.clone()
-            } else {
-                format!("{}/{}", prefix, name)
-            };
-            collect_files_recursive(&path, files, &new_prefix);
-        } else if path.is_file() {
-            let full_path = if prefix.is_empty() {
-                name.clone()
-            } else {
-                format!("{}/{}", prefix, name)
-            };
-            files.push((
-                full_path.clone(),
-                fs::metadata(full_path.clone()).unwrap().len(),
-            ));
-        }
-    }
-}
-
-fn find_min_files(files: &mut Vec<(String, u64)>) -> Vec<String> {
-    files.sort_by_key(|k| k.1);
-    let mut to_return: Vec<String> = Vec::new();
-    if files.len() < 3 {
-        to_return = files.iter().map(|x| x.0.clone()).collect();
-    } else {
-        to_return = vec![files[0].0.clone(), files[1].0.clone(), files[2].0.clone()];
-    }
-
-    to_return
 }

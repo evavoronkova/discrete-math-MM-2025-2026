@@ -27,7 +27,7 @@ use std::sync::atomic::Ordering;
 use std::time::{Duration, Instant};
 use tokio::task;
 
-fn print_table(data: &Vec<(String, String)>) {
+pub fn print_table(data: &Vec<(String, String)>) {
     let metric_header = "Metric";
     let value_header = "Value";
 
