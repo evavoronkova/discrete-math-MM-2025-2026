@@ -4,6 +4,7 @@ mod graph;
 mod landmarks;
 mod parser;
 mod ui;
+mod interactive_landmarks;
 
 use crate::analysis::cluster_evaluation::{
     calculate_global_k_from_stats, calculate_mid_k_from_stats,
@@ -20,7 +21,7 @@ use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use std::fs::OpenOptions;
 use std::future::Future;
-use std::io::Write;
+use std::io::{Read, Write};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::Ordering;
@@ -140,12 +141,12 @@ async fn main() {
                 }
             };
 
-            println!("[DEBUG] Graph successfully parsed. Starting analysis...");
-            println!(
-                "[DEBUG] Graph has {} vertices and {} edges.",
-                graph.num_vertices(),
-                graph.num_edges()
-            );
+            // println!("[DEBUG] Graph successfully parsed. Starting analysis...");
+            // println!(
+            //     "[DEBUG] Graph has {} vertices and {} edges.",
+            //     graph.num_vertices(),
+            //     graph.num_edges()
+            // );
             let mut buffer_for_print_default_info: Vec<(String, String)> = Vec::new();
             let graph_type = graph.kind();
 
@@ -228,11 +229,11 @@ async fn main() {
 
             let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);
 
-            println!("[DEBUG] Largest weak components size: {}", num_weak_comps);
-            println!(
-                "[DEBUG] Largest weak component size: {}",
-                largest_weak_comp.len()
-            );
+            // println!("[DEBUG] Largest weak components size: {}", num_weak_comps);
+            // println!(
+            //     "[DEBUG] Largest weak component size: {}",
+            //     largest_weak_comp.len()
+            // );
             buffer_for_print_default_info.push((
                 "Fraction in largest weak component".to_string(),
                 format!(
@@ -483,6 +484,12 @@ async fn main() {
                 .expect("Failed to save graph as PNG");
                 log_duration(&perf_log, "save_log_degree_graph_png", start.elapsed());
             }
+            println!("\nGraph analysis ended succesfully, do you want to see results or make requests for estimating distance? ");
+            print!("y/n/yes/no> ");
+            let mut ans = String::new();
+            std::io::stdin().read_line(&mut ans);
+            let ans = ans.as_str();
+            
             println!("\nGraph Analysis Results");
             {
                 let start = Instant::now();
@@ -497,7 +504,10 @@ async fn main() {
             }
             log_duration(&perf_log, "total_runtime", start_point.elapsed());
             println!("Time: {:.2?}", start_point.elapsed());
+
+
         }
         None => println!("No file selected. Exiting."),
     }
+
 }

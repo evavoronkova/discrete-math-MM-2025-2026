@@ -1,2 +1,2 @@
-mod basic_landmarks;
-mod bfs_landmarks;
+pub mod basic_landmarks;
+pub mod bfs_landmarks;
