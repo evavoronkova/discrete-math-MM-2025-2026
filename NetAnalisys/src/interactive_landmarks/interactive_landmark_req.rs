@@ -2,6 +2,7 @@ use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
 use crate::landmarks::basic_landmarks::LandmarkBasic;
 use crate::landmarks::bfs_landmarks::LandmarkBFS;
+use anyhow::Result;
 use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
 use rand::seq::SliceRandom;
 use std::io::{Stdout, Write, stdout};
@@ -48,7 +49,10 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
     let basic = match LandmarkBasic::new(graph, num_landmarks) {
         Some(b) => b,
         None => {
-            let _ = writeln!(stdout, "  Error: could not create landmarks (graph too small?).");
+            let _ = writeln!(
+                stdout,
+                "  Error: could not create landmarks (graph too small?)."
+            );
             let _ = stdout.flush();
             std::thread::sleep(Duration::from_secs(2));
             return;
@@ -63,21 +67,9 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
     loop {
         let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
         let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
-        let _ = writeln!(
-            stdout,
-            "╔{}╗",
-            "═".repeat(58)
-        );
-        let _ = writeln!(
-            stdout,
-            "║{:^60}║",
-            "     Landmark Distance Estimator"
-        );
-        let _ = writeln!(
-            stdout,
-            "╚{}╝",
-            "═".repeat(58)
-        );
+        let _ = writeln!(stdout, "╔{}╗", "═".repeat(58));
+        let _ = writeln!(stdout, "║{:^60}║", "     Landmark Distance Estimator");
+        let _ = writeln!(stdout, "╚{}╝", "═".repeat(58));
         let _ = execute!(stdout, ResetColor);
         let _ = writeln!(
             stdout,
@@ -142,11 +134,17 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
                 }
                 KeyCode::Char('5') => {
                     landmark_info(&mut stdout, graph, &cur_basic, &cur_bfs);
-                } 
+                }
                 KeyCode::Char('6') | KeyCode::Esc | KeyCode::Char('q') => break,
                 KeyCode::Enter => match sel {
                     0 => distance_query(&mut stdout, graph, &cur_basic, &cur_bfs),
-                    1 => accuracy_benchmark(&mut stdout, graph, &cur_basic, &cur_bfs, &mut cached_bench),
+                    1 => accuracy_benchmark(
+                        &mut stdout,
+                        graph,
+                        &cur_basic,
+                        &cur_bfs,
+                        &mut cached_bench,
+                    ),
                     2 => speed_benchmark(&mut stdout, graph, &cur_basic, &cur_bfs, &cached_bench),
                     3 => {
                         if let Some(n) = change_landmarks(&mut stdout, graph, n_landmarks) {
@@ -164,9 +162,77 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
                     5 => break,
                     _ => {}
                 },
+                    _ => {}
+                },
                 _ => {}
-            },
-            _ => {}
+            }
         }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Stub functions
+// ---------------------------------------------------------------------------
+
+fn distance_query(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+) {
+    let _ = writeln!(stdout, "\n  [stub] distance_query — not implemented yet");
+    let _ = writeln!(stdout, "  Graph has {} vertices, {} edges", graph.num_vertices(), graph.num_edges());
+    let _ = stdout.flush();
+    std::thread::sleep(Duration::from_secs(1));
+}
+
+fn accuracy_benchmark(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+    cached_bench: &mut Option<Vec<BenchResult>>,
+) {
+    let _ = writeln!(stdout, "\n  [stub] accuracy_benchmark — not implemented yet");
+    let _ = writeln!(stdout, "  Would benchmark {} landmarks", cached_bench.as_ref().map_or(0, |v| v.len()));
+    let _ = stdout.flush();
+    std::thread::sleep(Duration::from_secs(1));
+}
+
+fn speed_benchmark(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+    cached_bench: &Option<Vec<BenchResult>>,
+) {
+    let _ = writeln!(stdout, "\n  [stub] speed_benchmark — not implemented yet");
+    let _ = writeln!(stdout, "  Would benchmark speed with {} landmarks", cached_bench.as_ref().map_or(0, |v| v.len()));
+    let _ = stdout.flush();
+    std::thread::sleep(Duration::from_secs(1));
+}
+
+fn change_landmarks(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    current: usize,
+) -> Option<usize> {
+    let _ = writeln!(stdout, "\n  [stub] change_landmarks — not implemented yet");
+    let _ = writeln!(stdout, "  Current: {}. Returning same value.", current);
+    let _ = stdout.flush();
+    std::thread::sleep(Duration::from_secs(1));
+    Some(current)
+}
+
+fn landmark_info(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+) {
+    let _ = writeln!(stdout, "\n  [stub] landmark_info — not implemented yet");
+    let _ = stdout.flush();
+    std::thread::sleep(Duration::from_secs(1));
+}
     }
 }
