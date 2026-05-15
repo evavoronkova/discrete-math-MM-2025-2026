@@ -1,4 +1,3 @@
-use crate::print_table;
 use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
 use crate::landmarks::LandmarkStrategy;
@@ -32,7 +31,6 @@ const MENU_ITEMS: &[&str] = &[
     "   Speed benchmark (landmarks only)     ",
     "   Change number of landmarks           ",
     "   Change strategy of landmarks samples ",
-    "   Show landmark information            ",
     "   Back to main menu                    ",
 ];
 
@@ -74,24 +72,43 @@ fn change_strategy(stdout: &mut Stdout, current: LandmarkStrategy) -> Option<Lan
         let _ = stdout.flush();
 
         match read().unwrap() {
-            Event::Key(KeyEvent { code: KeyCode::Up, .. })
-            | Event::Key(KeyEvent { code: KeyCode::Char('k'), .. }) => {
+            Event::Key(KeyEvent {
+                code: KeyCode::Up, ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Char('k'),
+                ..
+            }) => {
                 sel = sel.saturating_sub(1);
             }
-            Event::Key(KeyEvent { code: KeyCode::Down, .. })
-            | Event::Key(KeyEvent { code: KeyCode::Char('j'), .. }) => {
+            Event::Key(KeyEvent {
+                code: KeyCode::Down,
+                ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Char('j'),
+                ..
+            }) => {
                 if sel < items.len() - 1 {
                     sel += 1;
                 }
             }
-            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
+            Event::Key(KeyEvent {
+                code: KeyCode::Enter,
+                ..
+            }) => {
                 if items[sel].1 != current {
                     return Some(items[sel].1);
                 }
                 return None;
             }
-            Event::Key(KeyEvent { code: KeyCode::Esc, .. })
-            | Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) => return None,
+            Event::Key(KeyEvent {
+                code: KeyCode::Esc, ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Char('q'),
+                ..
+            }) => return None,
             _ => {}
         }
     }
@@ -161,7 +178,7 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
         let _ = execute!(
             stdout,
             SetForegroundColor(Color::DarkGrey),
-            Print("  ↑↓ navigate · Enter/1-7 select · q/Esc back\r\n"),
+            Print("  ↑↓ navigate · Enter/1-6 select · q/Esc back\r\n"),
             ResetColor,
         );
         let _ = stdout.flush();
@@ -174,7 +191,13 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     }
                 }
                 KeyCode::Char('1') => {
-                    distance_query(&mut stdout, graph.clone(), cur_basic.clone(), cur_bfs.clone()).await;
+                    distance_query(
+                        &mut stdout,
+                        graph.clone(),
+                        cur_basic.clone(),
+                        cur_bfs.clone(),
+                    )
+                    .await;
                 }
                 KeyCode::Char('2') => {
                     accuracy_benchmark(
@@ -184,9 +207,16 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                         &cur_bfs,
                         &mut cached_bench,
                     );
+                    cached_bench = None;
                 }
                 KeyCode::Char('3') => {
-                    speed_benchmark(&mut stdout, graph.clone(), &cur_basic, &cur_bfs, &cached_bench);
+                    speed_benchmark(
+                        &mut stdout,
+                        graph.clone(),
+                        &cur_basic,
+                        &cur_bfs,
+                        &cached_bench,
+                    );
                 }
                 KeyCode::Char('4') => {
                     if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
@@ -208,13 +238,16 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                         cached_bench = None;
                     }
                 }
-                KeyCode::Char('6') => {
-                    landmark_info(&mut stdout, &graph, &cur_basic, &cur_bfs);
-                }
-                KeyCode::Char('7') | KeyCode::Esc | KeyCode::Char('q') => break,
+                KeyCode::Char('6') | KeyCode::Esc | KeyCode::Char('q') => break,
                 KeyCode::Enter => match sel {
                     0 => {
-                        distance_query(&mut stdout, graph.clone(), cur_basic.clone(), cur_bfs.clone()).await;
+                        distance_query(
+                            &mut stdout,
+                            graph.clone(),
+                            cur_basic.clone(),
+                            cur_bfs.clone(),
+                        )
+                        .await;
                     }
                     1 => {
                         accuracy_benchmark(
@@ -223,9 +256,16 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                             &cur_basic,
                             &cur_bfs,
                             &mut cached_bench,
-                        )
+                        );
+                        cached_bench = None;
                     }
-                    2 => speed_benchmark(&mut stdout, graph.clone(), &cur_basic, &cur_bfs, &cached_bench),
+                    2 => speed_benchmark(
+                        &mut stdout,
+                        graph.clone(),
+                        &cur_basic,
+                        &cur_bfs,
+                        &cached_bench,
+                    ),
                     3 => {
                         if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
                             if n != n_landmarks {
@@ -246,8 +286,7 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                             cached_bench = None;
                         }
                     }
-                    5 => landmark_info(&mut stdout, &graph, &cur_basic, &cur_bfs),
-                    6 => break,
+                    5 => break,
                     _ => {}
                 },
                 _ => {}
@@ -405,26 +444,43 @@ async fn distance_query(
         let _ = write!(stdout, "\r\n");
         let _ = write!(stdout, "  Exact BFS:  ");
         match res.exact {
-            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.exact_time); }
-            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.exact_time); }
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.exact_time);
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.exact_time);
+            }
         }
         let _ = write!(stdout, "  Basic LM:   ");
         match res.basic {
-            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.basic_time); }
-            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.basic_time); }
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.basic_time);
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.basic_time);
+            }
         }
         let _ = write!(stdout, "  BFS LM:     ");
         match res.bfs {
-            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.bfs_time); }
-            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.bfs_time); }
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.bfs_time);
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.bfs_time);
+            }
         }
         let _ = write!(stdout, "\r\n");
         let _ = write!(stdout, "  Press Enter to query again, q to exit");
         let _ = stdout.flush();
 
         match read().unwrap() {
-            Event::Key(KeyEvent { code: KeyCode::Char('q'), .. })
-            | Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => return last_result,
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('q'),
+                ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Esc, ..
+            }) => return last_result,
             _ => {
                 let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
                 let _ = write!(stdout, "Distance Query\r\n");
@@ -436,7 +492,69 @@ async fn distance_query(
         }
     }
 }
-#[allow(unused_variables)]
+fn fmt_duration(d: Duration) -> String {
+    let secs = d.as_secs_f64();
+    if secs >= 1.0 {
+        format!("{secs:.3}s")
+    } else if secs >= 0.001 {
+        format!("{:.3}ms", secs * 1_000.0)
+    } else {
+        format!("{:.1}μs", secs * 1_000_000.0)
+    }
+}
+
+fn print_table_raw(stdout: &mut Stdout, data: &[(String, String)]) {
+    let metric_header = "Metric";
+    let value_header = "Value";
+
+    let metric_width = data
+        .iter()
+        .map(|(metric, _)| metric.chars().count())
+        .max()
+        .unwrap_or(0)
+        .max(metric_header.len());
+    let value_width = data
+        .iter()
+        .map(|(_, value)| value.chars().count())
+        .max()
+        .unwrap_or(0)
+        .max(value_header.len());
+
+    let top = format!(
+        "╔{}╦{}╗",
+        "═".repeat(metric_width + 2),
+        "═".repeat(value_width + 2)
+    );
+    let separator = format!(
+        "╠{}╬{}╣",
+        "═".repeat(metric_width + 2),
+        "═".repeat(value_width + 2)
+    );
+    let bottom = format!(
+        "╚{}╩{}╝",
+        "═".repeat(metric_width + 2),
+        "═".repeat(value_width + 2)
+    );
+
+    let _ = writeln!(stdout, "{top}\r");
+    let _ = writeln!(
+        stdout,
+        "║ {:<metric_width$} ║ {:<value_width$} ║\r",
+        metric_header, value_header
+    );
+    let _ = writeln!(stdout, "{separator}\r");
+
+    for (metric, value) in data {
+        let _ = writeln!(
+            stdout,
+            "║ {:<metric_width$} ║ {:<value_width$} ║\r",
+            metric, value
+        );
+    }
+
+    let _ = writeln!(stdout, "{bottom}\r");
+}
+
 fn accuracy_benchmark(
     stdout: &mut Stdout,
     graph: &Graph,
@@ -444,100 +562,184 @@ fn accuracy_benchmark(
     bfs: &LandmarkBFS,
     cached_bench: &mut Option<Vec<BenchResult>>,
 ) {
-    let num_pairs = match read_u32_at(stdout, "Enter number of pairs (10-100): ", 0, 2) {
+    // ── Clean screen + header ───────────────────────────────────────────
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
+    let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
+    let _ = write!(stdout, "║{:^58}║\r\n", "  📊  Accuracy Benchmark  ");
+    let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
+    let _ = execute!(stdout, ResetColor);
+    let _ = write!(stdout, "\r\n");
+
+    // ── Input for number of pairs ───────────────────────────────────────
+    let num_pairs = match read_u32_at(
+        stdout,
+        "  Number of random pairs [10-100, default 50]: ",
+        0,
+        5,
+    ) {
         Some(n) if (10..=100).contains(&n) => n as usize,
         Some(_) => {
-            let _ = write!(stdout, "  Defaulting to 50\n");
-            stdout.flush();
+            let _ = execute!(
+                stdout,
+                MoveTo(0, 6),
+                SetForegroundColor(Color::DarkGrey),
+                Print("  Using default: 50 pairs\r\n"),
+                ResetColor,
+            );
+            let _ = stdout.flush();
+            std::thread::sleep(Duration::from_millis(500));
             50
         }
-        None => {
-            return;
-        }
+        None => return,
     };
 
+    // ── Collect random vertices ─────────────────────────────────────────
     let vertices: Vec<u32> = graph.vertices().collect();
     if vertices.len() < 2 {
+        let _ = write!(stdout, "  ⚠ Graph too small for benchmarking.\r\n");
+        let _ = stdout.flush();
+        std::thread::sleep(Duration::from_secs(1));
         return;
     }
+
+    // ── Progress bar ────────────────────────────────────────────────────
+    let _ = execute!(
+        stdout,
+        MoveTo(0, 7),
+        Clear(ClearType::UntilNewLine),
+        Print("  Running benchmark..."),
+    );
+    let _ = stdout.flush();
+
     let mut rng = rand::thread_rng();
-    for _ in 0..num_pairs {
+    let bench_start = Instant::now();
+
+    // Use a LOCAL vec — не добавляем к старым результатам!
+    let mut results = Vec::with_capacity(num_pairs);
+
+    for i in 0..num_pairs {
         let idx1 = rng.gen_range(0..vertices.len());
         let idx2 = rng.gen_range(0..vertices.len());
-
         let s = vertices[idx1];
         let t = vertices[idx2];
 
         let res = compute_distances(graph, basic, bfs, s, t);
+        results.push(res);
 
-        match cached_bench {
-            Some(v) => v.push(res),
-            None => {*cached_bench = Some(vec![res])}
+        // Update progress every 5 pairs or on last
+        if i % 5 == 0 || i == num_pairs - 1 {
+            let pct = (i + 1) * 100 / num_pairs;
+            let elapsed = bench_start.elapsed();
+            let _ = execute!(
+                stdout,
+                MoveTo(0, 8),
+                Clear(ClearType::UntilNewLine),
+                Print(format!(
+                    "  Progress: [{:3}%]  {}/{}  ({})\r",
+                    pct,
+                    i + 1,
+                    num_pairs,
+                    fmt_duration(elapsed),
+                )),
+            );
+            let _ = stdout.flush();
         }
     }
-    
-    let mut count_basic_nice = 0;
-    let mut count_bfs_nice = 0;
-    let mut sum_time_basic: Duration = Duration::ZERO;
-    let mut sum_time_bfs: Duration = Duration::ZERO;
-    let mut sum_time_exact: Duration = Duration::ZERO;
 
-    if let Some(res) = cached_bench {
+    // Сохраняем только текущий запуск
+    *cached_bench = Some(results);
+
+    // ── Compute statistics ──────────────────────────────────────────────
+    let mut count_basic_nice = 0usize;
+    let mut count_bfs_nice = 0usize;
+    let mut sum_basic_err: f64 = 0.0;
+    let mut sum_bfs_err: f64 = 0.0;
+    let mut max_basic_err = 0usize;
+    let mut max_bfs_err = 0usize;
+    let mut sum_time_basic = Duration::ZERO;
+    let mut sum_time_bfs = Duration::ZERO;
+    let mut sum_time_exact = Duration::ZERO;
+
+    if let Some(ref res) = *cached_bench {
         for info in res {
             if info.exact == info.basic {
                 count_basic_nice += 1;
             }
-
             if info.exact == info.bfs {
                 count_bfs_nice += 1;
             }
+
+            if let (Some(ex), Some(ba)) = (info.exact, info.basic) {
+                let err = if ba >= ex { ba - ex } else { ex - ba };
+                sum_basic_err += err as f64;
+                max_basic_err = max_basic_err.max(err);
+            }
+            if let (Some(ex), Some(bf)) = (info.exact, info.bfs) {
+                let err = if bf >= ex { bf - ex } else { ex - bf };
+                sum_bfs_err += err as f64;
+                max_bfs_err = max_bfs_err.max(err);
+            }
+
             sum_time_basic += info.basic_time;
             sum_time_bfs += info.bfs_time;
             sum_time_exact += info.exact_time;
         }
     }
-    let average_time_basic = (sum_time_basic) / num_pairs as u32;
-    let average_time_bfs = (sum_time_bfs) / num_pairs as u32;
-    let average_time_exact = (sum_time_exact) / num_pairs as u32;
-    let percent_basic = count_basic_nice * 100 / num_pairs;
-    let percent_bfs = count_bfs_nice * 100 / num_pairs;
+
+    let avg_basic_err = sum_basic_err / num_pairs.max(1) as f64;
+    let avg_bfs_err = sum_bfs_err / num_pairs.max(1) as f64;
+    let avg_time_basic = sum_time_basic / num_pairs as u32;
+    let avg_time_bfs = sum_time_bfs / num_pairs as u32;
+    let avg_time_exact = sum_time_exact / num_pairs as u32;
+    let pct_basic = count_basic_nice * 100 / num_pairs.max(1);
+    let pct_bfs = count_bfs_nice * 100 / num_pairs.max(1);
+
+    // ── Display results ─────────────────────────────────────────────────
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
+    let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
+    let _ = write!(stdout, "║{:^58}║\r\n", "  📊  Accuracy Benchmark Results  ");
+    let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
+    let _ = execute!(stdout, ResetColor);
+    let _ = write!(stdout, "\r\n");
 
     let mut table_data: Vec<(String, String)> = Vec::new();
-    table_data.push(("Total pairs".to_string(), num_pairs.to_string()));
+    table_data.push(("Total pairs tested".to_string(), num_pairs.to_string()));
     table_data.push((
-        "Exact vs Basic matches".to_string(),
-        format!("{:.2}% ({}/{})", percent_basic, count_basic_nice, num_pairs)
+        "Basic exact matches".to_string(),
+        format!("{}%  ({}/{})", pct_basic, count_basic_nice, num_pairs),
     ));
     table_data.push((
-        "Exact vs BFS matches".to_string(),
-        format!("{:.2}% ({}/{})", percent_bfs, count_bfs_nice, num_pairs)
+        "BFS exact matches".to_string(),
+        format!("{}%  ({}/{})", pct_bfs, count_bfs_nice, num_pairs),
+    ));
+    table_data.push(("Basic avg error".to_string(), format!("{avg_basic_err:.2}")));
+    table_data.push(("BFS avg error".to_string(), format!("{avg_bfs_err:.2}")));
+    table_data.push(("Basic max error".to_string(), max_basic_err.to_string()));
+    table_data.push(("BFS max error".to_string(), max_bfs_err.to_string()));
+    table_data.push((
+        "Avg exact BFS time".to_string(),
+        fmt_duration(avg_time_exact),
     ));
     table_data.push((
-        "Average exact BFS time".to_string(),
-        format!("{:?}", average_time_exact)
+        "Avg Basic LM time".to_string(),
+        fmt_duration(avg_time_basic),
     ));
-    table_data.push((
-        "Average Basic LM time".to_string(),
-        format!("{:?}", average_time_basic)
-    ));
-    table_data.push((
-        "Average BFS LM time".to_string(),
-        format!("{:?}", average_time_bfs)
-    ));
+    table_data.push(("Avg BFS LM time".to_string(), fmt_duration(avg_time_bfs)));
 
-    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
-    let _ = write!(stdout, "  ─── Accuracy Benchmark Results ───\r\n\r\n");
-    let _ = stdout.flush();
+    print_table_raw(stdout, &table_data);
 
-    print_table(&table_data);
-
-    let _ = write!(stdout, "\r\n  Press Enter to continue...");
+    let _ = write!(stdout, "\r\n  Press Enter to continue...\r\n");
     let _ = stdout.flush();
 
     loop {
-        match read().unwrap() {
-            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => break,
-            _ => {}
+        if let Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            ..
+        }) = read().unwrap()
+        {
+            break;
         }
     }
 }
@@ -550,10 +752,13 @@ fn speed_benchmark(
     bfs: &LandmarkBFS,
     cached_bench: &Option<Vec<BenchResult>>,
 ) {
-    let _ = write!(stdout, "\n  [stub] speed_benchmark — not implemented yet");
     let _ = write!(
         stdout,
-        "  Would benchmark speed with {} landmarks",
+        "\r\n  [stub] speed_benchmark — not implemented yet\r\n"
+    );
+    let _ = write!(
+        stdout,
+        "  Would benchmark speed with {} landmarks\r\n",
         cached_bench.as_ref().map_or(0, |v| v.len())
     );
     let _ = stdout.flush();
@@ -572,9 +777,4 @@ fn change_landmarks(stdout: &mut Stdout, _graph: &Graph, current: usize) -> Opti
     read_u32_at(stdout, "New amount: ", 0, 1).map(|n| n as usize)
 }
 
-#[allow(unused_variables)]
-fn landmark_info(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs: &LandmarkBFS) {
-    let _ = write!(stdout, "\n  [stub] landmark_info — not implemented yet");
-    let _ = stdout.flush();
-    std::thread::sleep(Duration::from_secs(1));
-}
+
