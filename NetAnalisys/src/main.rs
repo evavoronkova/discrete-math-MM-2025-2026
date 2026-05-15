@@ -119,7 +119,7 @@ where
 #[tokio::main]
 async fn main() {
     let perf_log = open_perf_log();
-    let file_name = ui::main_ui::run_ui_and_file_parcing_menu();
+    let file_name = ui::main_ui::run_ui_and_file_parsing_menu();
     let graph: Arc<graph::Graph>;
     match file_name {
         Some(path) => {
@@ -135,7 +135,8 @@ async fn main() {
                 Err(error) => {
                     stop_animation.store(true, Ordering::Relaxed);
                     let _ = animation_handle.join();
-                    panic!("Failed to parse the file: {error}");
+                    eprintln!("Error: failed to parse file: {error}");
+                    return;
                 }
             };
 

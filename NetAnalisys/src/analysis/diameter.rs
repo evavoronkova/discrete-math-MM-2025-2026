@@ -1,7 +1,6 @@
 use crate::graph::Graph;
-use crate::graph::traversal::bfs_with_filter_internal;
-use rand::Rng;
 use rand::seq::{IteratorRandom, SliceRandom};
+use rand::Rng;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet as HashSet;
 use std::collections::VecDeque;
@@ -48,20 +47,41 @@ pub fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> 
     });
 
     let start = match component {
-        Some(comp) => graph
-            .external_to_internal(*comp.iter().next().unwrap())
-            .unwrap(),
-        None => graph.vertices_internal().next().unwrap(),
+        Some(comp) => match comp
+            .iter()
+            .next()
+            .and_then(|&v| graph.external_to_internal(v))
+        {
+            Some(v) => v,
+            None => return 0,
+        },
+        None => match graph.vertices_internal().next() {
+            Some(v) => v,
+            None => return 0,
+        },
     };
 
-    let dist = bfs_with_filter_internal(graph, start, allowed_mask.as_deref());
+    let dist = bfs_distances_internal(graph, start, allowed_mask.as_deref());
 
-    let (&farthest_node, _) = dist.iter().max_by_key(|&(_, &d)| d).unwrap();
+    let farthest_node = match dist
+        .iter()
+        .enumerate()
+        .filter(|&(_, &d)| d != usize::MAX)
+        .max_by_key(|&(_, &d)| d)
+        .map(|(i, _)| i as u32)
+    {
+        Some(v) => v,
+        None => return 0,
+    };
 
-    let dist_from_farthest =
-        bfs_with_filter_internal(graph, farthest_node, allowed_mask.as_deref());
+    let dist_from_farthest = bfs_distances_internal(graph, farthest_node, allowed_mask.as_deref());
 
-    *dist_from_farthest.values().max().unwrap()
+    dist_from_farthest
+        .iter()
+        .filter(|&&d| d != usize::MAX)
+        .max()
+        .copied()
+        .unwrap_or(0)
 }
 
 pub fn random_like_diameter_calculate(
@@ -91,10 +111,13 @@ pub fn random_like_diameter_calculate(
     let mut max_distance = 0;
 
     for _ in 0..iterations {
+        if vertices.is_empty() {
+            break;
+        }
         let start = vertices[rng.gen_range(0..vertices.len())];
-        let dist = bfs_with_filter_internal(graph, start, allowed_mask.as_deref());
+        let dist = bfs_distances_internal(graph, start, allowed_mask.as_deref());
 
-        if let Some(&current_max) = dist.values().max() {
+        if let Some(&current_max) = dist.iter().filter(|&&d| d != usize::MAX).max() {
             max_distance = max_distance.max(current_max);
         }
     }

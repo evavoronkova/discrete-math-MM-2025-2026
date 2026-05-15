@@ -1,10 +1,10 @@
-use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
+use crossterm::{cursor::*, event::*, execute, style::*, terminal::*, QueueableCommand};
 use rand::Rng;
 use std::fs;
-use std::io::{Stdout, Write, stdout};
+use std::io::{stdout, Stdout, Write};
 use std::sync::{
-    Arc,
     atomic::{AtomicBool, Ordering},
+    Arc,
 };
 use std::{thread, time::Duration};
 
@@ -42,7 +42,7 @@ fn print_greeting(stdout: &mut std::io::Stdout) {
     .unwrap();
 }
 
-pub fn run_ui_and_file_parcing_menu() -> Option<String> {
+pub fn run_ui_and_file_parsing_menu() -> Option<String> {
     let _guard = TerminalGuard::new();
     let mut stdout = stdout();
     let mut counter = 1;

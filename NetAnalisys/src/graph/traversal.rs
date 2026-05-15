@@ -2,6 +2,7 @@ use crate::graph::Graph;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::collections::VecDeque;
 
+#[allow(dead_code, unused)]
 fn component_mask(graph: &Graph, component: Option<&HashSet<u32>>) -> Option<Vec<bool>> {
     component.map(|comp| {
         let mut mask = vec![false; graph.num_vertices()];
@@ -13,7 +14,7 @@ fn component_mask(graph: &Graph, component: Option<&HashSet<u32>>) -> Option<Vec
         mask
     })
 }
-
+#[allow(dead_code, unused)]
 pub fn bfs_to_target(graph: &Graph, start: u32, target: &[u32]) -> HashMap<u32, usize> {
     let Some(start_internal) = graph.external_to_internal(start) else {
         return HashMap::default();
@@ -70,6 +71,7 @@ pub fn bfs_to_target(graph: &Graph, start: u32, target: &[u32]) -> HashMap<u32, 
 
     distances
 }
+#[allow(dead_code, unused)]
 
 pub fn bfs_internal(graph: &Graph, start: u32) -> HashMap<u32, usize> {
     let mut visited = vec![false; graph.num_vertices()];
@@ -142,6 +144,7 @@ pub fn bfs_with_filter_internal(
         .collect()
 }
 
+#[allow(dead_code, unused)]
 pub fn bfs_with_parents_internal(graph: &Graph, start: u32) -> HashMap<u32, (usize, Option<u32>)> {
     let mut visited = vec![false; graph.num_vertices()];
     let mut dist = vec![None; graph.num_vertices()];
@@ -175,6 +178,7 @@ pub fn bfs_with_parents_internal(graph: &Graph, start: u32) -> HashMap<u32, (usi
         .collect()
 }
 
+#[allow(dead_code, unused)]
 pub fn dfs(graph: &Graph, start: u32, visited: &mut HashSet<u32>) {
     let Some(start_internal) = graph.external_to_internal(start) else {
         return;
@@ -191,6 +195,7 @@ pub fn dfs(graph: &Graph, start: u32, visited: &mut HashSet<u32>) {
     }
 }
 
+#[allow(dead_code, unused)]
 pub fn bfs(graph: &Graph, start: u32) -> HashMap<u32, usize> {
     let Some(start_internal) = graph.external_to_internal(start) else {
         return HashMap::default();
@@ -202,6 +207,7 @@ pub fn bfs(graph: &Graph, start: u32) -> HashMap<u32, usize> {
         .collect()
 }
 
+#[allow(dead_code, unused)]
 pub fn bfs_with_filter(
     graph: &Graph,
     start: u32,
@@ -219,6 +225,7 @@ pub fn bfs_with_filter(
         .collect()
 }
 
+#[allow(dead_code, unused)]
 pub fn bfs_with_parents(graph: &Graph, start: u32) -> HashMap<u32, (usize, Option<u32>)> {
     let Some(start_internal) = graph.external_to_internal(start) else {
         return HashMap::default();
@@ -238,6 +245,7 @@ pub fn bfs_with_parents(graph: &Graph, start: u32) -> HashMap<u32, (usize, Optio
         .collect()
 }
 
+#[allow(dead_code, unused)]
 pub fn dfs_for_comps(
     graph: &Graph,
     start: u32,
