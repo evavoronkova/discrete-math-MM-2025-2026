@@ -272,6 +272,39 @@ fn exact_distance(graph: &Graph, s: u32, t: u32) -> Option<usize> {
     bfs_internal(&graph, s_int).get(&t_int).copied()
 }
 
+fn compute_distances(
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+    s: u32,
+    t: u32,
+) -> BenchResult {
+    let (exact_res, exact_time) = {
+        let start = Instant::now();
+        let result = exact_distance(graph, s, t);
+        (result, start.elapsed())
+    };
+    let (basic_res, basic_time) = {
+        let start = Instant::now();
+        let result = basic.estimate(s, t);
+        (result, start.elapsed())
+    };
+    let (bfs_res, bfs_time) = {
+        let start = Instant::now();
+        let result = bfs.estimate(graph, s, t);
+        (result, start.elapsed())
+    };
+
+    BenchResult {
+        exact: exact_res,
+        basic: basic_res,
+        bfs: bfs_res,
+        exact_time,
+        basic_time,
+        bfs_time,
+    }
+}
+
 async fn distance_query(
     stdout: &mut Stdout,
     graph: Arc<Graph>,
@@ -328,79 +361,37 @@ async fn distance_query(
         );
         let _ = stdout.flush();
 
-        let (exact_res, exact_time) = {
-            let start = Instant::now();
-            let result = exact_distance(&graph, s, t);
-            (result, start.elapsed())
-        };
-        let (basic_res, basic_time) = {
-            let start = Instant::now();
-            let result = basic.estimate(s, t);
-            (result, start.elapsed())
-        };
-        let (bfs_res, bfs_time) = {
-            let start = Instant::now();
-            let result = bfs.estimate(&graph, s, t);
-            (result, start.elapsed())
-        };
-
-        let res = BenchResult {
-            exact: exact_res,
-            basic: basic_res,
-            bfs: bfs_res,
-            exact_time,
-            basic_time,
-            bfs_time,
-        };
+        let res = compute_distances(&graph, &basic, &bfs, s, t);
         last_result = Some(res);
 
-        // Вывод результатов — каждая строка на своей позиции
         let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
         let _ = write!(stdout, "  ─── Distance Query Results ───\r\n");
         let _ = write!(stdout, "\r\n");
         let _ = write!(stdout, "  s = {s}  |  t = {t}\r\n");
         let _ = write!(stdout, "\r\n");
         let _ = write!(stdout, "  Exact BFS:  ");
-        match exact_res {
-            Some(d) => {
-                let _ = write!(stdout, "{d}  ({exact_time:.3?})\r\n");
-            }
-            None => {
-                let _ = write!(stdout, "unreachable  ({exact_time:.3?})\r\n");
-            }
+        match res.exact {
+            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.exact_time); }
+            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.exact_time); }
         }
         let _ = write!(stdout, "  Basic LM:   ");
-        match basic_res {
-            Some(d) => {
-                let _ = write!(stdout, "{d}  ({basic_time:.3?})\r\n");
-            }
-            None => {
-                let _ = write!(stdout, "unreachable  ({basic_time:.3?})\r\n");
-            }
+        match res.basic {
+            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.basic_time); }
+            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.basic_time); }
         }
         let _ = write!(stdout, "  BFS LM:     ");
-        match bfs_res {
-            Some(d) => {
-                let _ = write!(stdout, "{d}  ({bfs_time:.3?})\r\n");
-            }
-            None => {
-                let _ = write!(stdout, "unreachable  ({bfs_time:.3?})\r\n");
-            }
+        match res.bfs {
+            Some(d) => { let _ = write!(stdout, "{d}  ({:0.3?})\r\n", res.bfs_time); }
+            None => { let _ = write!(stdout, "unreachable  ({:0.3?})\r\n", res.bfs_time); }
         }
         let _ = write!(stdout, "\r\n");
         let _ = write!(stdout, "  Press Enter to query again, q to exit");
         let _ = stdout.flush();
 
         match read().unwrap() {
-            Event::Key(KeyEvent {
-                code: KeyCode::Char('q'),
-                ..
-            })
-            | Event::Key(KeyEvent {
-                code: KeyCode::Esc, ..
-            }) => return last_result,
+            Event::Key(KeyEvent { code: KeyCode::Char('q'), .. })
+            | Event::Key(KeyEvent { code: KeyCode::Esc, .. }) => return last_result,
             _ => {
-                // Начинаем заново — возвращаемся к вводу
                 let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
                 let _ = write!(stdout, "Distance Query\r\n");
                 let _ = write!(
@@ -437,21 +428,31 @@ async fn accuracy_benchmark(
     let l_bfs_2 = Arc::clone(&bfs);
     let l_bfs_3 = Arc::clone(&bfs);
 
+    let rt = tokio::runtime::Handle::current();
+
     tokio::try_join!(
-        task::spawn_blocking(move || {
-            let mut stdout = stdout_1.lock().unwrap();
-            distance_query(&mut *stdout, g1, l_basic_1, l_bfs_1)
+        task::spawn_blocking({
+            let rt = rt.clone();
+            move || {
+                let mut stdout = stdout_1.lock().unwrap();
+                rt.block_on(distance_query(&mut *stdout, g1, l_basic_1, l_bfs_1))
+            }
         }),
-        task::spawn_blocking(move || {
-            let mut stdout = stdout_2.lock().unwrap();
-            distance_query(&mut *stdout, g2, l_basic_2, l_bfs_2)
+        task::spawn_blocking({
+            let rt = rt.clone();
+            move || {
+                let mut stdout = stdout_2.lock().unwrap();
+                rt.block_on(distance_query(&mut *stdout, g2, l_basic_2, l_bfs_2))
+            }
         }),
-        task::spawn_blocking(move || {
-            let mut stdout = stdout_3.lock().unwrap();
-            distance_query(&mut *stdout, g3, l_basic_3, l_bfs_3)
+        task::spawn_blocking({
+            let rt = rt.clone();
+            move || {
+                let mut stdout = stdout_3.lock().unwrap();
+                rt.block_on(distance_query(&mut *stdout, g3, l_basic_3, l_bfs_3))
+            }
         })
-    )
-    .unwrap();
+    ).unwrap();
     let mut stdout = stdout_arc.lock().unwrap();
 
     let _ = writeln!(
@@ -464,7 +465,6 @@ async fn accuracy_benchmark(
         cached_bench.as_ref().map_or(0, |v| v.len())
     );
     let _ = stdout.flush();
-    std::thread::sleep(Duration::from_secs(1));
 }
 
 #[allow(unused_variables)]
