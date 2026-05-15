@@ -14,7 +14,7 @@ use crate::analysis::connectivity::{
     get_largest_comp, get_number_of_comps, tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
-use crate::analysis::diameter::{approximate_diameter, percentile_90_distance};
+use crate::analysis::diameter::{percentile_90_distance, count_diameters};
 use crate::analysis::robustness::{lcc_after_hub_removal, lcc_after_random_removal};
 use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
@@ -262,14 +262,6 @@ async fn main() {
             }
             let largest_weak_comp = Arc::new(largest_weak_comp);
 
-            let diameter_handle = {
-                let graph = Arc::clone(&graph);
-                let largest_weak_comp = Arc::clone(&largest_weak_comp);
-                spawn_blocking_logged(Arc::clone(&perf_log), "approximate_diameter", move || {
-                    approximate_diameter(graph.as_ref(), Some(largest_weak_comp.as_ref()))
-                })
-            };
-
             let percentile_handle = {
                 let graph = Arc::clone(&graph);
                 spawn_blocking_logged(Arc::clone(&perf_log), "percentile_90_distance", move || {
@@ -283,13 +275,29 @@ async fn main() {
                     find_triangles(graph.as_ref())
                 })
             };
+            
+            let (percentile, num_triangles) =
+                tokio::try_join!(percentile_handle, num_triangles_handle).unwrap();
 
-            let (diameter, percentile, num_triangles) =
-                tokio::try_join!(diameter_handle, percentile_handle, num_triangles_handle).unwrap();
+            let diameters = count_diameters(
+                Arc::clone(&graph),
+                Some(Arc::clone(&largest_weak_comp)),
+            )
+            .await;
 
             buffer_for_print_default_info.push((
-                "Diameter of largest weak component".to_string(),
-                diameter.to_string(),
+                "Diameter of largest weak component on double bfs".to_string(),
+                diameters[0].to_string(),
+            ));
+
+            buffer_for_print_default_info.push((
+                "Diameter of largest weak component on random vertices".to_string(),
+                diameters[1].to_string(),
+            ));
+
+            buffer_for_print_default_info.push((
+                "Diameter of largest weak component on snowball sampling".to_string(),
+                diameters[2].to_string(),
             ));
 
             buffer_for_print_default_info.push((
