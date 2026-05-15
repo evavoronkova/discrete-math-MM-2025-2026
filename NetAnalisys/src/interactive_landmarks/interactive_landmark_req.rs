@@ -2,7 +2,6 @@ use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
 use crate::landmarks::basic_landmarks::LandmarkBasic;
 use crate::landmarks::bfs_landmarks::LandmarkBFS;
-use anyhow::Result;
 use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
 use rand::seq::SliceRandom;
 use std::io::{Stdout, Write, stdout};
@@ -162,10 +161,9 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
                     5 => break,
                     _ => {}
                 },
-                    _ => {}
-                },
                 _ => {}
-            }
+            },
+            _ => {}
         }
     }
 }
@@ -174,14 +172,14 @@ pub fn run_landmark_interactive(graph: &Graph, num_landmarks: usize) {
 // Stub functions
 // ---------------------------------------------------------------------------
 
-fn distance_query(
-    stdout: &mut Stdout,
-    graph: &Graph,
-    basic: &LandmarkBasic,
-    bfs: &LandmarkBFS,
-) {
+fn distance_query(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs: &LandmarkBFS) {
     let _ = writeln!(stdout, "\n  [stub] distance_query — not implemented yet");
-    let _ = writeln!(stdout, "  Graph has {} vertices, {} edges", graph.num_vertices(), graph.num_edges());
+    let _ = writeln!(
+        stdout,
+        "  Graph has {} vertices, {} edges",
+        graph.num_vertices(),
+        graph.num_edges()
+    );
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
 }
@@ -193,8 +191,15 @@ fn accuracy_benchmark(
     bfs: &LandmarkBFS,
     cached_bench: &mut Option<Vec<BenchResult>>,
 ) {
-    let _ = writeln!(stdout, "\n  [stub] accuracy_benchmark — not implemented yet");
-    let _ = writeln!(stdout, "  Would benchmark {} landmarks", cached_bench.as_ref().map_or(0, |v| v.len()));
+    let _ = writeln!(
+        stdout,
+        "\n  [stub] accuracy_benchmark — not implemented yet"
+    );
+    let _ = writeln!(
+        stdout,
+        "  Would benchmark {} landmarks",
+        cached_bench.as_ref().map_or(0, |v| v.len())
+    );
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
 }
@@ -207,16 +212,16 @@ fn speed_benchmark(
     cached_bench: &Option<Vec<BenchResult>>,
 ) {
     let _ = writeln!(stdout, "\n  [stub] speed_benchmark — not implemented yet");
-    let _ = writeln!(stdout, "  Would benchmark speed with {} landmarks", cached_bench.as_ref().map_or(0, |v| v.len()));
+    let _ = writeln!(
+        stdout,
+        "  Would benchmark speed with {} landmarks",
+        cached_bench.as_ref().map_or(0, |v| v.len())
+    );
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
 }
 
-fn change_landmarks(
-    stdout: &mut Stdout,
-    graph: &Graph,
-    current: usize,
-) -> Option<usize> {
+fn change_landmarks(stdout: &mut Stdout, graph: &Graph, current: usize) -> Option<usize> {
     let _ = writeln!(stdout, "\n  [stub] change_landmarks — not implemented yet");
     let _ = writeln!(stdout, "  Current: {}. Returning same value.", current);
     let _ = stdout.flush();
@@ -224,15 +229,8 @@ fn change_landmarks(
     Some(current)
 }
 
-fn landmark_info(
-    stdout: &mut Stdout,
-    graph: &Graph,
-    basic: &LandmarkBasic,
-    bfs: &LandmarkBFS,
-) {
+fn landmark_info(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs: &LandmarkBFS) {
     let _ = writeln!(stdout, "\n  [stub] landmark_info — not implemented yet");
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
-}
-    }
 }

@@ -1,10 +1,10 @@
-use crossterm::{cursor::*, event::*, execute, style::*, terminal::*, QueueableCommand};
+use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
 use rand::Rng;
 use std::fs;
-use std::io::{stdout, Stdout, Write};
+use std::io::{Stdout, Write, stdout};
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc,
+    atomic::{AtomicBool, Ordering},
 };
 use std::{thread, time::Duration};
 
