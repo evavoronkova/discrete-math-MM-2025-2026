@@ -46,30 +46,82 @@ struct BenchResult {
     bfs_time: Duration,
 }
 
+fn change_strategy(stdout: &mut Stdout, current: LandmarkStrategy) -> Option<LandmarkStrategy> {
+    let items = [
+        ("Random", LandmarkStrategy::Random),
+        ("Highest degree", LandmarkStrategy::HighestDegree),
+        ("Farthest-first coverage", LandmarkStrategy::Coverage),
+    ];
+    let mut sel = items.iter().position(|(_, s)| *s == current).unwrap_or(0);
+    loop {
+        let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+        let _ = write!(stdout, "  ─── Select Landmark Strategy ───\r\n\r\n");
+        for (i, (name, _)) in items.iter().enumerate() {
+            if i == sel {
+                let _ = execute!(
+                    stdout,
+                    SetBackgroundColor(Color::Blue),
+                    SetForegroundColor(Color::White),
+                    Print(format!("  ❯ {} (press Enter)\r\n", name)),
+                    ResetColor,
+                );
+            } else {
+                let _ = write!(stdout, "    {}\r\n", name);
+            }
+        }
+        let _ = write!(stdout, "\r\n  Current: {}\r\n", items[sel].0);
+        let _ = write!(stdout, "  ↑↓ navigate · Enter select · Esc/q cancel");
+        let _ = stdout.flush();
+
+        match read().unwrap() {
+            Event::Key(KeyEvent { code: KeyCode::Up, .. })
+            | Event::Key(KeyEvent { code: KeyCode::Char('k'), .. }) => {
+                sel = sel.saturating_sub(1);
+            }
+            Event::Key(KeyEvent { code: KeyCode::Down, .. })
+            | Event::Key(KeyEvent { code: KeyCode::Char('j'), .. }) => {
+                if sel < items.len() - 1 {
+                    sel += 1;
+                }
+            }
+            Event::Key(KeyEvent { code: KeyCode::Enter, .. }) => {
+                if items[sel].1 != current {
+                    return Some(items[sel].1);
+                }
+                return None;
+            }
+            Event::Key(KeyEvent { code: KeyCode::Esc, .. })
+            | Event::Key(KeyEvent { code: KeyCode::Char('q'), .. }) => return None,
+            _ => {}
+        }
+    }
+}
+
+fn rebuild_landmarks(
+    graph: &Graph,
+    n_landmarks: usize,
+    strategy: LandmarkStrategy,
+) -> (Arc<LandmarkBasic>, Arc<LandmarkBFS>) {
+    let basic = LandmarkBasic::new(graph, n_landmarks, strategy)
+        .map(Arc::new)
+        .unwrap_or_else(|| Arc::new(LandmarkBasic::new(graph, 1, strategy).unwrap()));
+    let bfs = Arc::new(LandmarkBFS::new(graph, n_landmarks, strategy));
+    (basic, bfs)
+}
+
 pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
     let _guard = TerminalGuard::new();
     let mut stdout = stdout();
-    execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
-    execute!(stdout, MoveTo(0, 0)).unwrap();
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
 
-    let basic = match LandmarkBasic::new(&graph, num_landmarks, LandmarkStrategy::Random) {
-        Some(b) => b,
-        None => {
-            let _ = write!(
-                stdout,
-                "  Error: could not create landmarks (graph too small?).\r\n"
-            );
-            let _ = stdout.flush();
-            std::thread::sleep(Duration::from_secs(2));
-            return;
-        }
-    };
-    let bfs = LandmarkBFS::new(&graph, num_landmarks, LandmarkStrategy::Random);
+    let mut cur_strategy = LandmarkStrategy::Random;
+    let (cur_basic, cur_bfs) = rebuild_landmarks(&graph, num_landmarks, cur_strategy);
+    let mut cur_basic = cur_basic;
+    let mut cur_bfs = cur_bfs;
     let mut cached_bench: Option<Vec<BenchResult>> = None;
     let mut sel = 0usize;
     let mut n_landmarks = num_landmarks;
-    let mut cur_basic = Arc::new(basic);
-    let mut cur_bfs = Arc::new(bfs);
+
     loop {
         let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
         let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
@@ -77,13 +129,19 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
         let _ = write!(stdout, "║{:^58}║\r\n", "     Landmark Distance Estimator");
         let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
         let _ = execute!(stdout, ResetColor);
+        let strategy_name = match cur_strategy {
+            LandmarkStrategy::Random => "Random",
+            LandmarkStrategy::HighestDegree => "Top-deg",
+            LandmarkStrategy::Coverage => "Coverage",
+        };
         let _ = write!(
             stdout,
-            "  Graph: {} vertices, {} edges  |  Type: {}  |  Landmarks: {}\r\n",
-            &graph.num_vertices(),
-            &graph.num_edges(),
-            &graph.kind(),
+            "  Vertices: {}  Edges: {}  Type: {}  LM: {} ({})\r\n",
+            graph.num_vertices(),
+            graph.num_edges(),
+            graph.kind(),
             n_landmarks,
+            strategy_name,
         );
         let _ = write!(stdout, "\r\n");
         for (i, item) in MENU_ITEMS.iter().enumerate() {
@@ -103,7 +161,7 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
         let _ = execute!(
             stdout,
             SetForegroundColor(Color::DarkGrey),
-            Print("  ↑↓ navigate · Enter/1-6 select · q/Esc back\r\n"),
+            Print("  ↑↓ navigate · Enter/1-7 select · q/Esc back\r\n"),
             ResetColor,
         );
         let _ = stdout.flush();
@@ -116,13 +174,7 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     }
                 }
                 KeyCode::Char('1') => {
-                    distance_query(
-                        &mut stdout,
-                        graph.clone(),
-                        cur_basic.clone(),
-                        cur_bfs.clone(),
-                    )
-                    .await;
+                    distance_query(&mut stdout, graph.clone(), cur_basic.clone(), cur_bfs.clone()).await;
                 }
                 KeyCode::Char('2') => {
                     accuracy_benchmark(
@@ -134,30 +186,26 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     );
                 }
                 KeyCode::Char('3') => {
-                    speed_benchmark(
-                        &mut stdout,
-                        graph.clone(),
-                        &cur_basic,
-                        &cur_bfs,
-                        &cached_bench,
-                    );
+                    speed_benchmark(&mut stdout, graph.clone(), &cur_basic, &cur_bfs, &cached_bench);
                 }
                 KeyCode::Char('4') => {
                     if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
                         if n != n_landmarks {
                             n_landmarks = n;
-                            if let Some(b) =
-                                LandmarkBasic::new(&graph, n_landmarks, LandmarkStrategy::Random)
-                            {
-                                cur_basic = Arc::new(b);
-                            }
-                            cur_bfs = Arc::new(LandmarkBFS::new(
-                                &graph,
-                                n_landmarks,
-                                LandmarkStrategy::Random,
-                            ));
+                            let (b, b2) = rebuild_landmarks(&graph, n_landmarks, cur_strategy);
+                            cur_basic = b;
+                            cur_bfs = b2;
                             cached_bench = None;
                         }
+                    }
+                }
+                KeyCode::Char('5') => {
+                    if let Some(s) = change_strategy(&mut stdout, cur_strategy) {
+                        cur_strategy = s;
+                        let (b, b2) = rebuild_landmarks(&graph, n_landmarks, cur_strategy);
+                        cur_basic = b;
+                        cur_bfs = b2;
+                        cached_bench = None;
                     }
                 }
                 KeyCode::Char('6') => {
@@ -166,13 +214,7 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                 KeyCode::Char('7') | KeyCode::Esc | KeyCode::Char('q') => break,
                 KeyCode::Enter => match sel {
                     0 => {
-                        distance_query(
-                            &mut stdout,
-                            graph.clone(),
-                            cur_basic.clone(),
-                            cur_bfs.clone(),
-                        )
-                        .await;
+                        distance_query(&mut stdout, graph.clone(), cur_basic.clone(), cur_bfs.clone()).await;
                     }
                     1 => {
                         accuracy_benchmark(
@@ -183,35 +225,29 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                             &mut cached_bench,
                         )
                     }
-                    2 => speed_benchmark(
-                        &mut stdout,
-                        graph.clone(),
-                        &cur_basic,
-                        &cur_bfs,
-                        &cached_bench,
-                    ),
+                    2 => speed_benchmark(&mut stdout, graph.clone(), &cur_basic, &cur_bfs, &cached_bench),
                     3 => {
                         if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
                             if n != n_landmarks {
                                 n_landmarks = n;
-                                if let Some(b) = LandmarkBasic::new(
-                                    &graph,
-                                    n_landmarks,
-                                    LandmarkStrategy::Random,
-                                ) {
-                                    cur_basic = Arc::new(b);
-                                }
-                                cur_bfs = Arc::new(LandmarkBFS::new(
-                                    &graph,
-                                    n_landmarks,
-                                    LandmarkStrategy::Random,
-                                ));
+                                let (b, b2) = rebuild_landmarks(&graph, n_landmarks, cur_strategy);
+                                cur_basic = b;
+                                cur_bfs = b2;
                                 cached_bench = None;
                             }
                         }
                     }
-                    4 => landmark_info(&mut stdout, &graph, &cur_basic, &cur_bfs),
-                    5 => break,
+                    4 => {
+                        if let Some(s) = change_strategy(&mut stdout, cur_strategy) {
+                            cur_strategy = s;
+                            let (b, b2) = rebuild_landmarks(&graph, n_landmarks, cur_strategy);
+                            cur_basic = b;
+                            cur_bfs = b2;
+                            cached_bench = None;
+                        }
+                    }
+                    5 => landmark_info(&mut stdout, &graph, &cur_basic, &cur_bfs),
+                    6 => break,
                     _ => {}
                 },
                 _ => {}

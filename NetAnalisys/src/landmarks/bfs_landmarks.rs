@@ -99,12 +99,12 @@ impl LandmarkBFS {
         }
 
         if deg.len() <= k {
-            return deg.into_iter().map(|(v, _)| v).collect();
+            return deg.into_par_iter().map(|(v, _)| v).collect();
         }
 
         deg.select_nth_unstable_by(k, |a, b| b.1.cmp(&a.1));
         deg.truncate(k);
-        deg.into_iter().map(|(v, _)| v).collect()
+        deg.into_par_iter().map(|(v, _)| v).collect()
     }
 
     fn coverage_selection(graph: &Graph, k: usize) -> Vec<u32> {
@@ -115,6 +115,9 @@ impl LandmarkBFS {
         let mut min_dist = vec![usize::MAX; n];
 
         let first = rng.gen_range(0..n) as u32;
+        let mut selected_mask = vec![false; n];
+        selected_mask[first as usize] = true;
+
         selected.push(first);
 
         let dists = Self::bfs_all(graph, first);
@@ -127,7 +130,7 @@ impl LandmarkBFS {
             let farthest = min_dist
                 .par_iter()
                 .enumerate()
-                .filter(|(i, d)| **d != usize::MAX && **d != 0 && !selected.contains(&(*i as u32)))
+                .filter(|(i, d)| **d != usize::MAX && **d != 0 && !selected_mask[*i])
                 .max_by_key(|(_, d)| **d)
                 .map(|(i, _)| i as u32);
 
@@ -136,8 +139,8 @@ impl LandmarkBFS {
                 None => break,
             };
 
+            selected_mask[farthest as usize] = true;
             selected.push(farthest);
-
             let dists = Self::bfs_all(graph, farthest);
 
             min_dist.par_iter_mut().enumerate().for_each(|(i, v)| {
@@ -203,13 +206,21 @@ impl LandmarkBFS {
     }
 
     fn collect_subgraph(&self, s: u32, t: u32) -> HashSet<u32> {
-        let mut subgraph = HashSet::default();
-
-        for &u in &self.landmarks {
-            subgraph.extend(self.path_to_landmark(s, u));
-            subgraph.extend(self.path_to_landmark(t, u));
+        use rayon::prelude::*;
+        let subgraphs: Vec<HashSet<u32>> = self
+            .landmarks
+            .par_iter()
+            .map(|&u| {
+                let mut set = HashSet::default();
+                set.extend(self.path_to_landmark(s, u));
+                set.extend(self.path_to_landmark(t, u));
+                set
+            })
+            .collect();
+        let mut result = HashSet::default();
+        for sg in subgraphs {
+            result.extend(sg);
         }
-
-        subgraph
+        result
     }
 }

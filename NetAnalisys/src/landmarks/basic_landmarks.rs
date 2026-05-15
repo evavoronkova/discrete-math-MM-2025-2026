@@ -1,8 +1,9 @@
-use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
+use crate::graph::Graph;
 use crate::landmarks::LandmarkStrategy;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
+use rayon::prelude::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
 use std::collections::VecDeque;
 
@@ -32,7 +33,10 @@ impl LandmarkBasic {
             return None;
         }
 
-        let distances = landmarks.iter().map(|&l| bfs_internal(graph, l)).collect();
+        let distances = landmarks
+            .par_iter()
+            .map(|&l| bfs_internal(graph, l))
+            .collect();
         let external_to_internal = graph
             .vertices_internal()
             .map(|internal| (graph.internal_to_external(internal).unwrap(), internal))
@@ -84,7 +88,7 @@ impl LandmarkBasic {
         }
 
         if deg.len() <= k {
-            return deg.into_iter().map(|(v, _)| v).collect();
+            return deg.into_par_iter().map(|(v, _)| v).collect();
         }
 
         deg.select_nth_unstable_by(k, |a, b| b.1.cmp(&a.1));
@@ -96,22 +100,24 @@ impl LandmarkBasic {
         let n = graph.num_vertices();
         let mut rng = rand::thread_rng();
         let mut selected: Vec<u32> = Vec::with_capacity(k);
+        let mut selected_mask = vec![false; n];
 
         let mut min_dist = vec![usize::MAX; n];
 
         let first = rng.gen_range(0..n) as u32;
+        selected_mask[first as usize] = true;
         selected.push(first);
 
         let dists = Self::bfs_all(graph, first);
-        for (i, &d) in dists.iter().enumerate() {
-            min_dist[i] = d;
-        }
+        min_dist.par_iter_mut().enumerate().for_each(|(i, v)| {
+            *v = dists[i];
+        });
 
         for _ in 1..k {
             let farthest = min_dist
-                .iter()
+                .par_iter()
                 .enumerate()
-                .filter(|&(i, &d)| d != usize::MAX && d != 0 && !selected.contains(&(i as u32)))
+                .filter(|&(i, &d)| d != usize::MAX && d != 0 && !selected_mask[i])
                 .max_by_key(|&(_, &d)| d)
                 .map(|(i, _)| i as u32);
 
@@ -120,14 +126,15 @@ impl LandmarkBasic {
                 None => break,
             };
 
+            selected_mask[farthest as usize] = true;
             selected.push(farthest);
 
             let dists = Self::bfs_all(graph, farthest);
-            for (i, &d) in dists.iter().enumerate() {
-                if d < min_dist[i] {
-                    min_dist[i] = d;
+            min_dist.par_iter_mut().enumerate().for_each(|(i, v)| {
+                if dists[i] < *v {
+                    *v = dists[i];
                 }
-            }
+            });
         }
 
         selected
