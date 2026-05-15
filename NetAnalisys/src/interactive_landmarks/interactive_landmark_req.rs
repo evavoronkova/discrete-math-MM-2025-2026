@@ -249,19 +249,19 @@ fn exact_distance(graph: &Graph, s: u32, t: u32) -> Option<usize> {
     bfs_internal(&graph, s_int).get(&t_int).copied()
 }
 
-#[allow(unused_variables)]
 async fn distance_query(
     stdout: &mut Stdout,
     graph: Arc<Graph>,
     basic: Arc<LandmarkBasic>,
     bfs: Arc<LandmarkBFS>,
-) {
-    execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
-    write!(stdout, "Distance Query\n");
-    writeln!(
+) -> Option<BenchResult> {
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = write!(stdout, "Distance Query\n");
+    let _ = writeln!(
         stdout,
         "  Enter vertex IDs as they appear in the original dataset."
     );
+    let mut last_result: Option<BenchResult> = None;
     loop {
         let s = match read_u32_at(stdout, "  Source vertex ID: ", 0, 4) {
             Some(s) => {
@@ -279,18 +279,18 @@ async fn distance_query(
                 }
                 s
             }
-            None => return,
+            None => return last_result,
         };
         let t = match read_u32_at(stdout, "  Target vertex ID: ", 0, 5) {
             Some(t) => t,
-            None => return,
+            None => return last_result,
         };
         if graph.external_to_internal(t).is_none() {
             let _ = execute!(
                 stdout,
                 MoveTo(0, 6),
                 SetForegroundColor(Color::Red),
-                Print(format!("  ⚠ Vertex {t} not found in the &graph!")),
+                Print(format!("  ⚠ Vertex {t} not found in the graph!")),
                 ResetColor,
             );
             let _ = stdout.flush();
@@ -305,21 +305,30 @@ async fn distance_query(
         );
         let _ = stdout.flush();
 
-        let exact = {
+        let (exact_res, exact_time) = {
             let start = Instant::now();
             let result = exact_distance(&graph, s, t);
             (result, start.elapsed())
         };
-        let basic = {
+        let (basic_res, basic_time) = {
             let start = Instant::now();
             let result = basic.estimate(s, t);
             (result, start.elapsed())
         };
-        let bfs = {
+        let (bfs_res, bfs_time) = {
             let start = Instant::now();
             let result = bfs.estimate(&graph, s, t);
             (result, start.elapsed())
         };
+
+        last_result = Some(BenchResult {
+            exact: exact_res,
+            basic: basic_res,
+            bfs: bfs_res,
+            exact_time,
+            basic_time,
+            bfs_time,
+        });
     }
 }
 #[allow(unused_variables)]
