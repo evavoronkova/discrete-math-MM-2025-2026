@@ -776,5 +776,3 @@ fn change_landmarks(stdout: &mut Stdout, _graph: &Graph, current: usize) -> Opti
     );
     read_u32_at(stdout, "New amount: ", 0, 1).map(|n| n as usize)
 }
-
-

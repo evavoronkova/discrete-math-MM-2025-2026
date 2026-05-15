@@ -151,7 +151,7 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefi
         "Cargo.toml",
         "degree_data1.png",
         "log_degree_data.png",
-        "performance.log"
+        "performance.log",
     ];
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
