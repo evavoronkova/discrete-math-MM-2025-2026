@@ -1,9 +1,11 @@
+use std::sync::Mutex;
 use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
 use crate::landmarks::basic_landmarks::LandmarkBasic;
 use crate::landmarks::bfs_landmarks::LandmarkBFS;
-use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
-use rand::seq::SliceRandom;
+use crossterm::{cursor::*, event::*, execute, style::*, terminal::*};
+use std::fs;
+use tokio::task;
 use std::io::{Stdout, Write, stdout};
 use std::time::{Duration, Instant};
 struct TerminalGuard;
@@ -122,9 +124,9 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                 KeyCode::Char('2') => {
                     accuracy_benchmark(
                         &mut stdout,
-                        &graph,
-                        &cur_basic,
-                        &cur_bfs,
+                        graph.clone(),
+                        cur_basic.clone(),
+                        cur_bfs.clone(),
                         &mut cached_bench,
                     );
                 }
@@ -165,11 +167,11 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     }
                     1 => accuracy_benchmark(
                         &mut stdout,
-                        &graph,
-                        &cur_basic,
-                        &cur_bfs,
+                        graph.clone(),
+                        cur_basic.clone(),
+                        cur_bfs.clone(),
                         &mut cached_bench,
-                    ),
+                    ).await,
                     2 => speed_benchmark(
                         &mut stdout,
                         graph.clone(),
@@ -332,13 +334,48 @@ async fn distance_query(
     }
 }
 #[allow(unused_variables)]
-fn accuracy_benchmark(
+async fn accuracy_benchmark(
     stdout: &mut Stdout,
-    graph: &Graph,
-    basic: &LandmarkBasic,
-    bfs: &LandmarkBFS,
+    graph: Arc<Graph>,
+    basic: Arc<LandmarkBasic>,
+    bfs: Arc<LandmarkBFS>,
     cached_bench: &mut Option<Vec<BenchResult>>,
 ) {
+    let stdout_arc = Arc::new(Mutex::new(std::io::stdout()));
+
+    let stdout_1 = stdout_arc.clone();
+    let stdout_2 = stdout_arc.clone();
+    let stdout_3 = stdout_arc.clone();
+
+    let g1 = Arc::clone(&graph);
+    let g2 = Arc::clone(&graph);
+    let g3 = Arc::clone(&graph);
+
+    let l_basic_1 = Arc::clone(&basic);
+    let l_basic_2 = Arc::clone(&basic);
+    let l_basic_3 = Arc::clone(&basic);
+
+    let l_bfs_1 = Arc::clone(&bfs);
+    let l_bfs_2 = Arc::clone(&bfs);
+    let l_bfs_3 = Arc::clone(&bfs);
+
+    tokio::try_join!(
+        task::spawn_blocking(move || {
+            let mut stdout = stdout_1.lock().unwrap();
+            distance_query(&mut *stdout, g1, l_basic_1, l_bfs_1)
+        }),
+        task::spawn_blocking(move || {
+            let mut stdout = stdout_2.lock().unwrap();
+            distance_query(&mut *stdout, g2, l_basic_2, l_bfs_2)
+        }),
+        task::spawn_blocking(move || {
+            let mut stdout = stdout_3.lock().unwrap();
+            distance_query(&mut *stdout, g3, l_basic_3, l_bfs_3)
+        })
+    ).unwrap();
+    let mut stdout = stdout_arc.lock().unwrap();
+
+
     let _ = writeln!(
         stdout,
         "\n  [stub] accuracy_benchmark — not implemented yet"
@@ -398,4 +435,63 @@ fn landmark_info(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs:
     let _ = writeln!(stdout, "\n  [stub] landmark_info — not implemented yet");
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
+}
+
+fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<(String, u64)>, prefix: &str) {
+    let skip_names = [
+        "target",
+        "src",
+        ".git",
+        "node_modules",
+        ".vscode",
+        ".idea",
+        "target",
+        ".DS_Store",
+        "Cargo.lock",
+        "Cargo.toml",
+        "degree_data1.png",
+        "log_degree_data.png",
+        "performance.log"
+    ];
+    let entries = match fs::read_dir(dir) {
+        Ok(e) => e,
+        Err(_) => return,
+    };
+
+    for entry in entries.filter_map(|e| e.ok()) {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        if skip_names.contains(&name.as_str()) {
+            continue;
+        }
+
+        if path.is_dir() {
+            let new_prefix = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{}/{}", prefix, name)
+            };
+            collect_files_recursive(&path, files, &new_prefix);
+        } else if path.is_file() {
+            let full_path = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{}/{}", prefix, name)
+            };
+            files.push((full_path.clone(), fs::metadata(full_path.clone()).unwrap().len()));
+        }
+    }
+}
+
+fn find_min_files(files: &mut Vec<(String, u64)>) -> Vec<String> {
+    files.sort_by_key(|k| k.1);
+    let mut to_return: Vec<String> = Vec::new();
+    if files.len() < 3 {
+        to_return = files.iter().map(|x| x.0.clone()).collect();
+    } else {
+        to_return = vec![files[0].0.clone(), files[1].0.clone(), files[2].0.clone()];
+    }
+
+    to_return
 }
