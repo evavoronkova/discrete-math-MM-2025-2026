@@ -146,6 +146,12 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefi
         ".vscode",
         ".idea",
         "target",
+        ".DS_Store",
+        "Cargo.lock",
+        "Cargo.toml",
+        "degree_data1.png",
+        "log_degree_data.png",
+        "performance.log"
     ];
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
@@ -156,15 +162,17 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<String>, prefi
         let path = entry.path();
         let name = entry.file_name().to_string_lossy().to_string();
 
+        if skip_names.contains(&name.as_str()) {
+            continue;
+        }
+
         if path.is_dir() {
-            if !skip_names.contains(&name.as_str()) {
-                let new_prefix = if prefix.is_empty() {
-                    name.clone()
-                } else {
-                    format!("{}/{}", prefix, name)
-                };
-                collect_files_recursive(&path, files, &new_prefix);
-            }
+            let new_prefix = if prefix.is_empty() {
+                name.clone()
+            } else {
+                format!("{}/{}", prefix, name)
+            };
+            collect_files_recursive(&path, files, &new_prefix);
         } else if path.is_file() {
             let full_path = if prefix.is_empty() {
                 name.clone()
