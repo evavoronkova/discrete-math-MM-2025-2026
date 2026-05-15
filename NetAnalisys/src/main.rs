@@ -1,10 +1,10 @@
 #[allow(unused)]
 mod analysis;
 mod graph;
+mod interactive_landmarks;
 mod landmarks;
 mod parser;
 mod ui;
-mod interactive_landmarks;
 
 use crate::analysis::cluster_evaluation::{
     calculate_global_k_from_stats, calculate_mid_k_from_stats,
@@ -15,13 +15,12 @@ use crate::analysis::connectivity::{
     get_largest_comp, get_number_of_comps, tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
-use crate::analysis::diameter::{percentile_90_distance, count_diameters};
+use crate::analysis::diameter::{count_diameters, percentile_90_distance};
 use crate::analysis::robustness::{lcc_after_hub_removal, lcc_after_random_removal};
 use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use std::fs::OpenOptions;
-use std::future::Future;
-use std::io::{Read, Write};
+use std::io::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::Ordering;
@@ -90,15 +89,15 @@ fn log_duration(log: &Arc<Mutex<std::fs::File>>, label: &str, elapsed: Duration)
     writeln!(file, "{label}\t{elapsed:.6?}").unwrap();
 }
 
-async fn time_async<T, F>(log: &Arc<Mutex<std::fs::File>>, label: &'static str, fut: F) -> T
-where
-    F: Future<Output = T>,
-{
-    let start = Instant::now();
-    let out = fut.await;
-    log_duration(log, label, start.elapsed());
-    out
-}
+// async fn time_async<T, F>(log: &Arc<Mutex<std::fs::File>>, label: &'static str, fut: F) -> T
+// where
+//     F: Future<Output = T>,
+// {
+//     let start = Instant::now();
+//     let out = fut.await;
+//     log_duration(log, label, start.elapsed());
+//     out
+// }
 
 fn spawn_blocking_logged<T, F>(
     log: Arc<Mutex<std::fs::File>>,
@@ -128,8 +127,9 @@ async fn main() {
             let (stop_animation, animation_handle) =
                 ui::main_ui::spawn_cat_loading_animation(0, 0, Some(start_point));
 
-            let parse_result =
-                time_async(&perf_log, "parse_file", parser::parse::parse_file(&path)).await;
+            let start_parse = Instant::now();
+            let parse_result = parser::parse::parse_file(&path);
+            log_duration(&perf_log, "parse_file", start_parse.elapsed());
 
             graph = match parse_result {
                 Ok(graph) => Arc::new(graph),
@@ -276,15 +276,12 @@ async fn main() {
                     find_triangles(graph.as_ref())
                 })
             };
-            
+
             let (percentile, num_triangles) =
                 tokio::try_join!(percentile_handle, num_triangles_handle).unwrap();
 
-            let diameters = count_diameters(
-                Arc::clone(&graph),
-                Some(Arc::clone(&largest_weak_comp)),
-            )
-            .await;
+            let diameters =
+                count_diameters(Arc::clone(&graph), Some(Arc::clone(&largest_weak_comp))).await;
 
             buffer_for_print_default_info.push((
                 "Diameter of largest weak component on double bfs".to_string(),
@@ -484,12 +481,14 @@ async fn main() {
                 .expect("Failed to save graph as PNG");
                 log_duration(&perf_log, "save_log_degree_graph_png", start.elapsed());
             }
-            println!("\nGraph analysis ended succesfully, do you want to see results or make requests for estimating distance? ");
+            println!(
+                "\nGraph analysis ended succesfully, do you want to see results or make requests for estimating distance? "
+            );
             print!("y/n/yes/no> ");
             let mut ans = String::new();
             std::io::stdin().read_line(&mut ans);
             let ans = ans.as_str();
-            
+
             println!("\nGraph Analysis Results");
             {
                 let start = Instant::now();
@@ -504,10 +503,7 @@ async fn main() {
             }
             log_duration(&perf_log, "total_runtime", start_point.elapsed());
             println!("Time: {:.2?}", start_point.elapsed());
-
-
         }
         None => println!("No file selected. Exiting."),
     }
-
 }
