@@ -89,16 +89,6 @@ fn log_duration(log: &Arc<Mutex<std::fs::File>>, label: &str, elapsed: Duration)
     writeln!(file, "{label}\t{elapsed:.6?}").unwrap();
 }
 
-// async fn time_async<T, F>(log: &Arc<Mutex<std::fs::File>>, label: &'static str, fut: F) -> T
-// where
-//     F: Future<Output = T>,
-// {
-//     let start = Instant::now();
-//     let out = fut.await;
-//     log_duration(log, label, start.elapsed());
-//     out
-// }
-
 fn spawn_blocking_logged<T, F>(
     log: Arc<Mutex<std::fs::File>>,
     label: &'static str,
@@ -141,12 +131,6 @@ async fn main() {
                 }
             };
 
-            // println!("[DEBUG] Graph successfully parsed. Starting analysis...");
-            // println!(
-            //     "[DEBUG] Graph has {} vertices and {} edges.",
-            //     graph.num_vertices(),
-            //     graph.num_edges()
-            // );
             let mut buffer_for_print_default_info: Vec<(String, String)> = Vec::new();
             let graph_type = graph.kind();
 
@@ -229,11 +213,6 @@ async fn main() {
 
             let log_degree_data: Vec<(f32, f32)> = analysis::degree::transform_to_log(&degree_data);
 
-            // println!("[DEBUG] Largest weak components size: {}", num_weak_comps);
-            // println!(
-            //     "[DEBUG] Largest weak component size: {}",
-            //     largest_weak_comp.len()
-            // );
             buffer_for_print_default_info.push((
                 "Fraction in largest weak component".to_string(),
                 format!(
@@ -481,13 +460,22 @@ async fn main() {
                 .expect("Failed to save graph as PNG");
                 log_duration(&perf_log, "save_log_degree_graph_png", start.elapsed());
             }
+
+            log_duration(&perf_log, "total_runtime", start_point.elapsed());
+            println!("Time: {:.2?}", start_point.elapsed());
+
             println!(
                 "\nGraph analysis ended succesfully, do you want to see results or make requests for estimating distance? "
             );
             print!("y/n/yes/no> ");
-            let mut ans = String::new();
-            std::io::stdin().read_line(&mut ans);
-            let ans = ans.as_str();
+            // let mut ans = String::new();
+            // std::io::stdin().read_line(&mut ans);
+            // let ans = ans.as_str();
+
+            let graph = Arc::clone(&graph);
+
+            interactive_landmarks::interactive_landmark_req::run_landmark_interactive(graph, 10)
+                .await;
 
             println!("\nGraph Analysis Results");
             {
@@ -501,8 +489,6 @@ async fn main() {
                 print_table(&buffer_for_print_removes_of_largest);
                 log_duration(&perf_log, "print_result_table", start.elapsed());
             }
-            log_duration(&perf_log, "total_runtime", start_point.elapsed());
-            println!("Time: {:.2?}", start_point.elapsed());
         }
         None => println!("No file selected. Exiting."),
     }

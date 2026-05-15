@@ -1,13 +1,14 @@
-use std::sync::Mutex;
 use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
+use crate::landmarks::LandmarkStrategy;
 use crate::landmarks::basic_landmarks::LandmarkBasic;
 use crate::landmarks::bfs_landmarks::LandmarkBFS;
 use crossterm::{cursor::*, event::*, execute, style::*, terminal::*};
 use std::fs;
-use tokio::task;
 use std::io::{Stdout, Write, stdout};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
+use tokio::task;
 struct TerminalGuard;
 use std::sync::Arc;
 
@@ -31,6 +32,7 @@ const MENU_ITEMS: &[&str] = &[
     "   Accuracy benchmark (vs exact BFS)    ",
     "   Speed benchmark (landmarks only)     ",
     "   Change number of landmarks           ",
+    "   Change strategy of landmarks samples ",
     "   Show landmark information            ",
     "   Back to main menu                    ",
 ];
@@ -48,19 +50,22 @@ struct BenchResult {
 pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
     let _guard = TerminalGuard::new();
     let mut stdout = stdout();
-    let basic = match LandmarkBasic::new(&graph, num_landmarks) {
+    execute!(stdout, Clear(ClearType::All), MoveTo(0, 0)).unwrap();
+    execute!(stdout, MoveTo(0, 0)).unwrap();
+
+    let basic = match LandmarkBasic::new(&graph, num_landmarks, LandmarkStrategy::Random) {
         Some(b) => b,
         None => {
-            let _ = writeln!(
+            let _ = write!(
                 stdout,
-                "  Error: could not create landmarks (&graph too small?)."
+                "  Error: could not create landmarks (graph too small?).\r\n"
             );
             let _ = stdout.flush();
             std::thread::sleep(Duration::from_secs(2));
             return;
         }
     };
-    let bfs = LandmarkBFS::new(&graph, num_landmarks);
+    let bfs = LandmarkBFS::new(&graph, num_landmarks, LandmarkStrategy::Random);
     let mut cached_bench: Option<Vec<BenchResult>> = None;
     let mut sel = 0usize;
     let mut n_landmarks = num_landmarks;
@@ -69,39 +74,37 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
     loop {
         let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
         let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
-        let _ = writeln!(stdout, "╔{}╗", "═".repeat(58));
-        let _ = writeln!(stdout, "║{:^60}║", "     Landmark Distance Estimator");
-        let _ = writeln!(stdout, "╚{}╝", "═".repeat(58));
+        let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
+        let _ = write!(stdout, "║{:^58}║\r\n", "     Landmark Distance Estimator");
+        let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
         let _ = execute!(stdout, ResetColor);
-        let _ = writeln!(
+        let _ = write!(
             stdout,
-            "  &graph: {} vertices, {} edges  |  Type: {}  |  Landmarks: {}",
+            "  Graph: {} vertices, {} edges  |  Type: {}  |  Landmarks: {}\r\n",
             &graph.num_vertices(),
             &graph.num_edges(),
             &graph.kind(),
             n_landmarks,
         );
-        let _ = writeln!(stdout);
+        let _ = write!(stdout, "\r\n");
         for (i, item) in MENU_ITEMS.iter().enumerate() {
             if i == sel {
                 let _ = execute!(
                     stdout,
                     SetBackgroundColor(Color::Blue),
                     SetForegroundColor(Color::White),
-                    Print(format!("  ❯ {}", item)),
+                    Print(format!("  ❯ {}\r\n", item)),
                     ResetColor,
                 );
             } else {
-                let _ = writeln!(stdout, "    {}", item);
-                continue;
+                let _ = write!(stdout, "    {}\r\n", item);
             }
-            let _ = writeln!(stdout);
         }
-        let _ = writeln!(stdout);
+        let _ = write!(stdout, "\r\n");
         let _ = execute!(
             stdout,
             SetForegroundColor(Color::DarkGrey),
-            Print("  ↑↓ navigate · Enter/1-6 select · q/Esc back"),
+            Print("  ↑↓ navigate · Enter/1-6 select · q/Esc back\r\n"),
             ResetColor,
         );
         let _ = stdout.flush();
@@ -119,7 +122,8 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                         graph.clone(),
                         cur_basic.clone(),
                         cur_bfs.clone(),
-                    );
+                    )
+                    .await;
                 }
                 KeyCode::Char('2') => {
                     accuracy_benchmark(
@@ -143,18 +147,24 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                     if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
                         if n != n_landmarks {
                             n_landmarks = n;
-                            if let Some(b) = LandmarkBasic::new(&graph, n_landmarks) {
+                            if let Some(b) =
+                                LandmarkBasic::new(&graph, n_landmarks, LandmarkStrategy::Random)
+                            {
                                 cur_basic = Arc::new(b);
                             }
-                            cur_bfs = Arc::new(LandmarkBFS::new(&graph, n_landmarks));
+                            cur_bfs = Arc::new(LandmarkBFS::new(
+                                &graph,
+                                n_landmarks,
+                                LandmarkStrategy::Random,
+                            ));
                             cached_bench = None;
                         }
                     }
                 }
-                KeyCode::Char('5') => {
+                KeyCode::Char('6') => {
                     landmark_info(&mut stdout, &graph, &cur_basic, &cur_bfs);
                 }
-                KeyCode::Char('6') | KeyCode::Esc | KeyCode::Char('q') => break,
+                KeyCode::Char('7') | KeyCode::Esc | KeyCode::Char('q') => break,
                 KeyCode::Enter => match sel {
                     0 => {
                         distance_query(
@@ -165,13 +175,16 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                         )
                         .await;
                     }
-                    1 => accuracy_benchmark(
-                        &mut stdout,
-                        graph.clone(),
-                        cur_basic.clone(),
-                        cur_bfs.clone(),
-                        &mut cached_bench,
-                    ).await,
+                    1 => {
+                        accuracy_benchmark(
+                            &mut stdout,
+                            graph.clone(),
+                            cur_basic.clone(),
+                            cur_bfs.clone(),
+                            &mut cached_bench,
+                        )
+                        .await
+                    }
                     2 => speed_benchmark(
                         &mut stdout,
                         graph.clone(),
@@ -183,10 +196,18 @@ pub async fn run_landmark_interactive(graph: Arc<Graph>, num_landmarks: usize) {
                         if let Some(n) = change_landmarks(&mut stdout, &graph, n_landmarks) {
                             if n != n_landmarks {
                                 n_landmarks = n;
-                                if let Some(b) = LandmarkBasic::new(&graph, n_landmarks) {
+                                if let Some(b) = LandmarkBasic::new(
+                                    &graph,
+                                    n_landmarks,
+                                    LandmarkStrategy::Random,
+                                ) {
                                     cur_basic = Arc::new(b);
                                 }
-                                cur_bfs = Arc::new(LandmarkBFS::new(&graph, n_landmarks));
+                                cur_bfs = Arc::new(LandmarkBFS::new(
+                                    &graph,
+                                    n_landmarks,
+                                    LandmarkStrategy::Random,
+                                ));
                                 cached_bench = None;
                             }
                         }
@@ -258,10 +279,10 @@ async fn distance_query(
     bfs: Arc<LandmarkBFS>,
 ) -> Option<BenchResult> {
     let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
-    let _ = write!(stdout, "Distance Query\n");
-    let _ = writeln!(
+    let _ = write!(stdout, "Distance Query\r\n");
+    let _ = write!(
         stdout,
-        "  Enter vertex IDs as they appear in the original dataset."
+        "  Enter vertex IDs as they appear in the original dataset.\r\n"
     );
     let mut last_result: Option<BenchResult> = None;
     loop {
@@ -323,14 +344,71 @@ async fn distance_query(
             (result, start.elapsed())
         };
 
-        last_result = Some(BenchResult {
+        let res = BenchResult {
             exact: exact_res,
             basic: basic_res,
             bfs: bfs_res,
             exact_time,
             basic_time,
             bfs_time,
-        });
+        };
+        last_result = Some(res);
+
+        // Вывод результатов — каждая строка на своей позиции
+        let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+        let _ = write!(stdout, "  ─── Distance Query Results ───\r\n");
+        let _ = write!(stdout, "\r\n");
+        let _ = write!(stdout, "  s = {s}  |  t = {t}\r\n");
+        let _ = write!(stdout, "\r\n");
+        let _ = write!(stdout, "  Exact BFS:  ");
+        match exact_res {
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({exact_time:.3?})\r\n");
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({exact_time:.3?})\r\n");
+            }
+        }
+        let _ = write!(stdout, "  Basic LM:   ");
+        match basic_res {
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({basic_time:.3?})\r\n");
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({basic_time:.3?})\r\n");
+            }
+        }
+        let _ = write!(stdout, "  BFS LM:     ");
+        match bfs_res {
+            Some(d) => {
+                let _ = write!(stdout, "{d}  ({bfs_time:.3?})\r\n");
+            }
+            None => {
+                let _ = write!(stdout, "unreachable  ({bfs_time:.3?})\r\n");
+            }
+        }
+        let _ = write!(stdout, "\r\n");
+        let _ = write!(stdout, "  Press Enter to query again, q to exit");
+        let _ = stdout.flush();
+
+        match read().unwrap() {
+            Event::Key(KeyEvent {
+                code: KeyCode::Char('q'),
+                ..
+            })
+            | Event::Key(KeyEvent {
+                code: KeyCode::Esc, ..
+            }) => return last_result,
+            _ => {
+                // Начинаем заново — возвращаемся к вводу
+                let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+                let _ = write!(stdout, "Distance Query\r\n");
+                let _ = write!(
+                    stdout,
+                    "  Enter vertex IDs as they appear in the original dataset.\r\n"
+                );
+            }
+        }
     }
 }
 #[allow(unused_variables)]
@@ -372,24 +450,15 @@ async fn accuracy_benchmark(
             let mut stdout = stdout_3.lock().unwrap();
             distance_query(&mut *stdout, g3, l_basic_3, l_bfs_3)
         })
-    ).unwrap();
+    )
+    .unwrap();
     let mut stdout = stdout_arc.lock().unwrap();
 
-
     let _ = writeln!(
         stdout,
         "\n  [stub] accuracy_benchmark — not implemented yet"
     );
-    let _ = writeln!(
-        stdout,
-        "  Would benchmark {} landmarks",
-        cached_bench.as_ref().map_or(0, |v| v.len())
-    );
-    let _ = writeln!(
-        stdout,
-        "\n  [stub] accuracy_benchmark — not implemented yet"
-    );
-    let _ = writeln!(
+    let _ = write!(
         stdout,
         "  Would benchmark {} landmarks",
         cached_bench.as_ref().map_or(0, |v| v.len())
@@ -406,13 +475,8 @@ fn speed_benchmark(
     bfs: &LandmarkBFS,
     cached_bench: &Option<Vec<BenchResult>>,
 ) {
-    let _ = writeln!(stdout, "\n  [stub] speed_benchmark — not implemented yet");
-    let _ = writeln!(
-        stdout,
-        "  Would benchmark speed with {} landmarks",
-        cached_bench.as_ref().map_or(0, |v| v.len())
-    );
-    let _ = writeln!(
+    let _ = write!(stdout, "\n  [stub] speed_benchmark — not implemented yet");
+    let _ = write!(
         stdout,
         "  Would benchmark speed with {} landmarks",
         cached_bench.as_ref().map_or(0, |v| v.len())
@@ -421,18 +485,21 @@ fn speed_benchmark(
     std::thread::sleep(Duration::from_secs(1));
 }
 
-#[allow(unused_variables)]
-fn change_landmarks(stdout: &mut Stdout, graph: &Graph, current: usize) -> Option<usize> {
-    let _ = writeln!(stdout, "\n  [stub] change_landmarks — not implemented yet");
-    let _ = writeln!(stdout, "  Current: {}. Returning same value.", current);
-    let _ = stdout.flush();
-    std::thread::sleep(Duration::from_secs(1));
-    Some(current)
+fn change_landmarks(stdout: &mut Stdout, _graph: &Graph, current: usize) -> Option<usize> {
+    let _ = execute!(
+        stdout,
+        Clear(ClearType::All),
+        MoveTo(0, 0),
+        Print(format!(
+            "Enter new number of landmarks (current: {current}): "
+        )),
+    );
+    read_u32_at(stdout, "New amount: ", 0, 1).map(|n| n as usize)
 }
 
 #[allow(unused_variables)]
 fn landmark_info(stdout: &mut Stdout, graph: &Graph, basic: &LandmarkBasic, bfs: &LandmarkBFS) {
-    let _ = writeln!(stdout, "\n  [stub] landmark_info — not implemented yet");
+    let _ = write!(stdout, "\n  [stub] landmark_info — not implemented yet");
     let _ = stdout.flush();
     std::thread::sleep(Duration::from_secs(1));
 }
@@ -451,7 +518,7 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<(String, u64)>
         "Cargo.toml",
         "degree_data1.png",
         "log_degree_data.png",
-        "performance.log"
+        "performance.log",
     ];
     let entries = match fs::read_dir(dir) {
         Ok(e) => e,
@@ -479,7 +546,10 @@ fn collect_files_recursive(dir: &std::path::Path, files: &mut Vec<(String, u64)>
             } else {
                 format!("{}/{}", prefix, name)
             };
-            files.push((full_path.clone(), fs::metadata(full_path.clone()).unwrap().len()));
+            files.push((
+                full_path.clone(),
+                fs::metadata(full_path.clone()).unwrap().len(),
+            ));
         }
     }
 }

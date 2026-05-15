@@ -1,21 +1,33 @@
 use crate::graph::Graph;
 use crate::graph::traversal::{bfs_with_filter_internal, bfs_with_parents_internal};
+use crate::landmarks::LandmarkStrategy;
+use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
+use rayon::prelude::*;
 use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use std::collections::VecDeque;
 
 pub struct LandmarkBFS {
     landmarks: Vec<u32>,
     spts: HashMap<u32, HashMap<u32, (usize, Option<u32>)>>,
+    curr_strat: LandmarkStrategy,
 }
 
 impl LandmarkBFS {
-    pub fn new(graph: &Graph, num_landmarks: usize) -> Self {
-        let landmarks = Self::generate_landmarks(graph, num_landmarks);
+    pub fn new(graph: &Graph, num_landmarks: usize, strategy: LandmarkStrategy) -> Self {
+        let landmarks = Self::generate_landmarks(graph, num_landmarks, strategy);
         let spts = Self::build_spts(graph, &landmarks);
-
-        Self { landmarks, spts }
+        let curr_strat = strategy;
+        Self {
+            landmarks,
+            spts,
+            curr_strat,
+        }
     }
 
+    pub fn curr_strategy(self) -> LandmarkStrategy {
+        self.curr_strat
+    }
     pub fn estimate(&self, graph: &Graph, s: u32, t: u32) -> Option<usize> {
         let s = graph.external_to_internal(s)?;
         let t = graph.external_to_internal(t)?;
@@ -34,15 +46,27 @@ impl LandmarkBFS {
         dist.get(&t).copied()
     }
 
-    fn generate_landmarks(graph: &Graph, num_landmarks: usize) -> Vec<u32> {
-        let mut rng = rand::thread_rng();
-        let vertices: Vec<u32> = graph.vertices_internal().collect();
-
-        if vertices.is_empty() || num_landmarks == 0 {
+    fn generate_landmarks(
+        graph: &Graph,
+        num_landmarks: usize,
+        strategy: LandmarkStrategy,
+    ) -> Vec<u32> {
+        let n = graph.num_vertices();
+        if n == 0 || num_landmarks == 0 {
             return Vec::new();
         }
 
-        let k = num_landmarks.min(vertices.len());
+        let k = num_landmarks.min(n);
+        match strategy {
+            LandmarkStrategy::Random => Self::random_selection(graph, k),
+            LandmarkStrategy::HighestDegree => Self::highest_degree_selection(graph, k),
+            LandmarkStrategy::Coverage => Self::coverage_selection(graph, k),
+        }
+    }
+
+    fn random_selection(graph: &Graph, k: usize) -> Vec<u32> {
+        let mut rng = rand::thread_rng();
+        let vertices: Vec<u32> = graph.vertices_internal().collect();
         let mut chosen = HashSet::default();
 
         while chosen.len() < k {
@@ -53,12 +77,105 @@ impl LandmarkBFS {
         chosen.into_iter().collect()
     }
 
+    fn highest_degree_selection(graph: &Graph, k: usize) -> Vec<u32> {
+        let n = graph.num_vertices();
+        let mut deg: Vec<(u32, u32)> = Vec::with_capacity(n);
+        let undirected = graph.kind() == DirectedOrUndirected::Undirected;
+
+        for v in graph.vertices_internal() {
+            deg.push((v, graph.neighbors_internal(v).len() as u32));
+        }
+
+        if !undirected {
+            let mut in_deg = vec![0u32; n];
+            for v in graph.vertices_internal() {
+                for &nbr in graph.neighbors_internal(v) {
+                    in_deg[nbr as usize] += 1;
+                }
+            }
+            for (v, d) in deg.iter_mut() {
+                *d += in_deg[*v as usize];
+            }
+        }
+
+        if deg.len() <= k {
+            return deg.into_iter().map(|(v, _)| v).collect();
+        }
+
+        deg.select_nth_unstable_by(k, |a, b| b.1.cmp(&a.1));
+        deg.truncate(k);
+        deg.into_iter().map(|(v, _)| v).collect()
+    }
+
+    fn coverage_selection(graph: &Graph, k: usize) -> Vec<u32> {
+        let n = graph.num_vertices();
+        let mut rng = rand::thread_rng();
+
+        let mut selected: Vec<u32> = Vec::with_capacity(k);
+        let mut min_dist = vec![usize::MAX; n];
+
+        let first = rng.gen_range(0..n) as u32;
+        selected.push(first);
+
+        let dists = Self::bfs_all(graph, first);
+
+        min_dist.par_iter_mut().enumerate().for_each(|(i, v)| {
+            *v = dists[i];
+        });
+
+        for _ in 1..k {
+            let farthest = min_dist
+                .par_iter()
+                .enumerate()
+                .filter(|(i, d)| **d != usize::MAX && **d != 0 && !selected.contains(&(*i as u32)))
+                .max_by_key(|(_, d)| **d)
+                .map(|(i, _)| i as u32);
+
+            let farthest = match farthest {
+                Some(v) => v,
+                None => break,
+            };
+
+            selected.push(farthest);
+
+            let dists = Self::bfs_all(graph, farthest);
+
+            min_dist.par_iter_mut().enumerate().for_each(|(i, v)| {
+                if dists[i] < *v {
+                    *v = dists[i];
+                }
+            });
+        }
+
+        selected
+    }
+    fn bfs_all(graph: &Graph, start: u32) -> Vec<usize> {
+        let n = graph.num_vertices();
+        let mut dist = vec![usize::MAX; n];
+        let mut queue = VecDeque::new();
+
+        dist[start as usize] = 0;
+        queue.push_back(start);
+
+        while let Some(node) = queue.pop_front() {
+            let cur = dist[node as usize];
+            for &nbr in graph.neighbors_internal(node) {
+                if dist[nbr as usize] == usize::MAX {
+                    dist[nbr as usize] = cur + 1;
+                    queue.push_back(nbr);
+                }
+            }
+        }
+
+        dist
+    }
+
     fn build_spts(
         graph: &Graph,
         landmarks: &[u32],
     ) -> HashMap<u32, HashMap<u32, (usize, Option<u32>)>> {
         landmarks
-            .iter()
+            .par_iter()
             .map(|&l| (l, bfs_with_parents_internal(graph, l)))
             .collect()
     }
