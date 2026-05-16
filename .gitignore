@@ -6,6 +6,8 @@ target/
 *.log
 .codex/
 .opencode
+opencode.json
+AGENTS.md
 /ТЗ
 .env
 .env.*
