@@ -9,18 +9,18 @@ use std::collections::VecDeque;
 
 pub struct LandmarkBFS {
     landmarks: Vec<u32>,
-    spts: HashMap<u32, HashMap<u32, (usize, Option<u32>)>>,
+    parents: Vec<Vec<u32>>,
     curr_strat: LandmarkStrategy,
 }
 
 impl LandmarkBFS {
     pub fn new(graph: &Graph, num_landmarks: usize, strategy: LandmarkStrategy) -> Self {
         let landmarks = Self::generate_landmarks(graph, num_landmarks, strategy);
-        let spts = Self::build_spts(graph, &landmarks);
+        let parents = Self::build_parents(graph, &landmarks);
         let curr_strat = strategy;
         Self {
             landmarks,
-            spts,
+            parents,
             curr_strat,
         }
     }
@@ -173,53 +173,47 @@ impl LandmarkBFS {
         dist
     }
 
-    fn build_spts(
-        graph: &Graph,
-        landmarks: &[u32],
-    ) -> HashMap<u32, HashMap<u32, (usize, Option<u32>)>> {
+    fn build_parents(graph: &Graph, landmarks: &[u32]) -> Vec<Vec<u32>> {
+        let n = graph.num_vertices();
         landmarks
             .par_iter()
-            .map(|&l| (l, bfs_with_parents_internal(graph, l)))
+            .map(|&l| {
+                let bfs_result = bfs_with_parents_internal(graph, l);
+                let mut parents = vec![u32::MAX; n];
+                for (vertex, (_, parent)) in bfs_result {
+                    if let Some(p) = parent {
+                        parents[vertex as usize] = p;
+                    }
+                }
+                parents
+            })
             .collect()
     }
 
-    fn path_to_landmark(&self, v: u32, landmark: u32) -> Vec<u32> {
+    fn path_to_landmark(&self, v: u32, landmark_idx: usize) -> Vec<u32> {
+        let landmark_id = self.landmarks[landmark_idx];
+        let parents = &self.parents[landmark_idx];
         let mut path = Vec::new();
         let mut current = v;
 
-        while current != landmark {
+        while current != landmark_id {
             path.push(current);
-
-            if let Some((_, parent)) = self.spts.get(&landmark).and_then(|m| m.get(&current)) {
-                if let Some(p) = parent {
-                    current = *p;
-                } else {
-                    break;
-                }
-            } else {
+            let p = parents[current as usize];
+            if p == u32::MAX {
                 break;
             }
+            current = p;
         }
 
-        path.push(landmark);
+        path.push(landmark_id);
         path
     }
 
     fn collect_subgraph(&self, s: u32, t: u32) -> HashSet<u32> {
-        use rayon::prelude::*;
-        let subgraphs: Vec<HashSet<u32>> = self
-            .landmarks
-            .par_iter()
-            .map(|&u| {
-                let mut set = HashSet::default();
-                set.extend(self.path_to_landmark(s, u));
-                set.extend(self.path_to_landmark(t, u));
-                set
-            })
-            .collect();
         let mut result = HashSet::default();
-        for sg in subgraphs {
-            result.extend(sg);
+        for idx in 0..self.landmarks.len() {
+            result.extend(self.path_to_landmark(s, idx));
+            result.extend(self.path_to_landmark(t, idx));
         }
         result
     }

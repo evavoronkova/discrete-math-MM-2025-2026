@@ -15,7 +15,7 @@ use crate::analysis::connectivity::{
     get_largest_comp, get_number_of_comps, tarjan_scc,
 };
 use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
-use crate::analysis::diameter::{count_diameters, percentile_90_distance};
+use crate::analysis::diameter::{DiameterMethod, count_diameters, percentile_90_distance};
 use crate::analysis::robustness::{lcc_after_hub_removal, lcc_after_random_removal};
 use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
@@ -89,6 +89,22 @@ fn log_duration(log: &Arc<Mutex<std::fs::File>>, label: &str, elapsed: Duration)
     writeln!(file, "{label}\t{elapsed:.6?}").unwrap();
 }
 
+fn open_trace_log() -> Arc<Mutex<std::fs::File>> {
+    let file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open("trace.log")
+        .expect("Failed to open trace.log");
+    Arc::new(Mutex::new(file))
+}
+
+fn log_start(trace_log: &Arc<Mutex<std::fs::File>>, start_point: Instant, label: &str) {
+    let elapsed = start_point.elapsed();
+    let mut file = trace_log.lock().unwrap();
+    writeln!(file, "START\t{label}\t{elapsed:.3?}").unwrap();
+}
+
 fn spawn_blocking_logged<T, F>(
     log: Arc<Mutex<std::fs::File>>,
     label: &'static str,
@@ -109,14 +125,20 @@ where
 #[tokio::main]
 async fn main() {
     let perf_log = open_perf_log();
+    let trace_log = open_trace_log();
     let file_name = ui::main_ui::run_ui_and_file_parsing_menu();
     let graph: Arc<graph::Graph>;
     match file_name {
         Some(path) => {
+            // Выбор метода подсчёта диаметра — ДО котика и вычислений
+            let diameter_method =
+                ui::main_ui::select_diameter_method().unwrap_or(DiameterMethod::All);
+
             let start_point = Instant::now();
             let (stop_animation, animation_handle) =
                 ui::main_ui::spawn_cat_loading_animation(0, 0, Some(start_point));
 
+            log_start(&trace_log, start_point, "parse_file");
             let start_parse = Instant::now();
             let parse_result = parser::parse::parse_file(&path);
             log_duration(&perf_log, "parse_file", start_parse.elapsed());
@@ -163,6 +185,9 @@ async fn main() {
                 let perf_log_weak = Arc::clone(&perf_log);
                 let perf_log_degree = Arc::clone(&perf_log);
                 let perf_log_tarjan = Arc::clone(&perf_log);
+                log_start(&trace_log, start_point, "find_weak_components");
+                log_start(&trace_log, start_point, "degree_probability");
+                log_start(&trace_log, start_point, "tarjan_scc");
                 tokio::try_join!(
                     spawn_blocking_logged(perf_log_weak, "find_weak_components", move || {
                         find_weak_components(g1.as_ref())
@@ -242,6 +267,7 @@ async fn main() {
             }
             let largest_weak_comp = Arc::new(largest_weak_comp);
 
+            log_start(&trace_log, start_point, "percentile_90_distance");
             let percentile_handle = {
                 let graph = Arc::clone(&graph);
                 spawn_blocking_logged(Arc::clone(&perf_log), "percentile_90_distance", move || {
@@ -249,6 +275,7 @@ async fn main() {
                 })
             };
 
+            log_start(&trace_log, start_point, "find_triangles");
             let num_triangles_handle = {
                 let graph = Arc::clone(&graph);
                 spawn_blocking_logged(Arc::clone(&perf_log), "find_triangles", move || {
@@ -259,23 +286,81 @@ async fn main() {
             let (percentile, num_triangles) =
                 tokio::try_join!(percentile_handle, num_triangles_handle).unwrap();
 
-            let diameters =
-                count_diameters(Arc::clone(&graph), Some(Arc::clone(&largest_weak_comp))).await;
+            log_start(&trace_log, start_point, "count_diameters");
+            let (diameter_double, diameter_random, diameter_snowball) = match diameter_method {
+                DiameterMethod::DoubleBfs => {
+                    let g = Arc::clone(&graph);
+                    let c = Some(Arc::clone(&largest_weak_comp));
+                    let d = spawn_blocking_logged(
+                        Arc::clone(&perf_log),
+                        "approximate_diameter",
+                        move || analysis::diameter::approximate_diameter(g.as_ref(), c.as_deref()),
+                    )
+                    .await
+                    .unwrap();
+                    (Some(d), None, None)
+                }
+                DiameterMethod::RandomLike => {
+                    let g = Arc::clone(&graph);
+                    let c = Some(Arc::clone(&largest_weak_comp));
+                    let d = spawn_blocking_logged(
+                        Arc::clone(&perf_log),
+                        "random_like_diameter",
+                        move || {
+                            analysis::diameter::random_like_diameter_calculate(
+                                g.as_ref(),
+                                c.as_deref(),
+                                500,
+                            )
+                        },
+                    )
+                    .await
+                    .unwrap();
+                    (None, Some(d), None)
+                }
+                DiameterMethod::Snowball => {
+                    let g = Arc::clone(&graph);
+                    let c = Some(Arc::clone(&largest_weak_comp));
+                    let d = spawn_blocking_logged(
+                        Arc::clone(&perf_log),
+                        "snowball_sampling",
+                        move || {
+                            analysis::diameter::snowball_sampling(g.as_ref(), c.as_deref(), 1000)
+                        },
+                    )
+                    .await
+                    .unwrap();
+                    (None, None, Some(d))
+                }
+                DiameterMethod::All => {
+                    let res = count_diameters(
+                        Arc::clone(&graph),
+                        Some(Arc::clone(&largest_weak_comp)),
+                        Arc::clone(&perf_log),
+                    )
+                    .await;
+                    (Some(res[0]), Some(res[1]), Some(res[2]))
+                }
+            };
 
-            buffer_for_print_default_info.push((
-                "Diameter of largest weak component on double bfs".to_string(),
-                diameters[0].to_string(),
-            ));
-
-            buffer_for_print_default_info.push((
-                "Diameter of largest weak component on random vertices".to_string(),
-                diameters[1].to_string(),
-            ));
-
-            buffer_for_print_default_info.push((
-                "Diameter of largest weak component on snowball sampling".to_string(),
-                diameters[2].to_string(),
-            ));
+            if let Some(d) = diameter_double {
+                buffer_for_print_default_info.push((
+                    "Diameter of largest weak component on double bfs".to_string(),
+                    d.to_string(),
+                ));
+            }
+            if let Some(d) = diameter_random {
+                buffer_for_print_default_info.push((
+                    "Diameter of largest weak component on random vertices".to_string(),
+                    d.to_string(),
+                ));
+            }
+            if let Some(d) = diameter_snowball {
+                buffer_for_print_default_info.push((
+                    "Diameter of largest weak component on snowball sampling".to_string(),
+                    d.to_string(),
+                ));
+            }
 
             buffer_for_print_default_info.push((
                 "90 percentile of distance of the graph".to_string(),
@@ -306,6 +391,7 @@ async fn main() {
 
             let triangle_stats = Arc::new(triangle_stats);
 
+            log_start(&trace_log, start_point, "clustering_coefficients");
             let mid_k_graph = {
                 let triangle_stats = Arc::clone(&triangle_stats);
                 spawn_blocking_logged(Arc::clone(&perf_log), "calculate_mid_k", move || {
@@ -399,6 +485,7 @@ async fn main() {
             let mut buffer_for_print_random_removes: Vec<(String, String)> = Vec::new();
             let mut buffer_for_print_removes_of_largest: Vec<(String, String)> = Vec::new();
 
+            log_start(&trace_log, start_point, "robustness_analysis");
             let lcc_random_removes_handle = {
                 let graph = Arc::clone(&graph);
                 spawn_blocking_logged(
@@ -464,30 +551,34 @@ async fn main() {
             log_duration(&perf_log, "total_runtime", start_point.elapsed());
             println!("Time: {:.2?}", start_point.elapsed());
 
-            println!(
-                "\nGraph analysis ended succesfully, do you want to see results or make requests for estimating distance? "
-            );
-            print!("y/n/yes/no> ");
-            // let mut ans = String::new();
-            // std::io::stdin().read_line(&mut ans);
-            // let ans = ans.as_str();
-
-            let graph = Arc::clone(&graph);
-
-            interactive_landmarks::interactive_landmark_req::run_landmark_interactive(graph, 10)
-                .await;
-
-            println!("\nGraph Analysis Results");
-            {
-                let start = Instant::now();
-                print_table(&buffer_for_print_default_info);
-                println!("\nFraction of largest weak component after remove random n% vertices");
-                print_table(&buffer_for_print_random_removes);
-                println!(
-                    "\nFraction of largest weak component after remove n% vertices with largest degree"
-                );
-                print_table(&buffer_for_print_removes_of_largest);
-                log_duration(&perf_log, "print_result_table", start.elapsed());
+            loop {
+                match ui::main_ui::show_main_menu() {
+                    ui::main_ui::MainMenuChoice::ViewResults => {
+                        let start = Instant::now();
+                        print_table(&buffer_for_print_default_info);
+                        println!(
+                            "\nFraction of largest weak component after remove random n% vertices"
+                        );
+                        print_table(&buffer_for_print_random_removes);
+                        println!(
+                            "\nFraction of largest weak component after remove n% vertices with largest degree"
+                        );
+                        print_table(&buffer_for_print_removes_of_largest);
+                        log_duration(&perf_log, "print_result_table", start.elapsed());
+                        println!("\nPress Enter to return to menu...");
+                        let mut _line = String::new();
+                        let _ = std::io::stdin().read_line(&mut _line);
+                    }
+                    ui::main_ui::MainMenuChoice::InteractiveMode => {
+                        let graph = Arc::clone(&graph);
+                        log_start(&trace_log, start_point, "interactive_landmark_session");
+                        interactive_landmarks::interactive_landmark_req::run_landmark_interactive(
+                            graph, 10,
+                        )
+                        .await;
+                    }
+                    ui::main_ui::MainMenuChoice::Exit => break,
+                }
             }
         }
         None => println!("No file selected. Exiting."),

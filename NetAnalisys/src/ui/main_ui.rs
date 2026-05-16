@@ -1,3 +1,4 @@
+use crate::analysis::diameter::DiameterMethod;
 use crossterm::{QueueableCommand, cursor::*, event::*, execute, style::*, terminal::*};
 use rand::Rng;
 use std::fs;
@@ -338,6 +339,164 @@ fn draw_cat_loading_frame(
 fn random_star(rng: &mut rand::rngs::ThreadRng) -> &'static str {
     const STARS: [&str; 4] = ["✦", "✧", ".", " "];
     STARS[rng.gen_range(0..STARS.len())]
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MainMenuChoice {
+    ViewResults,
+    InteractiveMode,
+    Exit,
+}
+
+pub fn show_main_menu() -> MainMenuChoice {
+    let _guard = TerminalGuard::new();
+    let mut stdout = stdout();
+
+    let items: &[(&str, MainMenuChoice)] = &[
+        ("View analysis results", MainMenuChoice::ViewResults),
+        (
+            "Interactive landmark distance estimation",
+            MainMenuChoice::InteractiveMode,
+        ),
+        ("Exit", MainMenuChoice::Exit),
+    ];
+
+    let mut sel = 0usize;
+
+    loop {
+        let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+        let _ = execute!(
+            stdout,
+            SetForegroundColor(Color::Cyan),
+            Print("╔══════════════════════════════════════════════════════════╗\r\n"),
+            Print("║                  Graph Analysis Complete               ║\r\n"),
+            Print("╚══════════════════════════════════════════════════════════╝\r\n"),
+            ResetColor,
+            Print("\r\n"),
+        );
+
+        for (i, (label, _)) in items.iter().enumerate() {
+            if i == sel {
+                let _ = execute!(
+                    stdout,
+                    SetBackgroundColor(Color::Blue),
+                    SetForegroundColor(Color::White),
+                    Print(format!("  ❯ {label}\r\n")),
+                    ResetColor,
+                );
+            } else {
+                let _ = write!(stdout, "    {label}\r\n");
+            }
+        }
+
+        let _ = write!(
+            stdout,
+            "\r\n  ↑↓ navigate · Enter select · 1-3 quick select\n\r\n\
+             Esc / q — exit\r\n"
+        );
+        let _ = stdout.flush();
+
+        match read().unwrap() {
+            Event::Key(KeyEvent { code, .. }) => match code {
+                KeyCode::Up | KeyCode::Char('k') => {
+                    sel = sel.saturating_sub(1);
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    if sel < items.len() - 1 {
+                        sel += 1;
+                    }
+                }
+                KeyCode::Char('1') => return MainMenuChoice::ViewResults,
+                KeyCode::Char('2') => return MainMenuChoice::InteractiveMode,
+                KeyCode::Char('3') => return MainMenuChoice::Exit,
+                KeyCode::Enter => return items[sel].1,
+                KeyCode::Esc | KeyCode::Char('q') => return MainMenuChoice::Exit,
+                _ => {}
+            },
+            _ => {}
+        }
+    }
+}
+
+pub fn select_diameter_method() -> Option<DiameterMethod> {
+    let _guard = TerminalGuard::new();
+    let mut stdout = stdout();
+
+    let items: &[(u8, &str, DiameterMethod)] = &[
+        (
+            1,
+            "Double BFS (approximate diameter)",
+            DiameterMethod::DoubleBfs,
+        ),
+        (
+            2,
+            "Random 500 BFS (random-like)",
+            DiameterMethod::RandomLike,
+        ),
+        (
+            3,
+            "Snowball sampling (1000 vertices)",
+            DiameterMethod::Snowball,
+        ),
+        (4, "All methods simultaneously", DiameterMethod::All),
+    ];
+
+    let mut sel = 0usize;
+
+    loop {
+        let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+        let _ = execute!(
+            stdout,
+            SetForegroundColor(Color::Cyan),
+            Print("╔══════════════════════════════════════════════════════════╗\r\n"),
+            Print("║           Select Diameter Calculation Method           ║\r\n"),
+            Print("╚══════════════════════════════════════════════════════════╝\r\n"),
+            ResetColor,
+            Print("\r\n"),
+        );
+
+        for (i, (_key, label, _method)) in items.iter().enumerate() {
+            if i == sel {
+                let _ = execute!(
+                    stdout,
+                    SetBackgroundColor(Color::Blue),
+                    SetForegroundColor(Color::White),
+                    Print(format!("  ❯ {label}\r\n")),
+                    ResetColor,
+                );
+            } else {
+                let _ = write!(stdout, "    {label}\r\n");
+            }
+        }
+
+        let _ = write!(
+            stdout,
+            "\r\n  ↑↓ navigate · Enter select · 1-4 quick select\n\r\n\
+             Esc / q — use all methods (default)\r\n"
+        );
+        let _ = stdout.flush();
+
+        match read().unwrap() {
+            Event::Key(KeyEvent { code, .. }) => match code {
+                KeyCode::Up | KeyCode::Char('k') => {
+                    sel = sel.saturating_sub(1);
+                }
+                KeyCode::Down | KeyCode::Char('j') => {
+                    if sel < items.len() - 1 {
+                        sel += 1;
+                    }
+                }
+                KeyCode::Char('1') => return Some(DiameterMethod::DoubleBfs),
+                KeyCode::Char('2') => return Some(DiameterMethod::RandomLike),
+                KeyCode::Char('3') => return Some(DiameterMethod::Snowball),
+                KeyCode::Char('4') => return Some(DiameterMethod::All),
+                KeyCode::Enter => return Some(items[sel].2),
+                KeyCode::Esc | KeyCode::Char('q') => return None,
+                _ => {}
+            },
+            _ => {}
+        }
+    }
 }
 
 pub fn spawn_cat_loading_animation(

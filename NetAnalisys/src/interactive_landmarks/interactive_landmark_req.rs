@@ -562,7 +562,6 @@ fn accuracy_benchmark(
     bfs: &LandmarkBFS,
     cached_bench: &mut Option<Vec<BenchResult>>,
 ) {
-    // ── Clean screen + header ───────────────────────────────────────────
     let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
     let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
     let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
@@ -571,7 +570,6 @@ fn accuracy_benchmark(
     let _ = execute!(stdout, ResetColor);
     let _ = write!(stdout, "\r\n");
 
-    // ── Input for number of pairs ───────────────────────────────────────
     let num_pairs = match read_u32_at(
         stdout,
         "  Number of random pairs [10-100, default 50]: ",
@@ -594,7 +592,6 @@ fn accuracy_benchmark(
         None => return,
     };
 
-    // ── Collect random vertices ─────────────────────────────────────────
     let vertices: Vec<u32> = graph.vertices().collect();
     if vertices.len() < 2 {
         let _ = write!(stdout, "  ⚠ Graph too small for benchmarking.\r\n");
@@ -603,7 +600,6 @@ fn accuracy_benchmark(
         return;
     }
 
-    // ── Progress bar ────────────────────────────────────────────────────
     let _ = execute!(
         stdout,
         MoveTo(0, 7),
@@ -615,7 +611,6 @@ fn accuracy_benchmark(
     let mut rng = rand::thread_rng();
     let bench_start = Instant::now();
 
-    // Use a LOCAL vec — не добавляем к старым результатам!
     let mut results = Vec::with_capacity(num_pairs);
 
     for i in 0..num_pairs {
@@ -627,7 +622,6 @@ fn accuracy_benchmark(
         let res = compute_distances(graph, basic, bfs, s, t);
         results.push(res);
 
-        // Update progress every 5 pairs or on last
         if i % 5 == 0 || i == num_pairs - 1 {
             let pct = (i + 1) * 100 / num_pairs;
             let elapsed = bench_start.elapsed();
@@ -647,10 +641,8 @@ fn accuracy_benchmark(
         }
     }
 
-    // Сохраняем только текущий запуск
     *cached_bench = Some(results);
 
-    // ── Compute statistics ──────────────────────────────────────────────
     let mut count_basic_nice = 0usize;
     let mut count_bfs_nice = 0usize;
     let mut sum_basic_err: f64 = 0.0;
@@ -695,7 +687,6 @@ fn accuracy_benchmark(
     let pct_basic = count_basic_nice * 100 / num_pairs.max(1);
     let pct_bfs = count_bfs_nice * 100 / num_pairs.max(1);
 
-    // ── Display results ─────────────────────────────────────────────────
     let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
     let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
     let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));

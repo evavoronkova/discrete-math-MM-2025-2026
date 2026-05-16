@@ -9,7 +9,7 @@ use std::collections::VecDeque;
 
 pub struct LandmarkBasic {
     landmarks: Vec<u32>,
-    distances: Vec<HashMap<u32, usize>>,
+    distances: Vec<Vec<u32>>,
     external_to_internal: HashMap<u32, u32>,
     curr_strat: LandmarkStrategy,
 }
@@ -33,9 +33,16 @@ impl LandmarkBasic {
             return None;
         }
 
-        let distances = landmarks
-            .par_iter()
-            .map(|&l| bfs_internal(graph, l))
+        let distances: Vec<Vec<u32>> = landmarks
+            .iter()
+            .map(|&l| {
+                let dist_map = bfs_internal(graph, l);
+                let mut dists = vec![u32::MAX; n];
+                for (vertex, d) in dist_map {
+                    dists[vertex as usize] = d as u32;
+                }
+                dists
+            })
             .collect();
         let external_to_internal = graph
             .vertices_internal()
@@ -162,13 +169,15 @@ impl LandmarkBasic {
     }
 
     pub fn estimate(&self, s: u32, t: u32) -> Option<usize> {
-        let s = *self.external_to_internal.get(&s)?;
-        let t = *self.external_to_internal.get(&t)?;
+        let s = *self.external_to_internal.get(&s)? as usize;
+        let t = *self.external_to_internal.get(&t)? as usize;
         let mut best: Option<usize> = None;
 
-        for dist_map in &self.distances {
-            if let (Some(&ds), Some(&dt)) = (dist_map.get(&s), dist_map.get(&t)) {
-                let cand = ds.saturating_add(dt);
+        for dists in &self.distances {
+            let ds = dists[s];
+            let dt = dists[t];
+            if ds != u32::MAX && dt != u32::MAX {
+                let cand = ds as usize + dt as usize;
                 best = Some(best.map_or(cand, |b| b.min(cand)));
             }
         }

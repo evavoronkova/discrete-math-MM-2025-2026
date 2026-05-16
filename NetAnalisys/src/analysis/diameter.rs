@@ -4,8 +4,18 @@ use rand::seq::{IteratorRandom, SliceRandom};
 use rayon::prelude::*;
 use rustc_hash::FxHashSet as HashSet;
 use std::collections::VecDeque;
-use std::sync::Arc;
+use std::io::Write;
+use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
 use tokio::task;
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DiameterMethod {
+    DoubleBfs,
+    RandomLike,
+    Snowball,
+    All,
+}
 
 fn bfs_distances_internal(graph: &Graph, start: u32, allowed_mask: Option<&[bool]>) -> Vec<usize> {
     let n = graph.num_vertices();
@@ -37,9 +47,29 @@ fn bfs_distances_internal(graph: &Graph, start: u32, allowed_mask: Option<&[bool
     dist
 }
 
+fn spawn_blocking_diameter_logged<T, F>(
+    perf_log: &Arc<Mutex<std::fs::File>>,
+    label: &'static str,
+    job: F,
+) -> tokio::task::JoinHandle<T>
+where
+    F: FnOnce() -> T + Send + 'static,
+    T: Send + 'static,
+{
+    let log = Arc::clone(perf_log);
+    task::spawn_blocking(move || {
+        let start = Instant::now();
+        let result = job();
+        let mut file = log.lock().unwrap();
+        let _ = writeln!(file, "{label}\t{elapsed:.6?}", elapsed = start.elapsed());
+        result
+    })
+}
+
 pub async fn count_diameters(
     graph: Arc<Graph>,
     component: Option<Arc<HashSet<u32>>>,
+    perf_log: Arc<Mutex<std::fs::File>>,
 ) -> Vec<usize> {
     let graph_1 = Arc::clone(&graph);
     let graph_2 = Arc::clone(&graph);
@@ -49,17 +79,21 @@ pub async fn count_diameters(
     let component_2 = component.as_ref().map(Arc::clone);
     let component_3 = component.as_ref().map(Arc::clone);
 
+    let log_1 = Arc::clone(&perf_log);
+    let log_2 = Arc::clone(&perf_log);
+    let log_3 = Arc::clone(&perf_log);
+
     let (diameter_on_double_bfs, diameter_on_random, diameter_on_snowball_sampling) =
         tokio::try_join!(
-            tokio::task::spawn_blocking(move || {
+            spawn_blocking_diameter_logged(&log_1, "approximate_diameter", move || {
                 approximate_diameter(&graph_1, component_1.as_deref())
             }),
-            tokio::task::spawn_blocking(move || {
+            spawn_blocking_diameter_logged(&log_2, "random_like_diameter", move || {
                 random_like_diameter_calculate(&graph_2, component_2.as_deref(), 500)
             }),
-            tokio::task::spawn_blocking(move || {
+            spawn_blocking_diameter_logged(&log_3, "snowball_sampling", move || {
                 snowball_sampling(&graph_3, component_3.as_deref(), 1000)
-            })
+            }),
         )
         .unwrap();
 
@@ -70,7 +104,7 @@ pub async fn count_diameters(
     ]
 }
 
-fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
+pub(crate) fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usize {
     let allowed_mask = component.map(|comp| {
         let mut mask = vec![false; graph.num_vertices()];
         for &vertex in comp {
@@ -119,7 +153,7 @@ fn approximate_diameter(graph: &Graph, component: Option<&HashSet<u32>>) -> usiz
         .unwrap_or(0)
 }
 
-fn random_like_diameter_calculate(
+pub(crate) fn random_like_diameter_calculate(
     graph: &Graph,
     component: Option<&HashSet<u32>>,
     iterations: usize,
@@ -160,7 +194,11 @@ fn random_like_diameter_calculate(
     max_distance
 }
 
-fn snowball_sampling(graph: &Graph, component: Option<&HashSet<u32>>, sample_size: usize) -> usize {
+pub(crate) fn snowball_sampling(
+    graph: &Graph,
+    component: Option<&HashSet<u32>>,
+    sample_size: usize,
+) -> usize {
     let mut rng = rand::thread_rng();
     let allowed_mask = component.map(|comp| {
         let mut mask = vec![false; graph.num_vertices()];
