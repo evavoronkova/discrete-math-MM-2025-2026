@@ -269,6 +269,16 @@ pub fn percentile_90_distance(
     component: Option<&HashSet<u32>>,
     iterations: usize,
 ) -> usize {
+    let allowed_mask = component.map(|comp| {
+        let mut mask = vec![false; graph.num_vertices()];
+        for &vertex in comp {
+            if let Some(internal) = graph.external_to_internal(vertex) {
+                mask[internal as usize] = true;
+            }
+        }
+        mask
+    });
+
     let vertices: Vec<u32> = match component {
         Some(comp) => comp
             .iter()
@@ -281,7 +291,7 @@ pub fn percentile_90_distance(
         return 0;
     }
 
-    let runs = iterations.min(30).max(1);
+    let runs = iterations.clamp(1, 30);
     let max_per_run = 50_000;
 
     let chunks: Vec<Vec<usize>> = (0..runs)
@@ -289,7 +299,7 @@ pub fn percentile_90_distance(
         .map(|_| {
             let mut rng = rand::thread_rng();
             let start = vertices[rng.gen_range(0..vertices.len())];
-            let dist = bfs_distances_internal(graph, start, None);
+            let dist = bfs_distances_internal(graph, start, allowed_mask.as_deref());
             dist.into_iter()
                 .filter(|&d| d != usize::MAX)
                 .choose_multiple(&mut rng, max_per_run)

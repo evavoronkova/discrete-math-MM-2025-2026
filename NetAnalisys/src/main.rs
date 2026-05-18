@@ -270,8 +270,9 @@ async fn main() {
             log_start(&trace_log, start_point, "percentile_90_distance");
             let percentile_handle = {
                 let graph = Arc::clone(&graph);
+                let component = Arc::clone(&largest_weak_comp);
                 spawn_blocking_logged(Arc::clone(&perf_log), "percentile_90_distance", move || {
-                    percentile_90_distance(graph.as_ref(), None, 500)
+                    percentile_90_distance(graph.as_ref(), Some(component.as_ref()), 500)
                 })
             };
 

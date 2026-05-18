@@ -378,6 +378,65 @@ fn compute_distances(
     }
 }
 
+fn run_random_pairs_benchmark(
+    stdout: &mut Stdout,
+    graph: &Graph,
+    basic: &LandmarkBasic,
+    bfs: &LandmarkBFS,
+    num_pairs: usize,
+    progress_y: u16,
+) -> Option<Vec<BenchResult>> {
+    let vertices: Vec<u32> = graph.vertices().collect();
+    if vertices.len() < 2 {
+        let _ = write!(stdout, "  ⚠ Graph too small for benchmarking.\r\n");
+        let _ = stdout.flush();
+        std::thread::sleep(Duration::from_secs(1));
+        return None;
+    }
+
+    let _ = execute!(
+        stdout,
+        MoveTo(0, progress_y.saturating_sub(1)),
+        Clear(ClearType::UntilNewLine),
+        Print("  Running benchmark..."),
+    );
+    let _ = stdout.flush();
+
+    let mut rng = rand::thread_rng();
+    let bench_start = Instant::now();
+    let mut results = Vec::with_capacity(num_pairs);
+
+    for i in 0..num_pairs {
+        let idx1 = rng.gen_range(0..vertices.len());
+        let idx2 = rng.gen_range(0..vertices.len());
+        let s = vertices[idx1];
+        let t = vertices[idx2];
+
+        let res = compute_distances(graph, basic, bfs, s, t);
+        results.push(res);
+
+        if i % 5 == 0 || i == num_pairs - 1 {
+            let pct = (i + 1) * 100 / num_pairs;
+            let elapsed = bench_start.elapsed();
+            let _ = execute!(
+                stdout,
+                MoveTo(0, progress_y),
+                Clear(ClearType::UntilNewLine),
+                Print(format!(
+                    "  Progress: [{:3}%]  {}/{}  ({})\r",
+                    pct,
+                    i + 1,
+                    num_pairs,
+                    fmt_duration(elapsed),
+                )),
+            );
+            let _ = stdout.flush();
+        }
+    }
+
+    Some(results)
+}
+
 async fn distance_query(
     stdout: &mut Stdout,
     graph: Arc<Graph>,
@@ -592,56 +651,7 @@ fn accuracy_benchmark(
         None => return,
     };
 
-    let vertices: Vec<u32> = graph.vertices().collect();
-    if vertices.len() < 2 {
-        let _ = write!(stdout, "  ⚠ Graph too small for benchmarking.\r\n");
-        let _ = stdout.flush();
-        std::thread::sleep(Duration::from_secs(1));
-        return;
-    }
-
-    let _ = execute!(
-        stdout,
-        MoveTo(0, 7),
-        Clear(ClearType::UntilNewLine),
-        Print("  Running benchmark..."),
-    );
-    let _ = stdout.flush();
-
-    let mut rng = rand::thread_rng();
-    let bench_start = Instant::now();
-
-    let mut results = Vec::with_capacity(num_pairs);
-
-    for i in 0..num_pairs {
-        let idx1 = rng.gen_range(0..vertices.len());
-        let idx2 = rng.gen_range(0..vertices.len());
-        let s = vertices[idx1];
-        let t = vertices[idx2];
-
-        let res = compute_distances(graph, basic, bfs, s, t);
-        results.push(res);
-
-        if i % 5 == 0 || i == num_pairs - 1 {
-            let pct = (i + 1) * 100 / num_pairs;
-            let elapsed = bench_start.elapsed();
-            let _ = execute!(
-                stdout,
-                MoveTo(0, 8),
-                Clear(ClearType::UntilNewLine),
-                Print(format!(
-                    "  Progress: [{:3}%]  {}/{}  ({})\r",
-                    pct,
-                    i + 1,
-                    num_pairs,
-                    fmt_duration(elapsed),
-                )),
-            );
-            let _ = stdout.flush();
-        }
-    }
-
-    *cached_bench = Some(results);
+    *cached_bench = run_random_pairs_benchmark(stdout, graph, basic, bfs, num_pairs, 8);
 
     let mut count_basic_nice = 0usize;
     let mut count_bfs_nice = 0usize;
@@ -735,25 +745,149 @@ fn accuracy_benchmark(
     }
 }
 
-#[allow(unused_variables)]
 fn speed_benchmark(
     stdout: &mut Stdout,
     graph: Arc<Graph>,
     basic: &LandmarkBasic,
     bfs: &LandmarkBFS,
-    cached_bench: &Option<Vec<BenchResult>>,
+    _cached_bench: &Option<Vec<BenchResult>>,
 ) {
-    let _ = write!(
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
+    let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
+    let _ = write!(stdout, "║{:^58}║\r\n", "  ⚡  Speed Benchmark  ");
+    let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
+    let _ = execute!(stdout, ResetColor);
+    let _ = write!(stdout, "\r\n");
+
+    let num_pairs = match read_u32_at(
         stdout,
-        "\r\n  [stub] speed_benchmark — not implemented yet\r\n"
-    );
-    let _ = write!(
-        stdout,
-        "  Would benchmark speed with {} landmarks\r\n",
-        cached_bench.as_ref().map_or(0, |v| v.len())
-    );
+        "  Number of random pairs [10-300, default 100]: ",
+        0,
+        5,
+    ) {
+        Some(n) if (10..=300).contains(&n) => n as usize,
+        Some(_) => {
+            let _ = execute!(
+                stdout,
+                MoveTo(0, 6),
+                SetForegroundColor(Color::DarkGrey),
+                Print("  Using default: 100 pairs\r\n"),
+                ResetColor,
+            );
+            let _ = stdout.flush();
+            std::thread::sleep(Duration::from_millis(500));
+            100
+        }
+        None => return,
+    };
+
+    let Some(results) =
+        run_random_pairs_benchmark(stdout, graph.as_ref(), basic, bfs, num_pairs, 8)
+    else {
+        return;
+    };
+
+    let mut sum_time_basic = Duration::ZERO;
+    let mut sum_time_bfs = Duration::ZERO;
+    let mut sum_time_exact = Duration::ZERO;
+    let mut min_time_basic = Duration::MAX;
+    let mut min_time_bfs = Duration::MAX;
+    let mut min_time_exact = Duration::MAX;
+    let mut max_time_basic = Duration::ZERO;
+    let mut max_time_bfs = Duration::ZERO;
+    let mut max_time_exact = Duration::ZERO;
+
+    for info in &results {
+        sum_time_basic += info.basic_time;
+        sum_time_bfs += info.bfs_time;
+        sum_time_exact += info.exact_time;
+
+        min_time_basic = min_time_basic.min(info.basic_time);
+        min_time_bfs = min_time_bfs.min(info.bfs_time);
+        min_time_exact = min_time_exact.min(info.exact_time);
+
+        max_time_basic = max_time_basic.max(info.basic_time);
+        max_time_bfs = max_time_bfs.max(info.bfs_time);
+        max_time_exact = max_time_exact.max(info.exact_time);
+    }
+
+    let avg_time_basic = sum_time_basic / num_pairs as u32;
+    let avg_time_bfs = sum_time_bfs / num_pairs as u32;
+    let avg_time_exact = sum_time_exact / num_pairs as u32;
+
+    let speedup_basic = if avg_time_basic.is_zero() {
+        0.0
+    } else {
+        avg_time_exact.as_secs_f64() / avg_time_basic.as_secs_f64()
+    };
+    let speedup_bfs = if avg_time_bfs.is_zero() {
+        0.0
+    } else {
+        avg_time_exact.as_secs_f64() / avg_time_bfs.as_secs_f64()
+    };
+
+    let _ = execute!(stdout, Clear(ClearType::All), MoveTo(0, 0));
+    let _ = execute!(stdout, SetForegroundColor(Color::Cyan));
+    let _ = write!(stdout, "╔{}╗\r\n", "═".repeat(58));
+    let _ = write!(stdout, "║{:^58}║\r\n", "  ⚡  Speed Benchmark Results  ");
+    let _ = write!(stdout, "╚{}╝\r\n", "═".repeat(58));
+    let _ = execute!(stdout, ResetColor);
+    let _ = write!(stdout, "\r\n");
+
+    let table_data = vec![
+        ("Total pairs tested".to_string(), num_pairs.to_string()),
+        (
+            "Avg exact BFS time".to_string(),
+            fmt_duration(avg_time_exact),
+        ),
+        (
+            "Avg Basic LM time".to_string(),
+            fmt_duration(avg_time_basic),
+        ),
+        ("Avg BFS LM time".to_string(), fmt_duration(avg_time_bfs)),
+        (
+            "Min exact BFS time".to_string(),
+            fmt_duration(min_time_exact),
+        ),
+        (
+            "Min Basic LM time".to_string(),
+            fmt_duration(min_time_basic),
+        ),
+        ("Min BFS LM time".to_string(), fmt_duration(min_time_bfs)),
+        (
+            "Max exact BFS time".to_string(),
+            fmt_duration(max_time_exact),
+        ),
+        (
+            "Max Basic LM time".to_string(),
+            fmt_duration(max_time_basic),
+        ),
+        ("Max BFS LM time".to_string(), fmt_duration(max_time_bfs)),
+        (
+            "Basic speedup vs exact".to_string(),
+            format!("{speedup_basic:.2}x"),
+        ),
+        (
+            "BFS speedup vs exact".to_string(),
+            format!("{speedup_bfs:.2}x"),
+        ),
+    ];
+
+    print_table_raw(stdout, &table_data);
+
+    let _ = write!(stdout, "\r\n  Press Enter to continue...\r\n");
     let _ = stdout.flush();
-    std::thread::sleep(Duration::from_secs(1));
+
+    loop {
+        if let Event::Key(KeyEvent {
+            code: KeyCode::Enter,
+            ..
+        }) = read().unwrap()
+        {
+            break;
+        }
+    }
 }
 
 fn change_landmarks(stdout: &mut Stdout, _graph: &Graph, current: usize) -> Option<usize> {
