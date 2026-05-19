@@ -25,4 +25,3 @@ fun swap(arr: IntArray, ind1: Int, ind2: Int){
     arr[ind1] = arr[ind2]
     arr[ind2] = temp
 }
-
