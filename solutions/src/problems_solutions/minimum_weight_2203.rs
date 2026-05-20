@@ -2,7 +2,6 @@ use super::Solution;
 use std::cmp::Reverse;
 
 impl Solution {
-    // Обычная Дейкстра
     fn dijkstra(graph: &[Vec<(i32, i32)>], start: i32) -> Vec<i64> {
         let mut dist = vec![i64::MAX; graph.len()];
         dist[start as usize] = 0;

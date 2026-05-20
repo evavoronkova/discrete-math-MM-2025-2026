@@ -3,12 +3,9 @@ use std::cmp::Reverse;
 use std::collections::{BinaryHeap, HashMap};
 
 impl Solution {
-    // Дейкстра, но ещё считаем остановки.
-    // Храним (узел, кол-во остановок) → цена. Если есть вариант дешевле
-    // и с меньшим/таким же числом остановок — текущий отбрасываем.
     pub fn find_cheapest_price(n: i32, flights: Vec<Vec<i32>>, src: i32, dst: i32, k: i32) -> i32 {
         let n = n as usize;
-        let max_stops = k + 1; // в k остановок = k+1 перелётов
+        let max_stops = k + 1; 
 
         let mut graph: Vec<Vec<(usize, i32)>> = vec![vec![]; n];
         for flight in &flights {
@@ -16,7 +13,6 @@ impl Solution {
             graph[from].push((to, price));
         }
 
-        // Для каждого узла храним таблицу: сколько остановок → цена
         let mut cost: Vec<HashMap<i32, i32>> = vec![HashMap::new(); n];
         cost[src as usize].insert(0, 0);
 
@@ -25,7 +21,7 @@ impl Solution {
 
         while let Some((Reverse(total_cost), node, stops)) = heap.pop() {
             if node == dst as usize {
-                return total_cost; // первый раз достали dst — он минимальный
+                return total_cost; 
             }
 
             if stops > max_stops {
@@ -35,18 +31,17 @@ impl Solution {
             if let Some(&best) = cost[node].get(&stops)
                 && total_cost > best
             {
-                continue; // не лучший вариант для этих остановок
+                continue; 
             }
 
             if stops == max_stops {
-                continue; // больше лететь нельзя
+                continue; 
             }
 
             for &(neighbor, price) in &graph[node] {
                 let new_stops = stops + 1;
                 let new_cost = total_cost + price;
 
-                // Смотрим, может уже есть вариант, который доминирует над новым
                 let mut dominated = false;
                 if let Some(map) = cost.get(neighbor) {
                     for (&s, &c) in map {
@@ -65,7 +60,6 @@ impl Solution {
                 if new_cost < *entry {
                     *entry = new_cost;
 
-                    // Убираем варианты, которые доминируются новым
                     cost[neighbor].retain(|s, c| {
                         let s_val = *s;
                         let c_val = *c;

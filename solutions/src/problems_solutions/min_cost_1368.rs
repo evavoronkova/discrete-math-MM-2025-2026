@@ -2,8 +2,10 @@ use super::Solution;
 use std::collections::VecDeque;
 
 impl Solution {
-    // 0-1 BFS: идём по стрелке — бесплатно (кладём в начало),
-    // меняем стрелку — платим 1 (кладём в конец)
+    /*
+    идём по стрелке — бесплатно (кладём в начало),
+    меняем стрелку — платим 1 (кладём в конец)
+    */
     pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
         let m = grid.len();
         let n = grid[0].len();
@@ -19,7 +21,7 @@ impl Solution {
         }
 
         while let Some((curr_x, curr_y, cost)) = double_queue.pop_front() {
-            // index: 0=вправо(1), 1=влево(2), 2=вниз(3), 3=вверх(4)
+            // индексы 0=вправо 1, 1=влево 2, 2=вниз 3, 3=вверх 4
             for (index, (dx, dy)) in directions.iter().enumerate() {
                 let new_x = curr_x + dx;
                 let new_y = curr_y + dy;

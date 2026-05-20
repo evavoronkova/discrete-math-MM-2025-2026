@@ -2,11 +2,6 @@ use super::Solution;
 use std::collections::VecDeque;
 
 impl Solution {
-    // Раскладываем граф в 2D-сетку.
-    // 1. Берём угол (у него степень минимальная)
-    // 2. BFS от угла — считаем расстояния
-    // 3. Первая строка: идём по вершинам, где dist растёт на 1
-    // 4. Дальше: для каждой вершины строки берём непосещённого соседа
     pub fn construct_grid_layout(n: i32, edges: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
         let n = n as usize;
 
@@ -112,7 +107,6 @@ impl Solution {
     }
 }
 
-// Обычный BFS
 fn bfs(graph: &[Vec<usize>], start: usize) -> Vec<usize> {
     let n = graph.len();
     let mut dist = vec![usize::MAX; n];

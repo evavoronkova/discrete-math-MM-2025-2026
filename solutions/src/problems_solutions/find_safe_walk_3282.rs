@@ -2,12 +2,10 @@ use super::Solution;
 use std::collections::VecDeque;
 
 impl Solution {
-    // BFS: храним для каждой клетки максимальное здоровье, с которым там были
     pub fn find_safe_walk(grid: Vec<Vec<i32>>, health: i32) -> bool {
         let directions: [(i32, i32); 4] = [(0, 1), (1, 0), (0, -1), (-1, 0)];
         let curr_x = 0;
         let curr_y = 0;
-        // Теряем здоровье за стартовую клетку
         let health = health - grid[curr_x as usize][curr_y as usize];
         if health <= 0 {
             return false;
@@ -31,7 +29,6 @@ impl Solution {
                     && new_y < grid[0].len() as i32
                 {
                     let new_health = health - grid[new_x as usize][new_y as usize];
-                    // Идём, только если нашли более здоровый путь
                     if new_health > 0 && new_health > best_health[new_x as usize][new_y as usize] {
                         best_health[new_x as usize][new_y as usize] = new_health;
                         queue.push_back((new_x, new_y, new_health));

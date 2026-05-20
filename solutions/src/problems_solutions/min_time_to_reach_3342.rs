@@ -3,15 +3,13 @@ use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 
 impl Solution {
-    // Дейкстра, но вершина = (x, y, чётность шага).
     // Чётный шаг стоит 1, нечётный — 2.
-    // Если пришли раньше времени — ждём.
-    // Кодируем (x, y, p) в 1D: ((x*m + y) << 1) | p.
+    // Кодируем (x, y, p) в одномерныое представление: ((x*m + y) << 1) | p.
     pub fn min_time_to_reach(move_time: Vec<Vec<i32>>) -> i32 {
         let n = move_time.len();
         let m = move_time[0].len();
 
-        let mut dist = vec![i32::MAX; n * m * 2]; // ×2 из-за parity
+        let mut dist = vec![i32::MAX; n * m * 2]; 
         let mut pq = BinaryHeap::new();
 
         dist[0] = 0;
@@ -22,8 +20,8 @@ impl Solution {
             let y = y as usize;
             let p = p as usize;
 
-            let base = (x * m + y) << 1; // << 1 — освобождаем бит для parity
-            let cur_idx = base | p; // parity в младшем бите
+            let base = (x * m + y) << 1; 
+            let cur_idx = base | p; 
 
             if x == n - 1 && y == m - 1 {
                 return t;
@@ -33,16 +31,15 @@ impl Solution {
                 continue;
             }
 
-            let cost = (p + 1) as i32; // 0→1, 1→2
-            let np = 1 - p; // инвертируем чётность
+            let cost = (p + 1) as i32; 
+            let np = 1 - p;
 
-            // 4 направления
             if x + 1 < n {
                 let nx = x + 1;
                 let ny = y;
 
                 let mt = unsafe { *move_time.get_unchecked(nx).get_unchecked(ny) };
-                let start = if t > mt { t } else { mt }; // ждём
+                let start = if t > mt { t } else { mt }; 
                 let new_time = start + cost;
 
                 let i = ((nx * m + ny) << 1) | np;
