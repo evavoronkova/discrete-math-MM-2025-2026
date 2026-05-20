@@ -2,20 +2,25 @@ use super::Solution;
 use std::collections::VecDeque;
 
 impl Solution {
+    // 0-1 BFS: идём по стрелке — бесплатно (кладём в начало),
+    // меняем стрелку — платим 1 (кладём в конец)
     pub fn min_cost(grid: Vec<Vec<i32>>) -> i32 {
         let m = grid.len();
         let n = grid[0].len();
         let mut costs = vec![vec![i32::MAX; n]; m];
-        let DIRECTIONS: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+        let directions: [(i32, i32); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
         let mut double_queue = VecDeque::new();
         costs[0][0] = 0;
         double_queue.push_back((0, 0, 0));
+
         #[inline]
         fn is_valid(x: i32, y: i32, m: usize, n: usize) -> bool {
             x >= 0 && x < m as i32 && y >= 0 && y < n as i32
         }
+
         while let Some((curr_x, curr_y, cost)) = double_queue.pop_front() {
-            for (index, (dx, dy)) in DIRECTIONS.iter().enumerate() {
+            // index: 0=вправо(1), 1=влево(2), 2=вниз(3), 3=вверх(4)
+            for (index, (dx, dy)) in directions.iter().enumerate() {
                 let new_x = curr_x + dx;
                 let new_y = curr_y + dy;
                 if is_valid(new_x, new_y, m, n) {
@@ -36,6 +41,7 @@ impl Solution {
                 }
             }
         }
+
         costs[m - 1][n - 1]
     }
 }

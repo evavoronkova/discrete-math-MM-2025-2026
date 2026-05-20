@@ -2,6 +2,11 @@ use super::Solution;
 use std::collections::VecDeque;
 
 impl Solution {
+    // Раскладываем граф в 2D-сетку.
+    // 1. Берём угол (у него степень минимальная)
+    // 2. BFS от угла — считаем расстояния
+    // 3. Первая строка: идём по вершинам, где dist растёт на 1
+    // 4. Дальше: для каждой вершины строки берём непосещённого соседа
     pub fn construct_grid_layout(n: i32, edges: Vec<Vec<i32>>) -> Vec<Vec<i32>> {
         let n = n as usize;
 
@@ -17,14 +22,16 @@ impl Solution {
             graph[v].push(u);
         }
 
+        // Угол — вершина с наименьшим числом соседей
         let corner = (0..n).min_by_key(|&i| graph[i].len()).unwrap();
 
-        if graph[corner].len() == 0 {
+        if graph[corner].is_empty() {
             return vec![vec![corner as i32]];
         }
 
         let dist = bfs(&graph, corner);
 
+        // Строим первую строку
         let mut line = vec![corner];
         let mut prev = corner;
         let mut cur = graph[corner][0];
@@ -42,6 +49,7 @@ impl Solution {
                     continue;
                 }
 
+                // Сколько соседей у v на предыдущем расстоянии
                 let cnt_prev = graph[v].iter().filter(|&&u| dist[u] == cur_dist).count();
 
                 if cnt_prev == 1 {
@@ -60,6 +68,7 @@ impl Solution {
             }
         }
 
+        // Следующие строки
         let mut used = vec![false; n];
         for &v in &line {
             used[v] = true;
@@ -103,7 +112,8 @@ impl Solution {
     }
 }
 
-fn bfs(graph: &Vec<Vec<usize>>, start: usize) -> Vec<usize> {
+// Обычный BFS
+fn bfs(graph: &[Vec<usize>], start: usize) -> Vec<usize> {
     let n = graph.len();
     let mut dist = vec![usize::MAX; n];
     let mut q = VecDeque::new();

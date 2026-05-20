@@ -1,14 +1,16 @@
 use super::Solution;
 
 impl Solution {
+    // DFS — заходим во все смежные вершины, помечаем посещёнными
     fn dfs(is_connected: &Vec<Vec<i32>>, visited: &mut Vec<bool>, current: usize, n: usize) {
         visited[current] = true;
         for next in 0..n {
             if is_connected[current][next] == 1 && !visited[next] {
-                Solution::dfs(&is_connected, visited, next, n);
+                Solution::dfs(is_connected, visited, next, n);
             }
         }
     }
+    // Считаем компоненты связности: для каждой непосещённой вершины запускаем DFS
     pub fn find_circle_num(is_connected: Vec<Vec<i32>>) -> i32 {
         let n = is_connected.len();
         let mut visited = vec![false; n];

@@ -1,7 +1,9 @@
 use super::Solution;
 use std::cmp::Reverse;
+
 impl Solution {
-    fn dijkstra(graph: &Vec<Vec<(i32, i32)>>, start: i32) -> Vec<i64> {
+    // Обычная Дейкстра
+    fn dijkstra(graph: &[Vec<(i32, i32)>], start: i32) -> Vec<i64> {
         let mut dist = vec![i64::MAX; graph.len()];
         dist[start as usize] = 0;
         let mut heap = std::collections::BinaryHeap::new();
@@ -20,16 +22,22 @@ impl Solution {
         }
         dist
     }
+
+    // Запускаем Дейкстру 3 раза: от src1, src2 (прямой граф) и от dest (обратный).
+    // Потом ищем вершину, где они сходятся: ans = min(dist_src1[v] + dist_src2[v] + dist_dest[v]).
     pub fn minimum_weight(n: i32, edges: Vec<Vec<i32>>, src1: i32, src2: i32, dest: i32) -> i64 {
         let mut graph = vec![vec![]; n as usize];
         let mut rev_graph = vec![vec![]; n as usize];
         for edge in edges.iter() {
             graph[edge[0] as usize].push((edge[1], edge[2]));
-            rev_graph[edge[1] as usize].push((edge[0], edge[2]));
+            rev_graph[edge[1] as usize].push((edge[0], edge[2])); // граф наоборот
         }
+
         let dist_src1 = Self::dijkstra(&graph, src1);
         let dist_src2 = Self::dijkstra(&graph, src2);
         let dist_dest = Self::dijkstra(&rev_graph, dest);
+
+        // Перебираем вершину, где пути встретятся
         let mut ans = i64::MAX;
         for rand_node in 0..n as usize {
             if dist_src1[rand_node] == i64::MAX
@@ -42,6 +50,7 @@ impl Solution {
                 ans = ans.min(total_cost);
             }
         }
+
         ans
     }
 }

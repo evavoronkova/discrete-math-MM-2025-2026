@@ -16,6 +16,7 @@ impl Dsu {
         }
     }
 
+    // Ищем корень, попутно подвешиваем вершины прямо к корню
     fn find(&mut self, x: u16) -> u16 {
         let idx = x as usize;
         if self.parent[idx] != x {
@@ -25,6 +26,7 @@ impl Dsu {
         self.parent[idx]
     }
 
+    // Объединяем компоненты: меньшее под большее
     fn union(&mut self, x: u16, y: u16) -> bool {
         let mut root_x = self.find(x);
         let mut root_y = self.find(y);
@@ -42,7 +44,10 @@ impl Dsu {
 }
 
 impl Solution {
+    // Каждый камень соединяет строку и столбец → объединяем их в DSU.
+    // Внутри одной компоненты можно оставить только 1 камень.
     pub fn remove_stones(stones: Vec<Vec<i32>>) -> i32 {
+        // Даём ID каждой строке и каждому столбцу
         let mut rows: HashMap<u16, u16> = HashMap::new();
         let mut cols: HashMap<u16, u16> = HashMap::new();
         let mut next_id: u16 = 0;
@@ -70,6 +75,7 @@ impl Solution {
             dsu.union(rows[&row], cols[&col]);
         }
 
+        // Всего камней минус сколько компонент получилось
         stones.len() as i32 - dsu.components as i32
     }
 }
