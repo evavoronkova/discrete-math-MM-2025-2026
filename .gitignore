@@ -7,6 +7,7 @@ target/
 .codex/
 .opencode
 opencode.json
+opencode.jsonc
 AGENTS.md
 /ТЗ
 .env
