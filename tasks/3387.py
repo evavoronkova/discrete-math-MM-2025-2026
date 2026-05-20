@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 class Solution:
     def maxAmount(self, initialCurrency: str, pairs1: list[list[str]], rates1: list[float], pairs2: list[list[str]],
                   rates2: list[float]) -> float:
+        # составляем два графа обмена валют по курсу для двух дней: узлы - валюты, ребра с весом курса - обмен
         graph1 = defaultdict(dict)
         graph2 = defaultdict(dict)
 
@@ -18,6 +19,7 @@ class Solution:
             graph2[start][target] = rate
             graph2[target][start] = 1.0 / rate
 
+        # bfs для подсчета максимальных доходов от обмена валют
         def bfs(start_curr: str, start_amount: float, graph: defaultdict[str, dict]):
             max_amounts = defaultdict(float)
             max_amounts[start_curr] = start_amount
@@ -34,12 +36,12 @@ class Solution:
                         queue.append((neighbour, new_amount))
             return max_amounts
 
-        amounts1 = bfs(initialCurrency, 1.0, graph1)
+        amounts1 = bfs(initialCurrency, 1.0, graph1) # получаем максимальные возможные суммы для каждой валюты
         res = 1.0
 
         for currency, amount in amounts1.items():
             if currency in graph2:
-                amounts2 = bfs(currency, amount, graph2)
+                amounts2 = bfs(currency, amount, graph2)  # считаем максимальные доходы от каждой валюты во второй день
                 res = max(res, amounts2[initialCurrency])
 
         return res

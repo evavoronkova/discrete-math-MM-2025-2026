@@ -3,6 +3,7 @@ from collections import deque
 
 class Solution:
     def minReorder(self, n: int, connections: list[list[int]]) -> int:
+        # строим граф: узлы - города, а дороги - ребра с весом 1 при направлении от центра, и 0 - к центру
         graph = [[] for _ in range(n)]
 
         for a, b in connections:
@@ -16,6 +17,7 @@ class Solution:
 
         min_changed = 0
 
+        # bfs проходит все дороги от города 0, и считает дороги, которые нужно развернуть к нему
         while queue:
             current = queue.popleft()
             for neighbour, direction in graph[current]:

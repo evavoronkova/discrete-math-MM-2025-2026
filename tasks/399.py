@@ -4,6 +4,7 @@ from typing import List
 
 class Solution:
     def calcEquation(self, equations: List[List[str]], values: List[float], queries: List[List[str]]) -> List[float]:
+        # граф, где переменные - узлы, а ребра - graph[A][B] = val, graph[B][A] = 1/val
         graph = defaultdict(dict)
 
         for i in range(len(equations)):
@@ -12,6 +13,7 @@ class Solution:
             graph[a][b] = val
             graph[b][a] = 1.0 / val
 
+        # dfs проходит путь, перемножая веса ребер
         def dfs(current: str, target: str, visited: set[str]) -> float:
             if current not in graph or target not in graph:
                 return -1.0
@@ -26,6 +28,7 @@ class Solution:
                         return weight * res
             return -1.0
 
+        # находим результаты для запросов
         result: List[float] = []
         for start, end in queries:
             if start not in graph or end not in graph:
@@ -33,4 +36,3 @@ class Solution:
             else:
                 result.append(dfs(start, end, set()))
         return result
-
