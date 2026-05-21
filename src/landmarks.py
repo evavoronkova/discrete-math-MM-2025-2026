@@ -122,8 +122,7 @@ class ShortestPathTree:
     Дерево кратчайших путей от одного ориентира.
     """
 
-    __slots__ = ("graph", "_index", "root", "root_idx", "dist", "parent", "depth", "up", "log", "neighbors")
-
+    __slots__ = ("graph", "_index", "root", "root_idx", "dist", "parent", "neighbors")
     def __init__(self, graph: Graph, root: int, _index: _GraphIndex):
         self.graph = graph
         self._index = _index
@@ -132,9 +131,7 @@ class ShortestPathTree:
         self.neighbors = _index.neighbors
 
         self.dist, self.parent = self._build_tree()
-        self.depth = self._build_depth()
-        self.log = max(1, _index.n.bit_length())
-        self.up = self._build_lifting()
+        # глубина в BFS-дереве совпадает с dist, отдельное поле не нужно
 
     def _build_tree(self):
         n = self._index.n
@@ -156,48 +153,30 @@ class ShortestPathTree:
 
         return dist, parent
 
-    def _build_depth(self):
-        return self.dist
-
-    def _build_lifting(self):
-        n = self._index.n
-        up = [array("i", [-1]) * n for _ in range(self.log)]
-        up[0] = self.parent[:]
-        for level in range(1, self.log):
-            prev = up[level - 1]
-            cur = up[level]
-            for v in range(n):
-                p = prev[v]
-                cur[v] = -1 if p == -1 else prev[p]
-        return up
-
-    def _lift(self, v: int, steps: int) -> int:
-        bit = 0
-        while steps > 0 and v != -1:
-            if steps & 1:
-                v = self.up[bit][v]
-            steps >>= 1
-            bit += 1
-        return v
-
     def lca(self, u: int, v: int) -> int:
         if u == -1 or v == -1:
             return -1
-        if self.depth[u] < self.depth[v]:
-            u, v = v, u
+        dist = self.dist
+        parent = self.parent
+        depth_u = dist[u]
+        depth_v = dist[v]
+        while depth_u > depth_v:
+            u = parent[u]
+            if u == -1:
+                return -1
+            depth_u -= 1
+        while depth_v > depth_u:
+            v = parent[v]
+            if v == -1:
+                return -1
+            depth_v -= 1
+        while u != v:
+            u = parent[u]
+            v = parent[v]
+            if u == -1 or v == -1:
+                return -1
+        return u
 
-        u = self._lift(u, self.depth[u] - self.depth[v])
-        if u == v:
-            return u
-
-        for level in range(self.log - 1, -1, -1):
-            uu = self.up[level][u]
-            vv = self.up[level][v]
-            if uu != vv:
-                u = uu
-                v = vv
-
-        return self.parent[u]
 
     def distance_sc(self, u: int, v: int) -> float:
         iu = self._index.node_to_idx.get(u)
