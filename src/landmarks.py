@@ -8,6 +8,9 @@ from typing import List, Tuple
  
 from src.graph import Graph
  
+# sentinel «вершина не посещена» для bytearray-расстояний (0..254 — валидные глубины)
+_UNREACHABLE = 255
+ 
 class _GraphIndex:
     __slots__ = ("nodes", "node_to_idx", "idx_to_node",
                  "neighbor_offsets", "neighbor_adj", "degrees", "n")
@@ -32,7 +35,7 @@ class _GraphIndex:
         # если вызывающий код тоже отпустит свою ссылку (del graph)
  
     def bfs(self, source_idx: int, need_parent: bool = False, need_farthest: bool = False):
-        dist = array("h", [-1]) * self.n
+        dist = bytearray([_UNREACHABLE]) * self.n
         parent = array("i", [-1]) * self.n if need_parent else None
  
         offsets = self.neighbor_offsets
@@ -52,7 +55,7 @@ class _GraphIndex:
             end = offsets[u + 1]
             for i in range(start, end):
                 v = adj[i]
-                if dist[v] == -1:
+                if dist[v] == _UNREACHABLE:
                     dist[v] = du + 1
                     if parent is not None:
                         parent[v] = u
@@ -116,7 +119,7 @@ class LandmarksBasic:
         for dist in self.dist:
             du = dist[iu]
             dv = dist[iv]
-            if du != -1 and dv != -1:
+            if du != _UNREACHABLE and dv != _UNREACHABLE:
                 cand = du + dv
                 if cand < best:
                     best = cand
@@ -143,7 +146,7 @@ class ShortestPathTree:
  
     def _build_tree(self):
         n = self._index.n
-        dist = array("h", [-1]) * n
+        dist = bytearray([_UNREACHABLE]) * n
         parent = array("i", [-1]) * n
  
         offsets = self._index.neighbor_offsets
@@ -160,7 +163,7 @@ class ShortestPathTree:
             end = offsets[u + 1]
             for i in range(start, end):
                 v = adj[i]
-                if dist[v] == -1:
+                if dist[v] == _UNREACHABLE:
                     dist[v] = du + 1
                     parent[v] = u
                     q.append(v)
