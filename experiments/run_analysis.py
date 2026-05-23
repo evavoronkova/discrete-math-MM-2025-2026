@@ -37,21 +37,25 @@ def analyze_one(filepath: str) -> None:
     with open_report(report_path) as report:
         log(report, f"\n===== {name} =====")
         g = load_graph(filepath)
+        # по заданию все метрики, кроме SCC, считаются на неориентированном
+        # виде графа; для уже неориентированного to_undirected() возвращает self
+        g_u = g.to_undirected()
 
-        # базовые характеристики
-        n = g.number_of_nodes()
-        m = g.number_of_edges()
+        # базовые характеристики (на неориентированном виде)
+        n = g_u.number_of_nodes()
+        m = g_u.number_of_edges()
         max_edges = n * (n - 1) // 2
         dens = m / max_edges if max_edges > 0 else 0.0
-        comps = connected_components(g)
+        comps = connected_components(g_u)
         num_comps = len(comps)
-        lcc_size, lcc_frac = largest_cc_size(g)
+        lcc_size, lcc_frac = largest_cc_size(g_u)
 
         log(report, f"  Вершин: {n}, Рёбер: {m}")
         log(report, f"  Плотность: {dens:.6f}")
         log(report, f"  Компонент слабой связности: {num_comps}")
         log(report, f"  Доля вершин в макс. компоненте: {lcc_frac:.4f}")
 
+        # SCC — единственная метрика на оригинальном орграфе
         if g.directed:
             scc_num, scc_frac = scc_count_and_largest(g)
             if scc_num is not None:
@@ -59,13 +63,13 @@ def analyze_one(filepath: str) -> None:
                 log(report, f"  Доля вершин в наибольшей SCC: {scc_frac:.4f}")
 
         # оценка диаметра и 90-го процентиля
-        lcc_verts = largest_cc_vertices(g)
-        dbl_diam, dbl_perc = double_sweep_diameter(g, lcc_verts, percentile=90)
+        lcc_verts = largest_cc_vertices(g_u)
+        dbl_diam, dbl_perc = double_sweep_diameter(g_u, lcc_verts, percentile=90)
         smp_diam, smp_perc = sampled_diameter_and_percentile(
-            g, lcc_verts, sample_size=SAMPLE_SIZE, percentile=90
+            g_u, lcc_verts, sample_size=SAMPLE_SIZE, percentile=90
         )
         snb_diam, snb_perc = snowball_diameter_percentile(
-            g, lcc_verts, target_size=SAMPLE_SIZE, percentile=90
+            g_u, lcc_verts, target_size=SAMPLE_SIZE, percentile=90
         )
 
         log(report, "  Диаметр / 90-й процентиль:")
@@ -74,22 +78,22 @@ def analyze_one(filepath: str) -> None:
         log(report, f"    Snowball sample:   diam={snb_diam}, perc90={snb_perc}")
 
         # треугольники и кластерные коэффициенты
-        tri = count_triangles(g)
-        avg_cl = average_clustering_coefficient(g)
-        gcc = global_clustering_coefficient(g)
+        tri = count_triangles(g_u)
+        avg_cl = average_clustering_coefficient(g_u)
+        gcc = global_clustering_coefficient(g_u)
         log(report, f"  Треугольников: {tri}")
         log(report, f"  Средний кластерный коэффициент: {avg_cl:.6f}")
         log(report, f"  Глобальный кластерный коэффициент: {gcc:.6f}")
 
         # степени и распределение
-        min_d, max_d, avg_d = degree_stats(g)
+        min_d, max_d, avg_d = degree_stats(g_u)
         log(report, "  Степени:")
         log(report, f"  Минимальная: {min_d}")
         log(report, f"  Максимальная: {max_d}")
         log(report, f"  Средняя: {avg_d:.2f}")
 
         # график распределения степеней в персональную папку графа
-        dist = degree_distribution(g)
+        dist = degree_distribution(g_u)
         plot_degree_distribution(dist, name, output_dir=out_dir)
         log(report, f"  Графики и отчёт сохранены в {out_dir}")
 
