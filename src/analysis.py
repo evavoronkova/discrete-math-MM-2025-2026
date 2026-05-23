@@ -11,6 +11,7 @@ from src.utils import bfs, bfs_ignore
 # Кэш по id(graph), чтобы не пересобирать на каждый вызов.
 _undirected_adj_cache = {}
 
+
 def _get_undirected_adj(graph):
     """{вершина: множество соседей}, трактуя граф как неориентированный.
     Кэшируется; при обработке многих графов имеет смысл вызвать
@@ -28,24 +29,29 @@ def _get_undirected_adj(graph):
     _undirected_adj_cache[key] = adj
     return adj
 
+
 def clear_undirected_cache():
     """Сбрасывает кэш неориентированной смежности."""
     _undirected_adj_cache.clear()
+
 
 def _undirected_neighbors(graph, u):
     if not graph.directed:
         return graph.neighbors(u)
     return _get_undirected_adj(graph)[u]
 
+
 def _undirected_degree(graph, u):
     if not graph.directed:
         return graph.degree(u)
     return len(_get_undirected_adj(graph)[u])
 
+
 def _has_undirected_edge(graph, u, v):
     if not graph.directed:
         return graph.has_edge(u, v)
     return v in _get_undirected_adj(graph)[u]
+
 
 def _bfs_weak(graph, start):
     """BFS, трактующий граф как неориентированный.
@@ -63,6 +69,7 @@ def _bfs_weak(graph, start):
                 dist[v] = du + 1
                 queue.append(v)
     return dist
+
 
 def _bfs_weak_ignore(graph, start, ignore_set):
     """BFS с игнорированием вершин, трактующий граф как неориентированный."""
@@ -83,6 +90,7 @@ def _bfs_weak_ignore(graph, start, ignore_set):
             queue.append(v)
     return dist
 
+
 def connected_components(graph):
     """
     Возвращает список компонент слабой связности.
@@ -100,6 +108,7 @@ def connected_components(graph):
         components.append(comp)
 
     return components
+
 
 def connected_components_ignore(graph, ignore_set):
     """
@@ -120,6 +129,7 @@ def connected_components_ignore(graph, ignore_set):
 
     return components
 
+
 def largest_cc_size(graph):
     """
     Возвращает (размер максимальной компоненты,
@@ -132,6 +142,7 @@ def largest_cc_size(graph):
     max_size = max(len(c) for c in comp)
     fraction = max_size / n if n > 0 else 0.0
     return max_size, fraction
+
 
 def largest_cc_size_ignore(graph, ignore_set):
     """
@@ -147,6 +158,7 @@ def largest_cc_size_ignore(graph, ignore_set):
     fraction = max_size / n if n > 0 else 0.0
     return max_size, fraction
 
+
 def largest_cc_vertices(graph):
     """
     Возвращает множество вершин наибольшей компоненты
@@ -157,6 +169,7 @@ def largest_cc_vertices(graph):
         return set()
     return max(comp, key=len)  # компонента с максимумом вершин
 
+
 def compute_percentile(sorted_list, percentile):
     """
     Возвращает значение заданного процентиля
@@ -166,6 +179,7 @@ def compute_percentile(sorted_list, percentile):
         return 0
     idx = int(len(sorted_list) * percentile / 100)
     return sorted_list[min(idx, len(sorted_list) - 1)]
+
 
 def double_sweep_diameter(graph, cc_vertices=None, percentile=90):
     """
@@ -188,6 +202,7 @@ def double_sweep_diameter(graph, cc_vertices=None, percentile=90):
 
     return diam, compute_percentile(distances, percentile)
 
+
 def sample_distances(graph, cc_vertices, sample_size=500):
     """
     Вычисляет расстояния между случайными парами вершин.
@@ -208,6 +223,7 @@ def sample_distances(graph, cc_vertices, sample_size=500):
             distances.append(dist[v])
     return distances
 
+
 def sampled_diameter_and_percentile(graph, cc_vertices, sample_size=500, percentile=90):
     """
     Возвращает (оценка диаметра, заданный процентиль)
@@ -217,6 +233,7 @@ def sampled_diameter_and_percentile(graph, cc_vertices, sample_size=500, percent
         return 0, 0
     dists.sort()
     return max(dists), compute_percentile(dists, percentile)
+
 
 def snowball_sample(graph, cc_vertices, target_size=500):
     """
@@ -249,6 +266,7 @@ def snowball_sample(graph, cc_vertices, target_size=500):
 
     return current
 
+
 def create_subgraph(original_graph, vertices):
     """
     Создаёт новый граф с данным множеством вершин
@@ -264,6 +282,7 @@ def create_subgraph(original_graph, vertices):
                         sub.add_edge(u, v)
     return sub
 
+
 def snowball_diameter_percentile(graph, cc_vertices, target_size=500, percentile=90):
     """
     Оценка диаметра и процентиля по подграфу
@@ -275,6 +294,7 @@ def snowball_diameter_percentile(graph, cc_vertices, target_size=500, percentile
     if not sub_cc:
         return 0, 0
     return double_sweep_diameter(sub, sub_cc, percentile)
+
 
 def count_triangles(graph):
     """
@@ -298,6 +318,7 @@ def count_triangles(graph):
                 if _has_undirected_edge(graph, v, w):
                     triangles += 1
     return triangles
+
 
 def average_clustering_coefficient(graph, vertices=None):
     """
@@ -327,6 +348,7 @@ def average_clustering_coefficient(graph, vertices=None):
         count += 1
     return total_cl_u / count if count > 0 else 0.0
 
+
 def global_clustering_coefficient(graph):
     """
     Считает глобальный кластерный коэффициент
@@ -341,6 +363,7 @@ def global_clustering_coefficient(graph):
         return 0.0
     return triangles * 3.0 / triples
 
+
 def degree_stats(graph):
     """
     Возвращает (min_degree, max_degree, avg_degree) для графа
@@ -352,6 +375,7 @@ def degree_stats(graph):
     max_deg = max(degrees)
     avg_deg = sum(degrees) / len(degrees)
     return min_deg, max_deg, avg_deg
+
 
 def degree_distribution(graph):
     """
@@ -368,6 +392,7 @@ def degree_distribution(graph):
     # переводим в доли
     dist = {d: count / n for d, count in degree_counts.items()}
     return dist
+
 
 def _dfs_order(graph, start, visited, order):
     """
@@ -389,6 +414,7 @@ def _dfs_order(graph, start, visited, order):
         else:
             order.append(v)
 
+
 def _dfs_collect(adj_dict, start, visited, component):
     """
     dfs для второго прохода Косарайю на транспонированном графе.
@@ -405,6 +431,7 @@ def _dfs_collect(adj_dict, start, visited, component):
             if neighbor not in visited:
                 stack.append(neighbor)
 
+
 def _transpose_graph(graph):
     """
     Строит транспонированный граф
@@ -418,6 +445,7 @@ def _transpose_graph(graph):
         if u not in transposed:
             transposed[u] = []
     return transposed
+
 
 def kosaraju_scc(graph):
     """
@@ -444,6 +472,7 @@ def kosaraju_scc(graph):
             _dfs_collect(transposed_adj, node, visited, comp)
             components.append(set(comp))
     return components
+
 
 def scc_count_and_largest(graph):
     """

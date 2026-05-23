@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Iterable, Set, Tuple
 
+
 class Graph:
     def __init__(self, directed: bool = False):
         self.adj: dict[int, set[int]] = defaultdict(set)
