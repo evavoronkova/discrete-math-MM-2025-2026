@@ -33,6 +33,8 @@ def analyze_one(filepath: str) -> None:
     with open_report(report_path) as report:
         log(report, f"\n===== {name} =====")
         g = load_graph(filepath)
+        # по заданию граф трактуется как неориентированный
+        g = g.to_undirected()
         n = g.number_of_nodes()
 
         # если граф слишком большой, пока пропускаем устойчивость
