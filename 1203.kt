@@ -17,7 +17,7 @@ class Solution {
         val itemInDegree = IntArray(n)
         val groupInDegree = IntArray(totalGroups)
 
-        // Множество для дедупликации рёбер между группами
+        // Множество для дедупликации рёбер между группами (пару кодируем одним Long)
         val addedGroupEdges = HashSet<Long>()
         for (currentItem in 0 until n) {
             val currentGroup = itemGroupId[currentItem]
@@ -44,7 +44,7 @@ class Solution {
             groupToItems[itemGroupId[itemIndex]].add(itemIndex)
         }
 
-        // Топологическая сортировка групп
+        // Топологическая сортировка групп (алгоритм Кана), если цикл - пустой массив
         val sortedGroups = topologicalSort(totalGroups, groupAdjacency, groupInDegree)
             ?: return IntArray(0)
 
@@ -65,13 +65,14 @@ class Solution {
         return result
     }
 
-    // Топосортировка всех узлов от 0 до nodeCount-1
+    // Топосортировка всех узлов от 0 до nodeCount-1 (алгоритм Кана: BFS по нулевым in-degree)
     fun topologicalSort(
         nodeCount: Int,
         adjacency: Array<MutableList<Int>>,
         inDegree: IntArray
     ): IntArray? {
         val queue = ArrayDeque<Int>(nodeCount)
+        // стартуем со всех узлов с нулевой входящей степенью
         for (node in 0 until nodeCount) {
             if (inDegree[node] == 0) {
                 queue.addLast(node)
@@ -82,12 +83,14 @@ class Solution {
         while (queue.isNotEmpty()) {
             val currentNode = queue.removeFirst()
             sortedNodes[processedCount++] = currentNode
+            // "удаляем" узел: уменьшаем in-degree у соседей
             for (neighborNode in adjacency[currentNode]) {
                 if (--inDegree[neighborNode] == 0) {
                     queue.addLast(neighborNode)
                 }
             }
         }
+        // обработали меньше узлов - был цикл
         return if (processedCount == nodeCount) {
             sortedNodes
         } else {
@@ -95,7 +98,7 @@ class Solution {
         }
     }
 
-    // Топосортировка заданного подмножества узлов
+    // Топосортировка подмножества узлов, тот же inDegree но смотрим только на подмножество
     fun topologicalSortSubset(
         nodes: List<Int>,
         adjacency: Array<MutableList<Int>>,
