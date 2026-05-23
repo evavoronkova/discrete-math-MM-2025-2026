@@ -96,6 +96,11 @@ def process_graph(filepath: str, aggregated_csv: str) -> None:
     with open_report(report_path) as report:
         log(report, f"\n===== {name} =====")
         g = load_graph(filepath)
+        # по заданию граф трактуется как неориентированный; делаем переход
+        # один раз — тогда и _GraphIndex (CSR для landmarks), и эталонный
+        # bfs работают на одном и том же неориентированном виде, и MRE
+        # сравнивает сопоставимые величины
+        g = g.to_undirected()
 
         lcc_verts = largest_cc_vertices(g)
         log(report, f"  Наибольшая компонента: {len(lcc_verts)} вершин")
