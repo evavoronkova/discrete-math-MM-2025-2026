@@ -1,6 +1,4 @@
 class Solution {
-    val listOfPaths = mutableListOf<MutableList<Int>>()
-
     fun findCheapestPrice(n: Int, flights: Array<IntArray>, src: Int, dst: Int, k: Int): Int {
         val dist = IntArray(n) { Int.MAX_VALUE }
         dist[src] = 0
