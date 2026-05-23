@@ -1,26 +1,33 @@
 use crate::{
-    analysis::{
-        connectivity::{
-            find_weak_components, find_weak_components_masked, fraction_from_component_size,
-            largest_component_size,
-        },
-        degree::all_degrees,
+    analysis::connectivity::{
+        find_weak_components_masked, fraction_from_component_size, largest_component_size,
     },
     graph::Graph,
     parser::directed_or_undirected::DirectedOrUndirected,
 };
 
+use rand::Rng;
 use rand::seq::SliceRandom;
 use rayon::prelude::*;
-use rustc_hash::{FxBuildHasher, FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::FxHashMap as HashMap;
+
+/// Sorted by degree descending: Vec of (internal_vertex_id, degree)
+fn sorted_by_degree_desc(degrees: &[u32]) -> Vec<(u32, u32)> {
+    let mut pairs: Vec<(u32, u32)> = degrees
+        .iter()
+        .enumerate()
+        .map(|(v, &d)| (v as u32, d))
+        .collect();
+    pairs.par_sort_unstable_by(|a, b| b.1.cmp(&a.1));
+    pairs
+}
 
 pub fn lcc_after_hub_removal(
     graph: &Graph,
     num_vertices: usize,
-    degrees: &HashMap<u32, u32>,
+    degrees: &[u32],
 ) -> HashMap<u32, f64> {
-    let mut sorted_vertices: Vec<u32> = degrees.keys().cloned().collect();
-    sorted_vertices.sort_by(|a, b| degrees[b].cmp(&degrees[a]));
+    let sorted = sorted_by_degree_desc(degrees);
 
     (1..=20)
         .into_par_iter()
@@ -30,10 +37,8 @@ pub fn lcc_after_hub_removal(
                 (((percent * num_vertices) as f64 / 100.0).round() as usize).min(num_vertices);
 
             let mut allowed = vec![true; graph.num_vertices()];
-            for &v_external in sorted_vertices.iter().take(num_remove) {
-                if let Some(internal) = graph.external_to_internal(v_external) {
-                    allowed[internal as usize] = false;
-                }
+            for &(v_internal, _) in sorted.iter().take(num_remove) {
+                allowed[v_internal as usize] = false;
             }
 
             let comps = find_weak_components_masked(graph, Some(&allowed), num_vertices);
@@ -55,10 +60,8 @@ pub fn lcc_after_random_removal(
     num_vertices: usize,
     trials: usize,
 ) -> HashMap<u32, f64> {
-    let vertices: Vec<u32> = graph
-        .vertices_internal()
-        .map(|v| graph.internal_to_external(v).unwrap())
-        .collect();
+    // Internal vertices that exist (all vertices_internal)
+    let vertices: Vec<u32> = graph.vertices_internal().collect();
 
     (1..=20)
         .into_par_iter()
@@ -74,10 +77,7 @@ pub fn lcc_after_random_removal(
                 let mut indices: Vec<usize> = (0..vertices.len()).collect();
                 indices.shuffle(&mut rng);
                 for &idx in indices.iter().take(num_remove) {
-                    let v_external = vertices[idx];
-                    if let Some(internal) = graph.external_to_internal(v_external) {
-                        allowed[internal as usize] = false;
-                    }
+                    allowed[vertices[idx] as usize] = false;
                 }
 
                 let comps = find_weak_components_masked(graph, Some(&allowed), num_vertices);

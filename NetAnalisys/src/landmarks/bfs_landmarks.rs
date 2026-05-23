@@ -4,7 +4,7 @@ use crate::landmarks::LandmarkStrategy;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::FxHashSet as HashSet;
 use std::collections::VecDeque;
 
 pub struct LandmarkBFS {

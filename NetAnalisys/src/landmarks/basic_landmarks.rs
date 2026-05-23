@@ -1,16 +1,15 @@
-use crate::graph::Graph;
 use crate::graph::traversal::bfs_internal;
+use crate::graph::Graph;
 use crate::landmarks::LandmarkStrategy;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::FxHashSet as HashSet;
 use std::collections::VecDeque;
 
 pub struct LandmarkBasic {
     landmarks: Vec<u32>,
     distances: Vec<Vec<u32>>,
-    external_to_internal: HashMap<u32, u32>,
     curr_strat: LandmarkStrategy,
 }
 
@@ -44,15 +43,10 @@ impl LandmarkBasic {
                 dists
             })
             .collect();
-        let external_to_internal = graph
-            .vertices_internal()
-            .map(|internal| (graph.internal_to_external(internal).unwrap(), internal))
-            .collect();
 
         Some(Self {
             landmarks,
             distances,
-            external_to_internal,
             curr_strat,
         })
     }
@@ -60,6 +54,7 @@ impl LandmarkBasic {
     pub fn curr_strategy(self) -> LandmarkStrategy {
         self.curr_strat
     }
+
     fn random_selection(graph: &Graph, k: usize) -> Vec<u32> {
         let mut rng = rand::thread_rng();
         let mut chosen = HashSet::default();
@@ -79,19 +74,13 @@ impl LandmarkBasic {
         let undirected = graph.kind() == DirectedOrUndirected::Undirected;
 
         for v in graph.vertices_internal() {
-            deg.push((v, graph.neighbors_internal(v).len() as u32));
-        }
-
-        if !undirected {
-            let mut in_deg = vec![0u32; n];
-            for v in graph.vertices_internal() {
-                for &nbr in graph.neighbors_internal(v) {
-                    in_deg[nbr as usize] += 1;
-                }
-            }
-            for (v, d) in deg.iter_mut() {
-                *d += in_deg[*v as usize];
-            }
+            let out_d = graph.out_degree(v);
+            let total_d = if undirected {
+                out_d
+            } else {
+                out_d + graph.in_degree(v)
+            };
+            deg.push((v, total_d));
         }
 
         if deg.len() <= k {
@@ -168,9 +157,11 @@ impl LandmarkBasic {
         dist
     }
 
-    pub fn estimate(&self, s: u32, t: u32) -> Option<usize> {
-        let s = *self.external_to_internal.get(&s)? as usize;
-        let t = *self.external_to_internal.get(&t)? as usize;
+    /// Estimate distance between two vertices (external IDs).
+    /// Uses graph's id mapping for conversion.
+    pub fn estimate(&self, graph: &Graph, s: u32, t: u32) -> Option<usize> {
+        let s = graph.external_to_internal(s)? as usize;
+        let t = graph.external_to_internal(t)? as usize;
         let mut best: Option<usize> = None;
 
         for dists in &self.distances {

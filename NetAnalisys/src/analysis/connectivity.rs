@@ -2,20 +2,20 @@ use crate::graph::Graph;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rayon::iter::IntoParallelIterator;
 use rayon::prelude::*;
-use rustc_hash::{FxHashMap as HashMap, FxHashSet as HashSet};
+use rustc_hash::FxHashSet as HashSet;
 
+/// Build an undirected version of the graph using internal IDs directly.
 pub fn build_undirected(graph: &Graph) -> Graph {
     let mut undirected_graph = Graph::new(DirectedOrUndirected::Undirected);
+    undirected_graph.init_mapping_from(graph);
 
     for (u, neighbors) in graph.adjacency_entries_internal() {
-        let u_external = graph.internal_to_external(u).unwrap();
-        undirected_graph.add_vertex(u_external);
         for &v in neighbors {
-            let v_external = graph.internal_to_external(v).unwrap();
-            undirected_graph.add_edge(u_external, v_external);
+            undirected_graph.add_edge_internal(u, v);
         }
     }
 
+    undirected_graph.finalize();
     undirected_graph
 }
 
@@ -56,84 +56,6 @@ pub fn find_weak_components(graph: &Graph) -> Vec<HashSet<u32>> {
     }
 
     components
-}
-
-#[allow(clippy::too_many_arguments)]
-pub fn strong_connect(
-    v: u32,
-    graph: &Graph,
-    index_counter: &mut u32,
-    indexes: &mut HashMap<u32, u32>,
-    lowlinks: &mut HashMap<u32, u32>,
-    stack: &mut Vec<u32>,
-    on_stack: &mut HashMap<u32, bool>,
-    sccs: &mut Vec<HashSet<u32>>,
-) {
-    struct Frame {
-        vertex: u32,
-        next_neighbor_idx: usize,
-        parent: Option<u32>,
-    }
-
-    *index_counter += 1;
-    indexes.insert(v, *index_counter);
-    lowlinks.insert(v, *index_counter);
-    stack.push(v);
-    on_stack.insert(v, true);
-
-    let mut frames = vec![Frame {
-        vertex: v,
-        next_neighbor_idx: 0,
-        parent: None,
-    }];
-
-    while let Some(mut frame) = frames.pop() {
-        let neighbors = graph.neighbors_internal(frame.vertex);
-
-        if frame.next_neighbor_idx < neighbors.len() {
-            let current_vertex = frame.vertex;
-            let neighbor = neighbors[frame.next_neighbor_idx];
-            frame.next_neighbor_idx += 1;
-            frames.push(frame);
-
-            if !indexes.contains_key(&neighbor) {
-                *index_counter += 1;
-                indexes.insert(neighbor, *index_counter);
-                lowlinks.insert(neighbor, *index_counter);
-                stack.push(neighbor);
-                on_stack.insert(neighbor, true);
-
-                frames.push(Frame {
-                    vertex: neighbor,
-                    next_neighbor_idx: 0,
-                    parent: Some(current_vertex),
-                });
-            } else if *on_stack.get(&neighbor).unwrap_or(&false) {
-                let new_lowlink = lowlinks[&current_vertex].min(indexes[&neighbor]);
-                lowlinks.insert(current_vertex, new_lowlink);
-            }
-
-            continue;
-        }
-
-        if let Some(parent) = frame.parent {
-            let parent_lowlink = lowlinks[&parent].min(lowlinks[&frame.vertex]);
-            lowlinks.insert(parent, parent_lowlink);
-        }
-
-        if lowlinks[&frame.vertex] == indexes[&frame.vertex] {
-            let mut scc = HashSet::default();
-            loop {
-                let w = stack.pop().unwrap();
-                on_stack.insert(w, false);
-                scc.insert(graph.internal_to_external(w).unwrap());
-                if w == frame.vertex {
-                    break;
-                }
-            }
-            sccs.push(scc);
-        }
-    }
 }
 
 pub fn tarjan_scc(graph: &Graph) -> Vec<HashSet<u32>> {
@@ -264,10 +186,10 @@ pub fn find_weak_components_masked(
     let mut components = Vec::new();
 
     for vertex in graph_ref.vertices_internal() {
-        if let Some(mask) = allowed_mask {
-            if !mask[vertex as usize] {
-                continue;
-            }
+        if let Some(mask) = allowed_mask
+            && !mask[vertex as usize]
+        {
+            continue;
         }
         if visited[vertex as usize] {
             continue;
@@ -280,10 +202,10 @@ pub fn find_weak_components_masked(
             if visited[node as usize] {
                 continue;
             }
-            if let Some(mask) = allowed_mask {
-                if !mask[node as usize] {
-                    continue;
-                }
+            if let Some(mask) = allowed_mask
+                && !mask[node as usize]
+            {
+                continue;
             }
 
             visited[node as usize] = true;
@@ -291,10 +213,10 @@ pub fn find_weak_components_masked(
 
             for &neighbor in graph_ref.neighbors_internal(node) {
                 if !visited[neighbor as usize] {
-                    if let Some(mask) = allowed_mask {
-                        if !mask[neighbor as usize] {
-                            continue;
-                        }
+                    if let Some(mask) = allowed_mask
+                        && !mask[neighbor as usize]
+                    {
+                        continue;
                     }
                     stack.push(neighbor);
                 }

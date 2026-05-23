@@ -91,6 +91,8 @@ fn parse_from_sample(
         process_chunk(&mut graph, buffer, symbol_chunks)?;
     }
 
+    graph.finalize();
+
     Ok(graph)
 }
 

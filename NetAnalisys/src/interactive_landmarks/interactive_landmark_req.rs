@@ -359,7 +359,7 @@ fn compute_distances(
     };
     let (basic_res, basic_time) = {
         let start = Instant::now();
-        let result = basic.estimate(s, t);
+        let result = basic.estimate(graph, s, t);
         (result, start.elapsed())
     };
     let (bfs_res, bfs_time) = {

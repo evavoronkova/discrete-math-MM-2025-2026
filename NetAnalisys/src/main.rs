@@ -14,7 +14,9 @@ use crate::analysis::connectivity::{
     find_weak_components, fraction_from_component_size, fraction_in_largest_component,
     get_largest_comp, get_number_of_comps, tarjan_scc,
 };
-use crate::analysis::degree::{all_degrees, max_degree, mid_degree, min_degree};
+use crate::analysis::degree::{
+    all_degrees, degree_probability_vec, degrees_internal, max_degree, mid_degree, min_degree,
+};
 use crate::analysis::diameter::{DiameterMethod, count_diameters, percentile_90_distance};
 use crate::analysis::robustness::{lcc_after_hub_removal, lcc_after_random_removal};
 use crate::analysis::triangle_counter::{compute_triangle_stats, find_triangles};
@@ -193,7 +195,7 @@ async fn main() {
                         find_weak_components(g1.as_ref())
                     }),
                     spawn_blocking_logged(perf_log_degree, "degree_probability", move || {
-                        analysis::degree::degree_probability(g2.as_ref())
+                        degree_probability_vec(g2.as_ref())
                     }),
                     async move {
                         Ok(if DirectedOrUndirected::Directed == graph_type {
@@ -498,9 +500,9 @@ async fn main() {
 
             let lcc_hub_removes_handle = {
                 let graph = Arc::clone(&graph);
-                let degrees = Arc::clone(&all_degrees);
+                let degrees = degrees_internal(graph.as_ref());
                 spawn_blocking_logged(Arc::clone(&perf_log), "lcc_after_hub_removal", move || {
-                    lcc_after_hub_removal(graph.as_ref(), num_vertices, degrees.as_ref())
+                    lcc_after_hub_removal(graph.as_ref(), num_vertices, &degrees)
                 })
             };
 
