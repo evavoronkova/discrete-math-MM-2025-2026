@@ -5,6 +5,7 @@ import random
 import time
 from typing import List
 
+from experiments._io import graph_output_dir, log, open_report
 from experiments.plot_results import plot_landmarks_results
 from src.analysis import largest_cc_vertices
 from src.graph import Graph
@@ -23,10 +24,10 @@ OUTPUT_DIR = "results"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 # параметры экспериментов
-KS = [5, 10, 20, 50]  # количество ориентиров
+KS = [5, 10, 20, 50]
 STRATEGIES = ["random", "degree", "coverage"]
-NUM_PAIRS = 100  # сколько случайных пар вершин тестируем
-COVERAGE_M = 200  # параметр M для Best-Coverage
+NUM_PAIRS = 100
+COVERAGE_M = 200
 
 CSV_HEADER = [
     "graph", "k", "strategy",
@@ -65,7 +66,6 @@ def evaluate_accuracy(exact_dist, est_basic, est_sc):
             continue
         valid += 1
         if true_d == 0:
-            # пары генерируются как a != b, ветка для подстраховки
             mre_basic_list.append(0.0 if e_b == 0 else 1.0)
             mre_sc_list.append(0.0 if e_s == 0 else 1.0)
             if e_b == 0:
@@ -79,7 +79,6 @@ def evaluate_accuracy(exact_dist, est_basic, est_sc):
                 exact_sc += 1
             mre_basic_list.append(abs(e_b - true_d) / true_d if e_b != -1 else 1.0)
             mre_sc_list.append(abs(e_s - true_d) / true_d if e_s != -1 else 1.0)
-
     if valid == 0:
         return 0.0, 0.0, 0.0, 0.0
     return (
@@ -89,120 +88,132 @@ def evaluate_accuracy(exact_dist, est_basic, est_sc):
         exact_sc / valid,
     )
 
-def process_graph(filepath: str, results_csv: str) -> None:
+def process_graph(filepath: str, aggregated_csv: str) -> None:
     name = os.path.relpath(filepath, DATASET_ROOT).replace("/", "_").replace(".", "_")
-    print(f"\n===== {name} =====")
-    g = load_graph(filepath)
+    out_dir = graph_output_dir(OUTPUT_DIR, name)
+    report_path = os.path.join(out_dir, "landmarks.txt")
 
-    # работаем с наибольшей компонентой связности
-    lcc_verts = largest_cc_vertices(g)
-    print(f"  Наибольшая компонента: {len(lcc_verts)} вершин")
+    with open_report(report_path) as report:
+        log(report, f"\n===== {name} =====")
+        g = load_graph(filepath)
 
-    nodes_lcc = list(lcc_verts)
-    if len(nodes_lcc) < 2:
-        print("  Недостаточно вершин для пар")
-        return
+        lcc_verts = largest_cc_vertices(g)
+        log(report, f"  Наибольшая компонента: {len(lcc_verts)} вершин")
 
-    # тестовые пары
-    random.seed(40)
-    pairs = []
-    while len(pairs) < NUM_PAIRS:
-        a = random.choice(nodes_lcc)
-        b = random.choice(nodes_lcc)
-        if a != b:
-            pairs.append((a, b))
+        nodes_lcc = list(lcc_verts)
+        if len(nodes_lcc) < 2:
+            log(report, "  Недостаточно вершин для пар")
+            return
 
-    # эталонные расстояния
-    print("  Вычисление эталонных расстояний...")
-    exact_dist = []
-    t0 = time.time()
-    for u, v in pairs:
-        dist_u = bfs(g, u)
-        exact_dist.append(dist_u[v] if v in dist_u else -1)
-    print(f"  Эталонные расстояния: {time.time() - t0:.2f} с")
+        random.seed(40)
+        pairs = []
+        while len(pairs) < NUM_PAIRS:
+            a = random.choice(nodes_lcc)
+            b = random.choice(nodes_lcc)
+            if a != b:
+                pairs.append((a, b))
 
-    # _GraphIndex строится один раз и переиспользуется во всех замерах
-    # на этом графе, иначе тратим память и время на |KS| * |STRATEGIES| * 2 копий
-    print("  Построение _GraphIndex...")
-    t0 = time.time()
-    index = _GraphIndex(g)
-    print(f"  _GraphIndex: {time.time() - t0:.2f} с")
+        log(report, "  Вычисление эталонных расстояний...")
+        exact_dist = []
+        t0 = time.time()
+        for u, v in pairs:
+            dist_u = bfs(g, u)
+            exact_dist.append(dist_u[v] if v in dist_u else -1)
+        log(report, f"  Эталонные расстояния: {time.time() - t0:.2f} с")
 
-    basic_prep_times, sc_prep_times = {}, {}
-    basic_query_times, sc_query_times = {}, {}
-    basic_mre, sc_mre = {}, {}
-    basic_exact_frac, sc_exact_frac = {}, {}
-    rows_to_write = []
+        log(report, "  Построение _GraphIndex...")
+        t0 = time.time()
+        index = _GraphIndex(g)
+        log(report, f"  _GraphIndex: {time.time() - t0:.2f} с")
 
-    for k in KS:
-        for strat in STRATEGIES:
-            print(f"  k={k}, стратегия {strat}")
-            landmarks = select_landmarks(index, k, strat)
+        basic_prep_times, sc_prep_times = {}, {}
+        basic_query_times, sc_query_times = {}, {}
+        basic_mre, sc_mre = {}, {}
+        basic_exact_frac, sc_exact_frac = {}, {}
+        rows_to_write = []
 
-            # LandmarksBasic — переиспользуем тот же index
-            t0 = time.time()
-            lb = LandmarksBasic(g, landmarks, _index=index)
-            prep_basic = time.time() - t0
+        for k in KS:
+            for strat in STRATEGIES:
+                log(report, f"  k={k}, стратегия {strat}")
+                landmarks = select_landmarks(index, k, strat)
 
-            t0 = time.time()
-            est_basic = [lb.estimate(u, v) for u, v in pairs]
-            query_basic = time.time() - t0
+                t0 = time.time()
+                lb = LandmarksBasic(g, landmarks, _index=index)
+                prep_basic = time.time() - t0
+                t0 = time.time()
+                est_basic = [lb.estimate(u, v) for u, v in pairs]
+                query_basic = time.time() - t0
 
-            # LandmarksSC — тот же index
-            t0 = time.time()
-            lsc = LandmarksSC(g, landmarks, _index=index)
-            prep_sc = time.time() - t0
+                t0 = time.time()
+                lsc = LandmarksSC(g, landmarks, _index=index)
+                prep_sc = time.time() - t0
+                t0 = time.time()
+                est_sc = [lsc.estimate(u, v) for u, v in pairs]
+                query_sc = time.time() - t0
 
-            t0 = time.time()
-            est_sc = [lsc.estimate(u, v) for u, v in pairs]
-            query_sc = time.time() - t0
+                avg_mre_basic, avg_mre_sc, frac_basic, frac_sc = evaluate_accuracy(
+                    exact_dist, est_basic, est_sc
+                )
+                log(report,
+                    f"    Basic: MRE={avg_mre_basic:.4f}, точных={frac_basic:.2f}, "
+                    f"prep={prep_basic:.2f}с, query={query_basic:.3f}с")
+                log(report,
+                    f"    SC:    MRE={avg_mre_sc:.4f}, точных={frac_sc:.2f}, "
+                    f"prep={prep_sc:.2f}с, query={query_sc:.3f}с")
 
-            avg_mre_basic, avg_mre_sc, frac_basic, frac_sc = evaluate_accuracy(
-                exact_dist, est_basic, est_sc
+                key = (k, strat)
+                basic_prep_times[key] = prep_basic
+                sc_prep_times[key] = prep_sc
+                basic_query_times[key] = query_basic
+                sc_query_times[key] = query_sc
+                basic_mre[key] = avg_mre_basic
+                sc_mre[key] = avg_mre_sc
+                basic_exact_frac[key] = frac_basic
+                sc_exact_frac[key] = frac_sc
+
+                rows_to_write.append([
+                    name, k, strat,
+                    prep_basic, prep_sc,
+                    query_basic, query_sc,
+                    avg_mre_basic, avg_mre_sc,
+                    frac_basic, frac_sc,
+                ])
+
+        # дозапись в общий aggregated CSV (для сравнения между графами)
+        with open(aggregated_csv, "a", newline="") as f:
+            csv.writer(f).writerows(rows_to_write)
+
+        # персональный CSV в папке графа (без колонки graph)
+        per_graph_csv = os.path.join(out_dir, "landmarks.csv")
+        with open(per_graph_csv, "w", newline="") as f:
+            writer = csv.writer(f)
+            writer.writerow(CSV_HEADER[1:])
+            for row in rows_to_write:
+                writer.writerow(row[1:])
+
+        try:
+            plot_landmarks_results(
+                name, KS, STRATEGIES,
+                basic_mre, sc_mre,
+                basic_exact_frac, sc_exact_frac,
+                basic_query_times, sc_query_times,
+                basic_prep_times, sc_prep_times,
+                output_dir=out_dir,
             )
+            log(report, f"  Графики сохранены в {out_dir}")
+        except Exception as e:
+            log(report, f"  Ошибка при построении графиков: {e}")
 
-            key = (k, strat)
-            basic_prep_times[key] = prep_basic
-            sc_prep_times[key] = prep_sc
-            basic_query_times[key] = query_basic
-            sc_query_times[key] = query_sc
-            basic_mre[key] = avg_mre_basic
-            sc_mre[key] = avg_mre_sc
-            basic_exact_frac[key] = frac_basic
-            sc_exact_frac[key] = frac_sc
-
-            rows_to_write.append([
-                name, k, strat,
-                prep_basic, prep_sc,
-                query_basic, query_sc,
-                avg_mre_basic, avg_mre_sc,
-                frac_basic, frac_sc,
-            ])
-
-    # одна запись CSV на граф вместо открытия файла на каждой строке
-    with open(results_csv, "a", newline="") as f:
-        csv.writer(f).writerows(rows_to_write)
-
-    # графики для текущего графа
-    try:
-        plot_landmarks_results(
-            name, KS, STRATEGIES,
-            basic_mre, sc_mre,
-            basic_exact_frac, sc_exact_frac,
-            basic_query_times, sc_query_times,
-            basic_prep_times, sc_prep_times,
-            output_dir=OUTPUT_DIR,
-        )
-    except Exception as e:
-        print(f"  Ошибка при построении графиков: {e}")
-
-def run():
+def run() -> None:
     all_files = collect_all_files(DATASET_ROOT)
-    results_csv = os.path.join(OUTPUT_DIR, "landmarks_results.csv")
-    with open(results_csv, "w", newline="") as f:
+    aggregated_csv = os.path.join(OUTPUT_DIR, "landmarks_results.csv")
+    with open(aggregated_csv, "w", newline="") as f:
         csv.writer(f).writerow(CSV_HEADER)
 
     for filepath in all_files:
-        process_graph(filepath, results_csv)
+        process_graph(filepath, aggregated_csv)
 
     print("\nЭксперименты завершены. Результаты в", OUTPUT_DIR)
+
+if __name__ == "__main__":
+    run()
