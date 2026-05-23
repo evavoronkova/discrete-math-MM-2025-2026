@@ -1,7 +1,6 @@
 from collections import defaultdict
 from typing import Iterable, Set, Tuple
 
-
 class Graph:
     def __init__(self, directed: bool = False):
         self.adj: dict[int, set[int]] = defaultdict(set)
@@ -51,6 +50,29 @@ class Graph:
                     if (v, u) not in seen:
                         seen.add((u, v))
                         yield (u, v)
+
+    def to_undirected(self) -> "Graph":
+        """
+        Возвращает неориентированную копию графа.
+        Для уже неориентированного графа возвращает self без копирования.
+
+        По заданию все метрики (кроме SCC) считаются на неориентированном
+        виде графа. Эксперименты вызывают этот метод сразу после загрузки
+        и дальше работают на полученном объекте — это избавляет analysis,
+        landmarks и robustness от необходимости различать directed/undirected
+        у себя внутри.
+        """
+        if not self.directed:
+            return self
+        new_g = Graph(directed=False)
+        for u, out_set in self.adj.items():
+            for v in out_set:
+                new_g.add_edge(u, v)
+        # перенесём изолированные вершины (для текущего add_edge невозможно,
+        # но защитно — на случай расширения API методом add_node)
+        for u in self._nodes:
+            new_g._nodes.add(u)
+        return new_g
 
     @staticmethod
     def from_file(filename: str, directed: bool = False) -> "Graph":
