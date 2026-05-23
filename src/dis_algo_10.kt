@@ -4,42 +4,28 @@ class Solution {
 
         val n = edges.size
 
-        val used = BooleanArray(n)
+        val vis = IntArray(n)
 
-        val dist = IntArray(n) { -1 }
-
+        var timer = 1
         var ans = -1
 
         for (i in 0 until n) {
 
-            if (used[i]) {
+            if (vis[i] != 0) {
                 continue
             }
 
             var v = i
-            var step = 0
+            val start = timer
 
-            while (v != -1 && !used[v]) {
+            while (v != -1 && vis[v] == 0) {
 
-                used[v] = true
-                dist[v] = step++
-
+                vis[v] = timer++
                 v = edges[v]
             }
 
-            if (v != -1 && dist[v] != -1) {
-                ans = maxOf(ans, step - dist[v])
-            }
-
-            v = i
-
-            while (v != -1 && dist[v] != -1) {
-
-                val nxt = edges[v]
-
-                dist[v] = -1
-
-                v = nxt
+            if (v != -1 && vis[v] >= start) {
+                ans = maxOf(ans, timer - vis[v])
             }
         }
 
