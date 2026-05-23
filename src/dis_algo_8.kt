@@ -2,7 +2,7 @@ class Solution {
 
     fun validArrangement(pairs: Array<IntArray>): Array<IntArray> {
 
-        val g = HashMap<Int, MutableList<Int>>()
+        val g = HashMap<Int, ArrayDeque<Int>>()
 
         val inDeg = HashMap<Int, Int>()
         val outDeg = HashMap<Int, Int>()
@@ -12,7 +12,8 @@ class Solution {
             val a = p[0]
             val b = p[1]
 
-            g.computeIfAbsent(a) { mutableListOf() }.add(b)
+            g.putIfAbsent(a, ArrayDeque())
+            g[a]!!.add(b)
 
             outDeg[a] = (outDeg[a] ?: 0) + 1
             inDeg[b] = (inDeg[b] ?: 0) + 1
@@ -20,8 +21,9 @@ class Solution {
 
         var start = pairs[0][0]
 
-        for ((v, out) in outDeg) {
+        for (v in g.keys) {
 
+            val out = outDeg[v] ?: 0
             val inn = inDeg[v] ?: 0
 
             if (out - inn == 1) {
@@ -30,46 +32,32 @@ class Solution {
             }
         }
 
-        val ptr = HashMap<Int, Int>()
+        val path = mutableListOf<Int>()
 
-        val st = IntArray(pairs.size + 1)
-        var top = 0
+        fun dfs(v: Int) {
 
-        st[top++] = start
+            val q = g[v]
 
-        val path = IntArray(pairs.size + 1)
-        var sz = 0
+            while (q != null && q.isNotEmpty()) {
 
-        while (top > 0) {
+                val to = q.removeFirst()
 
-            val v = st[top - 1]
-
-            val list = g[v]
-            val idx = ptr[v] ?: 0
-
-            if (list != null && idx < list.size) {
-
-                st[top++] = list[idx]
-
-                ptr[v] = idx + 1
-
-            } else {
-
-                path[sz++] = v
-                top--
+                dfs(to)
             }
+
+            path.add(v)
         }
 
-        val ans = Array(pairs.size) { IntArray(2) }
+        dfs(start)
 
-        var j = sz - 1
+        path.reverse()
 
-        for (i in 0 until pairs.size) {
+        val ans = Array(path.size - 1) { IntArray(2) }
 
-            ans[i][0] = path[j]
-            ans[i][1] = path[j - 1]
+        for (i in 0 until path.size - 1) {
 
-            j--
+            ans[i][0] = path[i]
+            ans[i][1] = path[i + 1]
         }
 
         return ans
