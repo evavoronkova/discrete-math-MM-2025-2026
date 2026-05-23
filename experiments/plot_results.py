@@ -3,7 +3,6 @@ import os
 
 import matplotlib.pyplot as plt
 
-
 def plot_degree_distribution(dist, dataset_name, output_dir="results"):
     if not dist:
         return
@@ -18,7 +17,7 @@ def plot_degree_distribution(dist, dataset_name, output_dir="results"):
     plt.ylabel("доля вершин")
     plt.title(f"Степенное распределение – {dataset_name}")
     plt.grid(True)
-    plt.savefig(os.path.join(output_dir, f"{dataset_name}_degree_dist.png"))
+    plt.savefig(os.path.join(output_dir, "degree_distribution.png"))
     plt.close()
 
     # log-log
@@ -28,9 +27,8 @@ def plot_degree_distribution(dist, dataset_name, output_dir="results"):
     plt.ylabel("доля вершин (log)")
     plt.title(f"Степенное распределение (log-log) – {dataset_name}")
     plt.grid(True)
-    plt.savefig(os.path.join(output_dir, f"{dataset_name}_degree_dist_loglog.png"))
+    plt.savefig(os.path.join(output_dir, "degree_distribution_loglog.png"))
     plt.close()
-
 
 def plot_robustness(rand_res, deg_res, name="robustness", output_dir="results"):
     os.makedirs(output_dir, exist_ok=True)
@@ -46,9 +44,8 @@ def plot_robustness(rand_res, deg_res, name="robustness", output_dir="results"):
     plt.title(f"Устойчивость – {name}")
     plt.legend()
     plt.grid(True)
-    plt.savefig(os.path.join(output_dir, f"robustness_{name}.png"))
+    plt.savefig(os.path.join(output_dir, "robustness.png"))
     plt.close()
-
 
 def plot_landmarks_results(
     graph_name,
@@ -124,6 +121,4 @@ def plot_landmarks_results(
 
     plt.suptitle(f"Анализ алгоритмов Landmarks – {graph_name}")
     plt.tight_layout()
-    filename = os.path.join(output_dir, f"landmarks_{graph_name}.png")
-    plt.savefig(filename)
-    plt.close()
+    plt.savefig(os.path.join(output_dir, "landmarks.png"))
