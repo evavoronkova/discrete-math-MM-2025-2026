@@ -63,17 +63,25 @@ def plot_landmarks_results(
 ):
     os.makedirs(output_dir, exist_ok=True)
 
-    # построим 2 строки, 2 столбца: (1) MRE, (2) Exact fraction, (3) Query time, (4) Prep time
+    # один цвет на стратегию, чтобы пара Basic+SC одной стратегии
+    # визуально читалась как пара; разные маркеры — на случай ч/б печати;
+    # сплошная линия — Basic, пунктир — SC
+    markers = {"random": "o", "degree": "s", "coverage": "^"}
+    colors = {"random": "C0", "degree": "C1", "coverage": "C2"}
+
+    def plot_pair(ax, dict_basic, dict_sc):
+        for strat in strategies:
+            y_basic = [dict_basic[(k, strat)] for k in ks]
+            y_sc = [dict_sc[(k, strat)] for k in ks]
+            ax.plot(ks, y_basic, marker=markers[strat], linestyle="-",
+                    color=colors[strat], label=f"Basic {strat}")
+            ax.plot(ks, y_sc, marker=markers[strat], linestyle="--",
+                    color=colors[strat], label=f"SC {strat}")
+
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-    markers = {"random": "o-", "degree": "s-", "coverage": "^-"}
 
     ax = axes[0, 0]
-    for strat in strategies:
-        x = ks
-        y_basic = [basic_mre[(k, strat)] for k in ks]
-        y_sc = [sc_mre[(k, strat)] for k in ks]
-        ax.plot(x, y_basic, markers[strat], label=f"Basic {strat}")
-        ax.plot(x, y_sc, markers[strat], label=f"SC {strat}")
+    plot_pair(ax, basic_mre, sc_mre)
     ax.set_title("Средняя относительная ошибка")
     ax.set_xlabel("Число ориентиров")
     ax.set_ylabel("MRE")
@@ -81,12 +89,7 @@ def plot_landmarks_results(
     ax.grid(True)
 
     ax = axes[0, 1]
-    for strat in strategies:
-        x = ks
-        y_basic = [basic_exact_frac[(k, strat)] for k in ks]
-        y_sc = [sc_exact_frac[(k, strat)] for k in ks]
-        ax.plot(x, y_basic, markers[strat], label=f"Basic {strat}")
-        ax.plot(x, y_sc, markers[strat], label=f"SC {strat}")
+    plot_pair(ax, basic_exact_frac, sc_exact_frac)
     ax.set_title("Доля точных оценок")
     ax.set_xlabel("Число ориентиров")
     ax.set_ylabel("Доля")
@@ -94,12 +97,7 @@ def plot_landmarks_results(
     ax.grid(True)
 
     ax = axes[1, 0]
-    for strat in strategies:
-        x = ks
-        y_basic = [basic_query_times[(k, strat)] for k in ks]
-        y_sc = [sc_query_times[(k, strat)] for k in ks]
-        ax.plot(x, y_basic, markers[strat], label=f"Basic {strat}")
-        ax.plot(x, y_sc, markers[strat], label=f"SC {strat}")
+    plot_pair(ax, basic_query_times, sc_query_times)
     ax.set_title("Суммарное время запросов")
     ax.set_xlabel("Число ориентиров")
     ax.set_ylabel("Время (с)")
@@ -107,12 +105,7 @@ def plot_landmarks_results(
     ax.grid(True)
 
     ax = axes[1, 1]
-    for strat in strategies:
-        x = ks
-        y_basic = [basic_prep_times[(k, strat)] for k in ks]
-        y_sc = [sc_prep_times[(k, strat)] for k in ks]
-        ax.plot(x, y_basic, markers[strat], label=f"Basic {strat}")
-        ax.plot(x, y_sc, markers[strat], label=f"SC {strat}")
+    plot_pair(ax, basic_prep_times, sc_prep_times)
     ax.set_title("Время препроцессинга")
     ax.set_xlabel("Число ориентиров")
     ax.set_ylabel("Время (с)")
@@ -122,3 +115,4 @@ def plot_landmarks_results(
     plt.suptitle(f"Анализ алгоритмов Landmarks – {graph_name}")
     plt.tight_layout()
     plt.savefig(os.path.join(output_dir, "landmarks.png"))
+    plt.close()
