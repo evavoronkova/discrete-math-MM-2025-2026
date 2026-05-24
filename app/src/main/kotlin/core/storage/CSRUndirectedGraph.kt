@@ -1,19 +1,17 @@
 package core.storage
 
-import core.model.Graph
-import core.algoritms.quickSort
-import java.io.File
+import core.model.MutableVertexGraph
 
 class CSRUndirectedGraph(
     private val prevVertNumbers: IntArray,
     private val offs: IntArray,
     private val neighs: IntArray
-): Graph{
-    val previousVertexNumbers = prevVertNumbers
+): MutableVertexGraph{
+    val previousVertexNumbers = prevVertNumbers.copyOf()
 
-    val offsets = offs
+    val offsets = offs.copyOf()
 
-    val neighbors = neighs
+    val neighbors = neighs.copyOf()
 
     override val vertexCount = offsets.size - 1
 
@@ -41,8 +39,8 @@ class CSRUndirectedGraph(
         return offsets[vertex + 1] - offsets[vertex]
     }
 
-    override fun density(): Double = 2 * edgeCount.toDouble() /
-                (vertexCount.toDouble() * (vertexCount.toDouble() - 1.0))
+    override fun density(): Double = if(vertexCount <= 1) 0.0
+            else 2 * edgeCount.toDouble() / (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
 
     override fun hasEdge(from: Int, to: Int): Boolean {
         if(from !in 0 until vertexCount || to !in 0 until vertexCount){
@@ -60,7 +58,7 @@ class CSRUndirectedGraph(
 
     override fun vertices(): IntArray = previousVertexNumbers.copyOf()
 
-    fun markDeleted(vertices: Collection<Int>){
+    override fun markDeleted(vertices: Collection<Int>){
         for (vertex in vertices){
             if (vertex !in 0 until vertexCount){
                 throw IndexOutOfBoundsException()
@@ -69,14 +67,14 @@ class CSRUndirectedGraph(
         }
     }
 
-    fun clearDeleted() = deleted.fill(false)
+    override fun clearDeleted() = deleted.fill(false)
 
-    fun isDeleted(vertex: Int): Boolean{
+    override fun isDeleted(vertex: Int): Boolean{
         if (vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
         return deleted[vertex]
     }
 
-    fun activeVertexCount(): Int = deleted.count(){ !it }
+    override fun activeVertexCount(): Int = deleted.count{ !it }
 }

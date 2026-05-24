@@ -1,24 +1,25 @@
 package core.storage
 
-import core.algoritms.quickSort
+import core.algorithms.quickSort
 import core.model.DirectedGraph
-import java.io.File
+import core.model.MutableVertexGraph
+
 class CSRDirectedGraph(
     private val prevVertNumbers: IntArray,
     private val outOffs: IntArray,
     private val outNeighs: IntArray,
     private val inOffs: IntArray,
     private val inNeighs: IntArray
-): DirectedGraph{
-    val previousVertexNumbers = prevVertNumbers
+): DirectedGraph, MutableVertexGraph{
+    val previousVertexNumbers = prevVertNumbers.copyOf()
 
-    val outOffsets = outOffs
+    val outOffsets = outOffs.copyOf()
 
-    val outNeighbors = outNeighs
+    val outNeighbors = outNeighs.copyOf()
 
-    val inOffsets = inOffs
+    val inOffsets = inOffs.copyOf()
 
-    val inNeighbors = inNeighs
+    val inNeighbors = inNeighs.copyOf()
 
     override val vertexCount: Int = inOffsets.size - 1
 
@@ -43,7 +44,7 @@ class CSRDirectedGraph(
         if(isDeleted(vertex)){
             throw IllegalStateException("Vertex is deleted")
         }
-        return inNeighbors.sliceArray(outOffsets[vertex] until outOffsets[vertex + 1]).toSet()
+        return inNeighbors.sliceArray(inOffsets[vertex] until inOffsets[vertex + 1]).toSet()
     }
 
     override fun neighbors(vertex: Int): Set<Int> {
@@ -97,12 +98,12 @@ class CSRDirectedGraph(
         return (outOffsets[from] until outOffsets[from + 1]).any{ outNeighbors[it] == to }
     }
 
-    override fun density(): Double = 2 * edgeCount.toDouble() /
-            (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
+    override fun density(): Double = if(vertexCount <= 1) 0.0
+            else edgeCount.toDouble() / (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
 
     override fun vertices(): IntArray = previousVertexNumbers.copyOf()
 
-    fun markDeleted(vertices: Collection<Int>){
+    override fun markDeleted(vertices: Collection<Int>){
         for(vertex in vertices){
             if(vertex !in 0 until vertexCount){
                 throw IndexOutOfBoundsException()
@@ -111,29 +112,37 @@ class CSRDirectedGraph(
         }
     }
 
-    fun clearDeleted() = deleted.fill(false)
+    override fun clearDeleted() = deleted.fill(false)
 
-    fun isDeleted(vertex: Int): Boolean{
+    override fun isDeleted(vertex: Int): Boolean{
         if(vertex !in 0 until vertexCount){
             throw IndexOutOfBoundsException()
         }
         return deleted[vertex]
     }
 
-    fun activeVertexCount(): Int = deleted.count{ !it }
+    override fun activeVertexCount(): Int = deleted.count{ !it }
 
     fun toUndirected(): CSRUndirectedGraph{
-        val offsets = IntArray(vertexCount + 1){ i -> inOffsets[i] + outOffsets[i] }
-        val neighbors = IntArray(edgeCount * 2)
+        val uniqueDegree = IntArray(vertexCount)
+        for(i in 0 until vertexCount){
+            val combined = inNeighbors.sliceArray(inOffsets[i] until inOffsets[i + 1]) +
+                    outNeighbors.sliceArray(outOffsets[i] until outOffsets[i + 1])
+            uniqueDegree[i] = combined.toSet().size
+        }
+
+        val offsets = IntArray(vertexCount + 1)
         for(i in 1 .. vertexCount){
-            val leftIndexOfIn = inOffsets[i - 1]
-            val rightIndexOfIn = inOffsets[i]
-            val leftIndexOfOut = outOffsets[i - 1]
-            val rightIndexOfOut = outOffsets[i]
-            val neighborsOfVertex = inNeighbors.sliceArray(leftIndexOfIn until rightIndexOfIn) +
-                    outNeighbors.sliceArray(leftIndexOfOut until rightIndexOfOut)
-            quickSort(neighborsOfVertex, 0, neighborsOfVertex.size - 1)
-            neighborsOfVertex.copyInto(neighbors, destinationOffset = offsets[i - 1])
+            offsets[i] = offsets[i - 1] + uniqueDegree[i - 1]
+        }
+
+        val neighbors = IntArray(offsets[vertexCount])
+        for(i in 0 until vertexCount){
+            val combined = (inNeighbors.sliceArray(inOffsets[i] until inOffsets[i + 1]) +
+                    outNeighbors.sliceArray(outOffsets[i] until outOffsets[i + 1])).toSet()
+            val sorted = combined.toIntArray()
+            quickSort(sorted, 0, sorted.size - 1)
+            sorted.copyInto(neighbors, destinationOffset = offsets[i])
         }
         return CSRUndirectedGraph(previousVertexNumbers, offsets, neighbors)
     }
