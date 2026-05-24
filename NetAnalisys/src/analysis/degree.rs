@@ -109,6 +109,7 @@ pub fn degree_probability(graph: &Graph) -> Vec<(f32, f32)> {
 
 pub fn transform_to_log(data: &Vec<(f32, f32)>) -> Vec<(f32, f32)> {
     data.iter()
+        .filter(|(degree, count)| *degree > 0.0 && *count > 0.0)
         .map(|(degree, count)| (f32::log10(*degree), f32::log10(*count)))
         .collect()
 }
