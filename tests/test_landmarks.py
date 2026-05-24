@@ -21,6 +21,7 @@ def test_landmarks_basic_path():
     est = lb.estimate(2, 4)
     assert est == 4
 
+
 def test_landmarks_basic_triangle_exact():
     # треугольник: ориентиры 1 и 2, оценка для 1-3 должна быть точной 1
     g = Graph()
@@ -31,6 +32,7 @@ def test_landmarks_basic_triangle_exact():
     est = lb.estimate(1, 3)
     assert est == 1
 
+
 def test_landmarks_basic_unreachable():
     # граф из двух компонент: вершины в разных компонентах дают -1
     g = Graph()
@@ -39,6 +41,7 @@ def test_landmarks_basic_unreachable():
     lb = LandmarksBasic(g, [1])
     est = lb.estimate(1, 3)
     assert est == -1.0
+
 
 def test_landmarks_basic_batch():
     g = Graph()
@@ -64,6 +67,7 @@ def test_spt_parent_after_bfs():
     assert spt.parent[i3] == i1
     assert spt.parent[i1] == -1
 
+
 def test_spt_lca_siblings():
     # LCA 2 и 3 в звезде с центром 1 — это вершина 1
     g = Graph()
@@ -76,6 +80,7 @@ def test_spt_lca_siblings():
     i3 = index.node_to_idx[3]
     assert spt.lca(i2, i3) == i1
 
+
 def test_spt_lca_self():
     # LCA вершины с собой — она же
     g = Graph()
@@ -84,6 +89,7 @@ def test_spt_lca_self():
     spt = ShortestPathTree(g, 1, index)
     i2 = index.node_to_idx[2]
     assert spt.lca(i2, i2) == i2
+
 
 def test_spt_lca_ancestor():
     # LCA вершины и её предка в дереве — это сам предок
@@ -109,6 +115,7 @@ def test_distance_sc_simple_tree():
     est = spt.distance_sc(2, 3)
     assert est == 2
 
+
 def test_distance_sc_path_tree():
     # путь 0-1-2-3-4. SPT от 0 совпадает с путём.
     # distance_sc(2, 4) = 2 + 4 - 2*2 = 2 (точное расстояние, путь лежит в дереве)
@@ -119,6 +126,7 @@ def test_distance_sc_path_tree():
     spt = ShortestPathTree(g, 0, index)
     est = spt.distance_sc(2, 4)
     assert est == 2
+
 
 def test_distance_sc_unreachable_node():
     # запрос с вершиной, которой нет в графе → inf
@@ -140,6 +148,7 @@ def test_landmarks_sc_two_landmarks():
     lsc = LandmarksSC(g, [0, 5])
     est = lsc.estimate(1, 4)
     assert est == 3
+
 
 def test_landmarks_sc_triangle_tree_estimate():
     # треугольник 1-2-3 с единственным ориентиром 1.
@@ -167,6 +176,7 @@ def test_random_landmarks_count():
     assert len(landmarks) == 3
     assert all(0 <= lm <= 10 for lm in landmarks)
 
+
 def test_degree_landmarks_order():
     g = Graph()
     g.add_edge(1, 2)
@@ -178,6 +188,7 @@ def test_degree_landmarks_order():
     assert landmarks[0] == 1
     assert len(landmarks) == 2
 
+
 def test_coverage_landmarks_count():
     g = Graph()
     for i in range(5):
@@ -186,6 +197,7 @@ def test_coverage_landmarks_count():
     landmarks = select_best_coverage_landmarks(index, k=2, M=100)
     assert len(landmarks) == 2
     assert all(0 <= lm <= 5 for lm in landmarks)
+
 
 def test_coverage_landmarks_seed_reproducibility():
     # с одинаковым seed функция даёт одинаковый результат
