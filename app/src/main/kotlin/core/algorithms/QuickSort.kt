@@ -1,4 +1,4 @@
-package core.algoritms
+package core.algorithms
 
 import kotlin.random.Random
 

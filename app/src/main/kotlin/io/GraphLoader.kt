@@ -1,6 +1,6 @@
 package io
 
-import core.algoritms.quickSort
+import core.algorithms.quickSort
 import core.storage.CSRDirectedGraph
 import core.storage.CSRUndirectedGraph
 import java.io.File
