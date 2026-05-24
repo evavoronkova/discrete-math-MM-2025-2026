@@ -28,7 +28,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--directed", action="store_true", help="Считать граф ориентированным.")
     parser.add_argument("--auto-directed", action="store_true", help="Определять ориентированность по имени файла.")
     parser.add_argument("--delimiter", default=None, help="Разделитель для edge list.")
-    parser.add_argument("--format", default="auto", choices=["auto", "edge_list", "csv", "mtx"], help="Формат входного файла.")
+    parser.add_argument("--format", default="auto", choices=["auto", "edge_list", "size_header_edge_list", "csv", "mtx"], help="Формат входного файла.")
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 

@@ -17,6 +17,22 @@ def _iter_plain_edges(path: Path, delimiter: str | None = None) -> Iterator[tupl
             yield parts[0], parts[1]
 
 
+def _iter_size_header_edges(path: Path, delimiter: str | None = None) -> Iterator[tuple[str, str]]:
+    with path.open("r", encoding="utf-8", errors="replace") as handle:
+        header_skipped = False
+        for raw_line in handle:
+            line = raw_line.strip()
+            if not line or line.startswith("#") or line.startswith("%"):
+                continue
+            if not header_skipped:
+                header_skipped = True
+                continue
+            parts = line.split(delimiter) if delimiter else line.split()
+            if len(parts) < 2:
+                continue
+            yield parts[0], parts[1]
+
+
 def _iter_csv_edges(path: Path) -> Iterator[tuple[str, str]]:
     with path.open("r", encoding="utf-8", errors="replace", newline="") as handle:
         reader = csv.reader(handle)
@@ -51,7 +67,7 @@ def _looks_like_edge(left: str, right: str) -> bool:
     if not left or not right:
         return False
     lowered = (left.lower(), right.lower())
-    forbidden = {"id_1", "id_2", "source", "target", "fromnodeid", "tonodeid"}
+    forbidden = {"id_1", "id_2", "source", "target", "fromnodeid", "tonodeid", "u", "v"}
     if lowered[0] in forbidden or lowered[1] in forbidden:
         return False
     return True
@@ -63,8 +79,8 @@ def detect_directed_from_name(path: str | Path) -> bool:
     if "datasets" in lowered_parts and "undirected" in lowered_parts:
         return False
     name = file_path.name.lower()
-    directed_markers = ("email", "wiki-vote", "vote")
-    undirected_markers = ("ca-", "musae", "grqc", "astroph")
+    directed_markers = ("email", "wiki-vote", "vote", "web-")
+    undirected_markers = ("ca-", "musae", "grqc", "astroph", "youtube", "dblp", "vk")
     if any(marker in name for marker in directed_markers):
         return True
     if any(marker in name for marker in undirected_markers):
@@ -88,6 +104,8 @@ def iter_edges(path: str | Path, file_format: str = "auto", delimiter: str | Non
         return _iter_csv_edges(file_path)
     if resolved_format == "mtx":
         return _iter_mtx_edges(file_path)
+    if resolved_format == "size_header_edge_list":
+        return _iter_size_header_edges(file_path, delimiter=delimiter)
     return _iter_plain_edges(file_path, delimiter=delimiter)
 
 

@@ -18,7 +18,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--format",
         default="auto",
-        choices=["auto", "edge_list", "csv", "mtx"],
+        choices=["auto", "edge_list", "size_header_edge_list", "csv", "mtx"],
         help="Формат входного файла.",
     )
     parser.add_argument("--distance-sample-size", type=int, default=500, help="Размер выборки случайных пар.")

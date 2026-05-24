@@ -28,6 +28,13 @@ def eccentricity(graph: Graph, source: str, allowed_nodes: set[str] | None = Non
 
 def double_sweep_diameter_estimate(graph: Graph, component_nodes: Iterable[str], seed: int = 42) -> Dict[str, object]:
     component = list(component_nodes)
+    if not component:
+        return {
+            "start": None,
+            "first_end": None,
+            "second_end": None,
+            "diameter_estimate": 0,
+        }
     randomizer = random.Random(seed)
     start = randomizer.choice(component)
     first_end, _ = eccentricity(graph, start, allowed_nodes=set(component))
@@ -37,6 +44,52 @@ def double_sweep_diameter_estimate(graph: Graph, component_nodes: Iterable[str],
         "first_end": first_end,
         "second_end": second_end,
         "diameter_estimate": diameter_estimate,
+    }
+
+
+def exact_diameter(
+    graph: Graph,
+    component_nodes: Sequence[str],
+    max_nodes_for_exact: int = 2000,
+) -> Dict[str, object]:
+    component = list(component_nodes)
+    node_count = len(component)
+    if node_count == 0:
+        return {
+            "computed": True,
+            "reason": "empty_component",
+            "nodes": 0,
+            "diameter": 0,
+            "endpoints": [None, None],
+        }
+    if node_count > max_nodes_for_exact:
+        return {
+            "computed": False,
+            "reason": "component_too_large",
+            "nodes": node_count,
+            "max_nodes_for_exact": max_nodes_for_exact,
+            "diameter": None,
+            "endpoints": None,
+        }
+
+    allowed_nodes = set(component)
+    diameter = 0
+    endpoints: tuple[str | None, str | None] = (component[0], component[0])
+    for source in component:
+        distances = bfs_distances(graph, source, allowed_nodes=allowed_nodes)
+        if not distances:
+            continue
+        target, distance = max(distances.items(), key=lambda item: item[1])
+        if distance > diameter:
+            diameter = distance
+            endpoints = (source, target)
+
+    return {
+        "computed": True,
+        "reason": "ok",
+        "nodes": node_count,
+        "diameter": diameter,
+        "endpoints": list(endpoints),
     }
 
 

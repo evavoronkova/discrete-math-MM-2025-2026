@@ -75,6 +75,8 @@ def _dataset_entry(result_dir: Path) -> DatasetComparison:
 def load_available_comparisons(results_dir: str | Path) -> list[DatasetComparison]:
     base = Path(results_dir)
     comparisons: list[DatasetComparison] = []
+    if not base.exists():
+        return comparisons
     for item in sorted(base.iterdir()):
         if not item.is_dir():
             continue
@@ -119,43 +121,49 @@ def _build_observations(comparisons: list[DatasetComparison]) -> list[str]:
     most_clustered = max(comparisons, key=lambda item: item.metrics["average_clustering"])
     widest = max(comparisons, key=lambda item: item.metrics["double_sweep_diameter"])
     most_fragmented = max(comparisons, key=lambda item: item.metrics["weak_count"])
-    most_resilient_random = max(
-        [item for item in comparisons if item.metrics["random_attack_last"] is not None],
-        key=lambda item: item.metrics["random_attack_last"]["largest_weak_component_share"],
+
+    random_candidates = [item for item in comparisons if item.metrics["random_attack_last"] is not None]
+    targeted_candidates = [item for item in comparisons if item.metrics["targeted_attack_last"] is not None]
+
+    observations.append(f"Largest network by node count: {largest.name} ({largest.metrics['nodes']} nodes).")
+    observations.append(
+        f"Highest density: {densest.name} ({densest.metrics['density']:.6f}); "
+        "this indicates a larger share of possible local ties."
     )
-    least_resilient_targeted = min(
-        [item for item in comparisons if item.metrics["targeted_attack_last"] is not None],
-        key=lambda item: item.metrics["targeted_attack_last"]["largest_weak_component_share"],
+    observations.append(
+        f"Highest average clustering coefficient: {most_clustered.name} "
+        f"({most_clustered.metrics['average_clustering']:.4f})."
+    )
+    observations.append(
+        f"Largest double-sweep diameter estimate: {widest.name} "
+        f"({widest.metrics['double_sweep_diameter']})."
+    )
+    observations.append(
+        f"Most fragmented network by weak component count: {most_fragmented.name} "
+        f"({most_fragmented.metrics['weak_count']} components)."
     )
 
-    observations.append(
-        f"Самая крупная сеть по числу вершин: {largest.name} ({largest.metrics['nodes']} вершин)."
-    )
-    observations.append(
-        f"Наибольшая плотность наблюдается у {densest.name} ({densest.metrics['density']:.6f}), "
-        f"что указывает на более насыщенные локальные связи."
-    )
-    observations.append(
-        f"Максимальный средний кластерный коэффициент у {most_clustered.name} "
-        f"({most_clustered.metrics['average_clustering']:.4f}), то есть в этой сети сильнее выражены локальные группы."
-    )
-    observations.append(
-        f"Наибольшая оценка диаметра по double sweep получена для {widest.name} "
-        f"({widest.metrics['double_sweep_diameter']}), значит сеть более 'растянута' по расстояниям."
-    )
-    observations.append(
-        f"Наибольшее число компонент слабой связности у {most_fragmented.name} "
-        f"({most_fragmented.metrics['weak_count']}), поэтому она сильнее фрагментирована."
-    )
-    observations.append(
-        f"При случайном удалении вершин лучше всего сохраняет крупнейшую слабую компоненту "
-        f"{most_resilient_random.name} (доля {most_resilient_random.metrics['random_attack_last']['largest_weak_component_share']:.4f} "
-        f"после удаления {most_resilient_random.metrics['random_attack_last']['removed_percent']:.0f}% вершин)."
-    )
-    observations.append(
-        f"При удалении вершин наибольшей степени сильнее всего разрушается {least_resilient_targeted.name} "
-        f"(доля крупнейшей компоненты {least_resilient_targeted.metrics['targeted_attack_last']['largest_weak_component_share']:.4f})."
-    )
+    if random_candidates:
+        most_resilient_random = max(
+            random_candidates,
+            key=lambda item: item.metrics["random_attack_last"]["largest_weak_component_share"],
+        )
+        observations.append(
+            f"Under random node removal, {most_resilient_random.name} keeps the largest weak component best "
+            f"({most_resilient_random.metrics['random_attack_last']['largest_weak_component_share']:.4f} "
+            f"after removing {most_resilient_random.metrics['random_attack_last']['removed_percent']:.0f}% of nodes)."
+        )
+
+    if targeted_candidates:
+        least_resilient_targeted = min(
+            targeted_candidates,
+            key=lambda item: item.metrics["targeted_attack_last"]["largest_weak_component_share"],
+        )
+        observations.append(
+            f"Under targeted removal by highest degree, {least_resilient_targeted.name} is damaged the most "
+            f"(largest weak component share {least_resilient_targeted.metrics['targeted_attack_last']['largest_weak_component_share']:.4f})."
+        )
+
     return observations
 
 
@@ -183,28 +191,31 @@ def build_comparison_summary(comparisons: list[DatasetComparison]) -> dict[str, 
 
 def build_comparison_markdown(summary: dict[str, Any]) -> str:
     lines: list[str] = []
-    lines.append("# Сравнение сетей (пункт 1C)")
+    lines.append("# Network comparison (task 1C)")
     lines.append("")
-    lines.append("## Краткая таблица")
+    lines.append("## Summary table")
     lines.append("")
-    lines.append("| Сеть | Ориентир. | Вершины | Ребра | Плотность | Компоненты weak | Доля max weak | Ср. степень | Ср. кластеризация | Диаметр (double sweep) | P90 |")
+    lines.append(
+        "| Network | Directed | Nodes | Edges | Density | Weak components | Largest weak share | "
+        "Mean degree | Avg clustering | Diameter (double sweep) | P90 |"
+    )
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |")
     for item in summary["datasets"]:
         lines.append(
-            f"| {item['name']} | {'да' if item['directed'] else 'нет'} | {item['nodes']} | {item['edges']} | "
+            f"| {item['name']} | {'yes' if item['directed'] else 'no'} | {item['nodes']} | {item['edges']} | "
             f"{item['density']:.6f} | {item['weak_count']} | {item['largest_weak_share']:.4f} | "
             f"{item['mean_degree']:.4f} | {item['average_clustering']:.4f} | "
             f"{item['double_sweep_diameter']} | {item['random_pairs_p90']:.2f} |"
         )
     lines.append("")
-    lines.append("## Наблюдения")
+    lines.append("## Observations")
     lines.append("")
     for observation in summary["observations"]:
         lines.append(f"- {observation}")
     lines.append("")
-    lines.append("## Устойчивость")
+    lines.append("## Robustness")
     lines.append("")
-    lines.append("Сравнение проводится по доле вершин в крупнейшей слабой компоненте после последнего шага удаления.")
+    lines.append("The comparison uses the share of nodes in the largest weak component after the last removal step.")
     lines.append("")
     for item in summary["datasets"]:
         random_attack = item["random_attack_last"]
@@ -212,15 +223,15 @@ def build_comparison_markdown(summary: dict[str, Any]) -> str:
         if random_attack is None or targeted_attack is None:
             continue
         lines.append(
-            f"- {item['name']}: случайное удаление -> {random_attack['largest_weak_component_share']:.4f}, "
-            f"удаление вершин наибольшей степени -> {targeted_attack['largest_weak_component_share']:.4f}."
+            f"- {item['name']}: random removal -> {random_attack['largest_weak_component_share']:.4f}, "
+            f"highest-degree removal -> {targeted_attack['largest_weak_component_share']:.4f}."
         )
     lines.append("")
-    lines.append("## Интерпретация")
+    lines.append("## Interpretation")
     lines.append("")
-    lines.append("- Более высокая плотность и кластеризация обычно означают наличие плотных локальных сообществ.")
-    lines.append("- Большой диаметр и высокий `P90` расстояний говорят о более длинных путях между типичными парами вершин.")
-    lines.append("- Сильное падение крупнейшей компоненты при targeted attack показывает зависимость структуры от небольшого числа хабов.")
+    lines.append("- Higher density and clustering usually indicate denser local communities.")
+    lines.append("- Larger diameter and P90 distance indicate longer paths between typical vertex pairs.")
+    lines.append("- A sharp drop under targeted removal shows that the network depends on a small set of high-degree hubs.")
     return "\n".join(lines) + "\n"
 
 

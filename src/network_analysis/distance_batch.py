@@ -99,23 +99,23 @@ def build_distance_batch_summary(dataset_results: list[dict[str, Any]]) -> dict[
             }
         )
 
-    observations: list[str] = []
+    observations = []
     if best_accuracy is not None:
         observations.append(
-            f"Лучшая точность среди всех экспериментов: {best_accuracy['dataset']} / "
-            f"{best_accuracy['algorithm']} / {best_accuracy['landmark_strategy']} / "
-            f"{best_accuracy['landmark_count']} landmarks, exact match = {best_accuracy['exact_match_ratio']:.4f}, "
+            f"Best accuracy overall: {best_accuracy['dataset']} / {best_accuracy['algorithm']} / "
+            f"{best_accuracy['landmark_strategy']} / {best_accuracy['landmark_count']} landmarks, "
+            f"exact match = {best_accuracy['exact_match_ratio']:.4f}, "
             f"MAE = {best_accuracy['mean_absolute_error']:.4f}."
         )
     if best_speed is not None:
         observations.append(
-            f"Наибольшее ускорение: {best_speed['dataset']} / {best_speed['algorithm']} / "
+            f"Best speedup overall: {best_speed['dataset']} / {best_speed['algorithm']} / "
             f"{best_speed['landmark_strategy']} / {best_speed['landmark_count']} landmarks, "
-            f"speedup = {best_speed['speedup_vs_exact']:.2f}x."
+            f"speedup = {(best_speed['speedup_vs_exact'] or 0.0):.2f}x."
         )
-    observations.append("`basic` обычно быстрее на запросах, но чаще завышает расстояние.")
-    observations.append("`bfs` в большинстве случаев точнее, потому что использует структуру BFS-деревьев landmark-ов.")
-    observations.append("Увеличение числа landmark-ов обычно повышает точность, но увеличивает время предобработки.")
+    observations.append("`basic` is usually faster at query time, but can overestimate distances.")
+    observations.append("`bfs` often improves accuracy because it also uses landmark BFS-tree structure.")
+    observations.append("More landmarks usually improve accuracy, but increase preprocessing time.")
 
     return {
         "dataset_count": len(dataset_results),
@@ -129,9 +129,9 @@ def build_distance_batch_summary(dataset_results: list[dict[str, Any]]) -> dict[
 
 def build_distance_batch_markdown(summary: dict[str, Any]) -> str:
     lines: list[str] = []
-    lines.append("# Сводное исследование по части 2")
+    lines.append("# Distance estimation batch summary")
     lines.append("")
-    lines.append("| Датасет | Лучший по точности | Exact match | MAE | Лучший по скорости | Speedup |")
+    lines.append("| Dataset | Best accuracy setup | Exact match | MAE | Best speed setup | Speedup |")
     lines.append("| --- | --- | ---: | ---: | --- | ---: |")
     for item in summary["datasets"]:
         best_acc = item["best_accuracy"]
@@ -155,7 +155,7 @@ def build_distance_batch_markdown(summary: dict[str, Any]) -> str:
             f"| {item['dataset']} | {acc_label} | {acc_ratio} | {acc_mae} | {spd_label} | {spd_value} |"
         )
     lines.append("")
-    lines.append("## Выводы")
+    lines.append("## Conclusions")
     lines.append("")
     for observation in summary["observations"]:
         lines.append(f"- {observation}")

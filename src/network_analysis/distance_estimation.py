@@ -1,4 +1,4 @@
-import json
+﻿import json
 import random
 import time
 from collections import deque
@@ -372,9 +372,11 @@ def save_distance_experiment(output_dir: str | Path, report: dict[str, Any]) -> 
 
 def build_distance_markdown(report: dict[str, Any]) -> str:
     lines: list[str] = []
-    lines.append("# Исследование алгоритмов оценки расстояний")
+    lines.append("# Distance estimation experiments")
     lines.append("")
-    lines.append("| Алгоритм | Стратегия | Landmarks | Доля точных ответов | MAE | Max error | Build time (s) | Speedup |")
+    lines.append(
+        "| Algorithm | Strategy | Landmarks | Exact match ratio | MAE | Max error | Build time (s) | Speedup |"
+    )
     lines.append("| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |")
     for experiment in report["experiments"]:
         speedup = experiment["speedup_vs_exact"] or 0.0
@@ -387,18 +389,19 @@ def build_distance_markdown(report: dict[str, Any]) -> str:
     if report.get("best_accuracy"):
         best = report["best_accuracy"]
         lines.append(
-            f"- Лучшая точность: `{best['algorithm']}` + `{best['landmark_strategy']}` + "
-            f"{best['landmark_count']} landmarks, доля точных ответов {best['exact_match_ratio']:.4f}, "
+            f"- Best accuracy: `{best['algorithm']}` + `{best['landmark_strategy']}` + "
+            f"{best['landmark_count']} landmarks, exact match ratio {best['exact_match_ratio']:.4f}, "
             f"MAE {best['mean_absolute_error']:.4f}."
         )
     if report.get("best_speed"):
         best = report["best_speed"]
+        speedup = best["speedup_vs_exact"] or 0.0
         lines.append(
-            f"- Наибольшее ускорение: `{best['algorithm']}` + `{best['landmark_strategy']}` + "
-            f"{best['landmark_count']} landmarks, ускорение {best['speedup_vs_exact']:.2f}x."
+            f"- Best speedup: `{best['algorithm']}` + `{best['landmark_strategy']}` + "
+            f"{best['landmark_count']} landmarks, speedup {speedup:.2f}x."
         )
     lines.append("")
-    lines.append("- `basic` обычно быстрее на запросе, но чаще переоценивает расстояние.")
-    lines.append("- `bfs` обычно точнее, потому что использует пути в BFS-деревьях landmark-ов.")
-    lines.append("- Увеличение числа landmark-ов обычно повышает точность ценой более долгой предобработки.")
+    lines.append("- `basic` is usually faster at query time, but can overestimate distances.")
+    lines.append("- `bfs` also uses landmark BFS-tree paths and is often more accurate.")
+    lines.append("- More landmarks usually improve accuracy, but increase preprocessing time.")
     return "\n".join(lines) + "\n"
