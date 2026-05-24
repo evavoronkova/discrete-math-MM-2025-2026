@@ -1,7 +1,7 @@
 package core.model
 
 interface MutableVertexGraph : Graph {
-    fun markDeleted(vertices: List<Int>)
+    fun markDeleted(vertices: Collection<Int>)
 
     fun clearDeleted()
 
