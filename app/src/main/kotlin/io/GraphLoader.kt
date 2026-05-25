@@ -3,27 +3,27 @@ package io
 import core.algorithms.quickSort
 import core.storage.CSRDirectedGraph
 import core.storage.CSRUndirectedGraph
+import java.io.BufferedReader
 import java.io.File
 import java.io.IOException
 
 class GraphLoader {
-    fun preprocessFile(fileFrom: String, isDirectedGraph: Boolean): String{
+
+    fun preprocessFile(fileFrom: String, isDirectedGraph: Boolean): String {
         val originalFile = File(fileFrom)
-        if(originalFile.length() == 0L) error("File $fileFrom is empty")
+        if (originalFile.length() == 0L) error("File $fileFrom is empty")
         val nameOfNewFile = "processed_${originalFile.name}"
         val preprocessedFile = File(originalFile.parentFile, nameOfNewFile)
         preprocessedFile.createNewFile()
         preprocessedFile.deleteOnExit()
-        val command = if(!isDirectedGraph) {
+        val command = if (!isDirectedGraph) {
             arrayOf(
-                "bash",
-                "-c",
+                "bash", "-c",
                 "tr -d '\\r' < \"$fileFrom\" | awk '{if(\$1!=\$2) print (\$1<\$2 ? \$1\" \"\$2 : \$2\" \"\$1)}' | sort -u > \"$preprocessedFile\""
             )
-        }else{
+        } else {
             arrayOf(
-                "bash",
-                "-c",
+                "bash", "-c",
                 "tr -d '\\r' < \"$fileFrom\" | awk '{if(\$1!=\$2) print(\$1\" \"\$2)}' | sort -u > \"$preprocessedFile\""
             )
         }
@@ -33,120 +33,165 @@ class GraphLoader {
             val exitCode = process.waitFor()
             if (exitCode != 0) error("Preprocessing failed with exit code $exitCode")
             if (preprocessedFile.length() == 0L) error("Preprocessing produced empty file")
-        } catch (e: IOException){
+        } catch (e: IOException) {
             error("Failed to start the process ${e.message}. Make sure bash is installed (Linux/macOS/WSL)")
         }
         return preprocessedFile.toString()
     }
 
-    fun loadDirectedGraph(originalFile: String): CSRDirectedGraph{
+    fun loadDirectedGraph(originalFile: String): CSRDirectedGraph {
         val processedFile = File(preprocessFile(originalFile, true))
+        return loadDirectedFromProcessed(processedFile)
+    }
 
+    fun loadUndirectedGraph(originalFile: String): CSRUndirectedGraph {
+        val processedFile = File(preprocessFile(originalFile, false))
+        return loadUndirectedFromProcessed(processedFile)
+    }
+
+    private fun loadDirectedFromProcessed(file: File): CSRDirectedGraph {
         val vertexSet = mutableSetOf<Int>()
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                if(line.isBlank()) throw IllegalStateException("Line $line is empty")
-                val parts = line.trim().split(' ')
-                if(parts.size != 2) throw IllegalStateException("Invalid line: $line")
-                val u = parts[0].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
-                val v = parts[1].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+        val outDegreeByOrig = IntArrayList()
+        val inDegreeByOrig = IntArrayList()
+        val edges = ArrayList<Long>()
+
+        file.bufferedReader().use { reader ->
+            var line = reader.readLine()
+            while (line != null) {
+                if (line.isBlank() || line[0] == '#') { line = reader.readLine(); continue }
+                val spaceIdx = line.indexOf(' ')
+                if (spaceIdx == -1) { line = reader.readLine(); continue }
+                val u = line.substring(0, spaceIdx).toInt()
+                val v = line.substring(spaceIdx + 1).toInt()
                 vertexSet.add(u); vertexSet.add(v)
+                outDegreeByOrig.add(u)
+                inDegreeByOrig.add(v)
+                edges.add(pack(u, v))
+                line = reader.readLine()
             }
         }
+
         val vertexCount = vertexSet.size
         val prevVertNumbers = vertexSet.toIntArray()
         quickSort(prevVertNumbers, 0, vertexCount - 1)
-        val vertexToIndexMap = mutableMapOf<Int, Int>()
-        for(i in 0 until vertexCount){
-            vertexToIndexMap[prevVertNumbers[i]] = i
-        }
+        val vertexToIndex = Int2IntMap(prevVertNumbers)
 
-        var edgeCount = 0
-        val inDegree = IntArray(vertexCount)
         val outDegree = IntArray(vertexCount)
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                val (u, v) = line.trim().split(' ').map{ it.toInt() }
-                outDegree[vertexToIndexMap[u]!!]++
-                inDegree[vertexToIndexMap[v]!!]++
-                edgeCount++
-            }
-        }
-        val inOffs = IntArray(vertexCount + 1)
-        val outOffs = IntArray(vertexCount + 1)
-        for(i in 1 .. vertexCount){
-            inOffs[i] = inOffs[i - 1] + inDegree[i - 1]
-            outOffs[i] = outOffs[i - 1] + outDegree[i - 1]
+        val inDegree = IntArray(vertexCount)
+        for (i in 0 until outDegreeByOrig.size) {
+            outDegree[vertexToIndex[outDegreeByOrig[i]]]++
+            inDegree[vertexToIndex[inDegreeByOrig[i]]]++
         }
 
-        val inNeighs = IntArray(edgeCount)
+        val outOffs = buildOffsets(outDegree, vertexCount)
+        val inOffs = buildOffsets(inDegree, vertexCount)
+        val edgeCount = outDegreeByOrig.size
+
         val outNeighs = IntArray(edgeCount)
-        val inCurrentPosition = IntArray(vertexCount)
-        val outCurrentPosition = IntArray(vertexCount)
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                val (u, v) = line.trim().split(' ').map { it.toInt() }
-                val indexOfFirstVert = vertexToIndexMap[u]!!
-                val indexOfSecondVert = vertexToIndexMap[v]!!
-                outNeighs[outOffs[indexOfFirstVert] + outCurrentPosition[indexOfFirstVert]] = indexOfSecondVert
-                inNeighs[inOffs[indexOfSecondVert] + inCurrentPosition[indexOfSecondVert]] = indexOfFirstVert
-                inCurrentPosition[indexOfSecondVert]++
-                outCurrentPosition[indexOfFirstVert]++
-            }
+        val inNeighs = IntArray(edgeCount)
+        val outPos = IntArray(vertexCount)
+        val inPos = IntArray(vertexCount)
+
+        for (i in 0 until edges.size) {
+            val (u, v) = unpack(edges[i])
+            val ui = vertexToIndex[u]
+            val vi = vertexToIndex[v]
+            outNeighs[outOffs[ui] + outPos[ui]] = vi
+            outPos[ui]++
+            inNeighs[inOffs[vi] + inPos[vi]] = ui
+            inPos[vi]++
         }
+
         return CSRDirectedGraph(prevVertNumbers, outOffs, outNeighs, inOffs, inNeighs)
     }
 
-    fun loadUndirectedGraph(originalFile: String): CSRUndirectedGraph{
-        val processedFile = File(preprocessFile(originalFile, false))
-
+    private fun loadUndirectedFromProcessed(file: File): CSRUndirectedGraph {
         val vertexSet = mutableSetOf<Int>()
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                if(line.isBlank()) throw IllegalStateException("Line $line is empty")
-                val parts = line.trim().split(' ')
-                if(parts.size != 2) throw IllegalStateException("Invalid line: $line")
-                val u = parts[0].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
-                val v = parts[1].toIntOrNull() ?: throw IllegalStateException("Invalid line: $line")
+        val degreeByOrig = IntArrayList()
+        val edges = ArrayList<Long>()
+
+        file.bufferedReader().use { reader ->
+            var line = reader.readLine()
+            while (line != null) {
+                if (line.isBlank() || line[0] == '#') { line = reader.readLine(); continue }
+                val spaceIdx = line.indexOf(' ')
+                if (spaceIdx == -1) { line = reader.readLine(); continue }
+                val u = line.substring(0, spaceIdx).toInt()
+                val v = line.substring(spaceIdx + 1).toInt()
                 vertexSet.add(u); vertexSet.add(v)
+                degreeByOrig.add(u)
+                degreeByOrig.add(v)
+                edges.add(pack(u, v))
+                line = reader.readLine()
             }
         }
+
         val vertexCount = vertexSet.size
-        val previousVertexArray = vertexSet.toIntArray()
-        quickSort(previousVertexArray, 0, vertexCount - 1)
-        val vertexToIndexMap = mutableMapOf<Int, Int>()
-        for(i in 0 until vertexCount){
-            vertexToIndexMap[previousVertexArray[i]] = i
+        val prevVertNumbers = vertexSet.toIntArray()
+        quickSort(prevVertNumbers, 0, vertexCount - 1)
+        val vertexToIndex = Int2IntMap(prevVertNumbers)
+
+        val degree = IntArray(vertexCount)
+        for (i in 0 until degreeByOrig.size) {
+            degree[vertexToIndex[degreeByOrig[i]]]++
         }
 
-        var edgeCount = 0
-        val vertexDegreeArray = IntArray(vertexCount)
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                val (u, v) = line.trim().split(' ').map{ it.toInt() }
-                edgeCount++
-                vertexDegreeArray[vertexToIndexMap[u]!!]++
-                vertexDegreeArray[vertexToIndexMap[v]!!]++
-            }
+        val offs = buildOffsets(degree, vertexCount)
+        val edgeCount = degreeByOrig.size / 2
+
+        val neighs = IntArray(degreeByOrig.size)
+        val pos = IntArray(vertexCount)
+
+        for (i in 0 until edges.size) {
+            val (u, v) = unpack(edges[i])
+            val ui = vertexToIndex[u]
+            val vi = vertexToIndex[v]
+            neighs[offs[ui] + pos[ui]] = vi
+            pos[ui]++
+            neighs[offs[vi] + pos[vi]] = ui
+            pos[vi]++
         }
+
+        return CSRUndirectedGraph(prevVertNumbers, offs, neighs)
+    }
+
+    private fun pack(u: Int, v: Int): Long = (u.toLong() shl 32) or (v.toLong() and 0xFFFFFFFFL)
+    private fun unpack(packed: Long): Pair<Int, Int> = Pair((packed shr 32).toInt(), packed.toInt())
+
+    private fun buildOffsets(degree: IntArray, vertexCount: Int): IntArray {
         val offs = IntArray(vertexCount + 1)
-        for(i in 1..vertexCount){
-            offs[i] = offs[i - 1] + vertexDegreeArray[i - 1]
-        }
+        for (i in 1..vertexCount) offs[i] = offs[i - 1] + degree[i - 1]
+        return offs
+    }
+}
 
-        val neighs = IntArray(edgeCount * 2)
-        val currentPosition = IntArray(vertexCount)
-        processedFile.useLines { lines ->
-            lines.forEach { line ->
-                val (u, v) = line.trim().split(' ').map { it.toInt() }
-                val indexOfFirstVert = vertexToIndexMap[u]!!
-                val indexOfSecondVert = vertexToIndexMap[v]!!
-                neighs[offs[indexOfFirstVert] + currentPosition[indexOfFirstVert]] = indexOfSecondVert
-                currentPosition[indexOfFirstVert]++
-                neighs[offs[indexOfSecondVert] + currentPosition[indexOfSecondVert]] = indexOfFirstVert
-                currentPosition[indexOfSecondVert]++
-            }
+private class IntArrayList {
+    private var data = IntArray(1024)
+    var size = 0
+        private set
+
+    fun add(value: Int) {
+        if (size >= data.size) data = data.copyOf(data.size * 2)
+        data[size++] = value
+    }
+
+    operator fun get(index: Int): Int = data[index]
+}
+
+private class Int2IntMap(sortedKeys: IntArray) {
+    private val keys = sortedKeys
+    private val vals = IntArray(sortedKeys.size) { it }
+
+    operator fun get(key: Int): Int {
+        var lo = 0
+        var hi = keys.size - 1
+        while (lo <= hi) {
+            val mid = (lo + hi) ushr 1
+            val k = keys[mid]
+            if (k < key) lo = mid + 1
+            else if (k > key) hi = mid - 1
+            else return vals[mid]
         }
-        return CSRUndirectedGraph(previousVertexArray, offs, neighs)
+        error("Vertex $key not found in mapping")
     }
 }
