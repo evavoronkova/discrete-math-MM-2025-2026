@@ -47,3 +47,34 @@ class LandmarkEstimator:
             if u in dists and v in dists:
                 min_dist = min(min_dist, dists[u] + dists[v])
         return min_dist if min_dist != float('inf') else -1
+
+    def _find_lca(self, l, u, v):
+        """Поиск Наименьшего общего предка (LCA) в дереве SPT ориентира l"""
+        parents = self.spt_parents[l]
+        depths = self.spt_depths[l]
+        if u not in depths or v not in depths: return None
+
+        curr_u, curr_v = u, v
+        while depths[curr_u] > depths[curr_v]:
+            curr_u = parents[curr_u]
+        while depths[curr_v] > depths[curr_u]:
+            curr_v = parents[curr_v]
+        while curr_u != curr_v:
+            curr_u = parents[curr_u]
+            curr_v = parents[curr_v]
+        return curr_u
+
+    def estimate_lca(self, u, v):
+        """
+        Модификация Landmarks-LCA.
+        Формула: d(u,v) = depth(u) + depth(v) - 2 * depth(LCA(u,v))
+        """
+        min_dist = float('inf')
+        for l in self.landmarks:
+            depths = self.spt_depths[l]
+            if u in depths and v in depths:
+                lca = self._find_lca(l, u, v)
+                if lca is not None:
+                    dist = depths[u] + depths[v] - 2 * depths[lca]
+                    min_dist = min(min_dist, dist)
+        return min_dist if min_dist != float('inf') else -1
