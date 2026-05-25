@@ -5,15 +5,25 @@ def load_graph(filepath, delimiter=None, is_directed=False):
     """
     Читает граф из файла. Возвращает граф, обратный граф и множество ВСЕХ узлов.
     """
+    # АВТОМАТИЧЕСКОЕ ОПРЕДЕЛЕНИЕ РАЗДЕЛИТЕЛЯ
+    if delimiter is None:
+        if filepath.endswith('.csv'):
+            delimiter = ','  # Для CSV используем запятую
+        else:
+            delimiter = None # Для .txt останется None (будет разбивать по пробелам/табам)
+
     graph = defaultdict(set)
     rev_graph = defaultdict(set)
-    all_nodes = set()  # <--- СОБИРАЕМ ВСЕ УЗЛЫ
+    all_nodes = set()  
 
     with open(filepath, 'r') as f:
         for line in f:
             if line.startswith('#') or line.startswith('%') or not line.strip():
                 continue
+            # Если delimiter None, split() работает как split(None) - по пробелам
+            # Если delimiter ',', split() разобьет по запятым
             parts = line.strip().split(delimiter)
+            
             if len(parts) >= 2:
                 try:
                     u, v = int(parts[0]), int(parts[1])
