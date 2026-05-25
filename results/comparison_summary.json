@@ -1,0 +1,771 @@
+{
+  "datasets": [
+    {
+      "name": "CA-AstroPh",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\CA-AstroPh\\summary.json",
+      "directed": false,
+      "nodes": 18771,
+      "edges": 198050,
+      "density": 0.0011242247964822463,
+      "weak_count": 289,
+      "largest_weak_share": 0.9537584571946087,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 504,
+      "mean_degree": 21.101699429971767,
+      "triangles": 1351441,
+      "average_clustering": 0.6306268351850292,
+      "global_clustering": 0.3180015812533629,
+      "largest_weak_average_clustering": 0.6328232091518612,
+      "double_sweep_diameter": 14,
+      "random_pairs_p90": 6.0,
+      "random_pairs_diameter": 8.0,
+      "random_pairs_mean": 4.206,
+      "snowball_p90": 4.0,
+      "snowball_diameter": 5.0,
+      "snowball_mean": 3.234,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 9385.0,
+        "largest_weak_component_share": 0.8490143846563666
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 9385.0,
+        "largest_weak_component_share": 0.0075652637187000535
+      }
+    },
+    {
+      "name": "ca-coauthors-dblp",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\ca-coauthors-dblp\\summary.json",
+      "directed": false,
+      "nodes": 540486,
+      "edges": 15245729,
+      "density": 0.00010437827055765996,
+      "weak_count": 1,
+      "largest_weak_share": 1.0,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 3299,
+      "mean_degree": 56.41488956235684,
+      "triangles": 444095058,
+      "average_clustering": 0.8018773521297451,
+      "global_clustering": 0.6561501456556504,
+      "largest_weak_average_clustering": 0.8018773521297451,
+      "double_sweep_diameter": 23,
+      "random_pairs_p90": 7.0,
+      "random_pairs_diameter": 11.0,
+      "random_pairs_mean": 5.766,
+      "snowball_p90": 4.0,
+      "snowball_diameter": 5.0,
+      "snowball_mean": 2.496,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 270243.0,
+        "largest_weak_component_share": 0.9295633929463483
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 270243.0,
+        "largest_weak_component_share": 0.7494440189015071
+      }
+    },
+    {
+      "name": "CA-GrQc",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\CA-GrQc\\summary.json",
+      "directed": false,
+      "nodes": 5241,
+      "edges": 14484,
+      "density": 0.0010548071503165733,
+      "weak_count": 354,
+      "largest_weak_share": 0.7933600457927876,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 81,
+      "mean_degree": 5.527189467658844,
+      "triangles": 48260,
+      "average_clustering": 0.5297368673030525,
+      "global_clustering": 0.6298424741263426,
+      "largest_weak_average_clustering": 0.5568782161697929,
+      "double_sweep_diameter": 15,
+      "random_pairs_p90": 8.0,
+      "random_pairs_diameter": 13.0,
+      "random_pairs_mean": 5.99,
+      "snowball_p90": 6.0,
+      "snowball_diameter": 6.0,
+      "snowball_mean": 4.22,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 2621.0,
+        "largest_weak_component_share": 0.49446776039679513
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 2621.0,
+        "largest_weak_component_share": 0.002289202594429607
+      }
+    },
+    {
+      "name": "com-youtube.ungraph",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\com-youtube.ungraph\\summary.json",
+      "directed": false,
+      "nodes": 1134890,
+      "edges": 2987624,
+      "density": 4.639260713241579e-06,
+      "weak_count": 1,
+      "largest_weak_share": 1.0,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 28754,
+      "mean_degree": 5.265045951590022,
+      "triangles": 3056386,
+      "average_clustering": 0.08080227776190227,
+      "global_clustering": 0.006218559818028638,
+      "largest_weak_average_clustering": 0.08080227776190227,
+      "double_sweep_diameter": 24,
+      "random_pairs_p90": 7.0,
+      "random_pairs_diameter": 9.0,
+      "random_pairs_mean": 5.254,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 4.0,
+      "snowball_mean": 2.694,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 567445.0,
+        "largest_weak_component_share": 0.5941897452616554
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 567445.0,
+        "largest_weak_component_share": 1.7622853316180423e-06
+      }
+    },
+    {
+      "name": "Email-EuAll",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\Email-EuAll\\summary.json",
+      "directed": false,
+      "nodes": 265009,
+      "edges": 364481,
+      "density": 1.0379711479564903e-05,
+      "weak_count": 15631,
+      "largest_weak_share": 0.8483938281341389,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 7636,
+      "mean_degree": 2.7507065797765358,
+      "triangles": 267313,
+      "average_clustering": 0.06713685363906052,
+      "global_clustering": 0.004106431079830243,
+      "largest_weak_average_clustering": 0.07913406652982578,
+      "double_sweep_diameter": 14,
+      "random_pairs_p90": 5.0,
+      "random_pairs_diameter": 7.0,
+      "random_pairs_mean": 4.136,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 3.0,
+      "snowball_mean": 2.29,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 132505.0,
+        "largest_weak_component_share": 0.4350779215878646
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 132505.0,
+        "largest_weak_component_share": 1.5093770046413342e-05
+      }
+    },
+    {
+      "name": "musae_git_edges",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\musae_git_edges\\summary.json",
+      "directed": false,
+      "nodes": 37700,
+      "edges": 289003,
+      "density": 0.0004066878203117068,
+      "weak_count": 1,
+      "largest_weak_share": 1.0,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 9458,
+      "mean_degree": 15.331724137931035,
+      "triangles": 523810,
+      "average_clustering": 0.1675370448010758,
+      "global_clustering": 0.012357188884259466,
+      "largest_weak_average_clustering": 0.1675370448010758,
+      "double_sweep_diameter": 11,
+      "random_pairs_p90": 4.0,
+      "random_pairs_diameter": 6.0,
+      "random_pairs_mean": 3.274,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 4.0,
+      "snowball_mean": 2.264,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 18850.0,
+        "largest_weak_component_share": 0.8841909814323607
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 18850.0,
+        "largest_weak_component_share": 0.000689655172413793
+      }
+    },
+    {
+      "name": "soc-wiki-Vote",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\soc-wiki-Vote\\summary.json",
+      "directed": true,
+      "nodes": 889,
+      "edges": 2914,
+      "density": 0.003691261565277313,
+      "weak_count": 1,
+      "largest_weak_share": 1.0,
+      "strong_count": 889,
+      "largest_strong_share": 0.0011248593925759281,
+      "min_degree": 1,
+      "max_degree": 102,
+      "mean_degree": 6.555680539932508,
+      "triangles": 2119,
+      "average_clustering": 0.15284694735014295,
+      "global_clustering": 0.12734885211747266,
+      "largest_weak_average_clustering": 0.15284694735014295,
+      "double_sweep_diameter": 13,
+      "random_pairs_p90": 6.0,
+      "random_pairs_diameter": 9.0,
+      "random_pairs_mean": 4.208,
+      "snowball_p90": 4.0,
+      "snowball_diameter": 5.0,
+      "snowball_mean": 3.15,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 445.0,
+        "largest_weak_component_share": 0.8134831460674158
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 445.0,
+        "largest_weak_component_share": 0.01348314606741573
+      }
+    },
+    {
+      "name": "vk",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\vk\\summary.json",
+      "directed": false,
+      "nodes": 3215720,
+      "edges": 17414510,
+      "density": 3.368099681514005e-06,
+      "weak_count": 24337,
+      "largest_weak_share": 0.9833620464468299,
+      "strong_count": null,
+      "largest_strong_share": null,
+      "min_degree": 1,
+      "max_degree": 6503,
+      "mean_degree": 10.830862139738535,
+      "triangles": 108030337,
+      "average_clustering": 0.04938048748183835,
+      "global_clustering": 0.10950481413915586,
+      "largest_weak_average_clustering": 0.049862341364547196,
+      "double_sweep_diameter": 19,
+      "random_pairs_p90": 7.0,
+      "random_pairs_diameter": 9.0,
+      "random_pairs_mean": 5.446,
+      "snowball_p90": 2.0,
+      "snowball_diameter": 4.0,
+      "snowball_mean": 2.102,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 1607860.0,
+        "largest_weak_component_share": 0.8047945716666874
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 1607860.0,
+        "largest_weak_component_share": 1.4304728023584144e-05
+      }
+    },
+    {
+      "name": "web-Google",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\web-Google\\summary.json",
+      "directed": true,
+      "nodes": 875713,
+      "edges": 5105039,
+      "density": 6.656960291514363e-06,
+      "weak_count": 2746,
+      "largest_weak_share": 0.9772630987549574,
+      "strong_count": 371764,
+      "largest_strong_share": 0.49653025591717836,
+      "min_degree": 1,
+      "max_degree": 6332,
+      "mean_degree": 9.870930316210904,
+      "triangles": 13391903,
+      "average_clustering": 0.5142961475355061,
+      "global_clustering": 0.0552306264884374,
+      "largest_weak_average_clustering": 0.5190321179360945,
+      "double_sweep_diameter": 24,
+      "random_pairs_p90": 8.0,
+      "random_pairs_diameter": 13.0,
+      "random_pairs_mean": 6.304,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 4.0,
+      "snowball_mean": 2.232,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 437857.0,
+        "largest_weak_component_share": 0.7192941987909295
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 437857.0,
+        "largest_weak_component_share": 7.536707189790274e-05
+      }
+    },
+    {
+      "name": "web-NotreDame",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\web-NotreDame\\summary.json",
+      "directed": true,
+      "nodes": 325729,
+      "edges": 1469679,
+      "density": 1.3851951745822905e-05,
+      "weak_count": 1,
+      "largest_weak_share": 1.0,
+      "strong_count": 203609,
+      "largest_strong_share": 0.16568374323440652,
+      "min_degree": 1,
+      "max_degree": 10721,
+      "mean_degree": 6.693343239318574,
+      "triangles": 8910005,
+      "average_clustering": 0.23462432071966585,
+      "global_clustering": 0.08767355048298259,
+      "largest_weak_average_clustering": 0.23462432071966585,
+      "double_sweep_diameter": 46,
+      "random_pairs_p90": 10.0,
+      "random_pairs_diameter": 25.0,
+      "random_pairs_mean": 7.062,
+      "snowball_p90": 2.0,
+      "snowball_diameter": 2.0,
+      "snowball_mean": 1.996,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 162865.0,
+        "largest_weak_component_share": 0.45154575875725295
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 162865.0,
+        "largest_weak_component_share": 0.00016578147545513155
+      }
+    },
+    {
+      "name": "web-Stanford",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\web-Stanford\\summary.json",
+      "directed": true,
+      "nodes": 281903,
+      "edges": 2312497,
+      "density": 2.9099352356114118e-05,
+      "weak_count": 365,
+      "largest_weak_share": 0.9055065040102447,
+      "strong_count": 29914,
+      "largest_strong_share": 0.5339850941635953,
+      "min_degree": 1,
+      "max_degree": 38625,
+      "mean_degree": 14.13703295105054,
+      "triangles": 11329473,
+      "average_clustering": 0.5976304608027568,
+      "global_clustering": 0.008617602328600992,
+      "largest_weak_average_clustering": 0.6188912167994167,
+      "double_sweep_diameter": 164,
+      "random_pairs_p90": 10.0,
+      "random_pairs_diameter": 33.0,
+      "random_pairs_mean": 6.724,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 3.0,
+      "snowball_mean": 2.128,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 140951.0,
+        "largest_weak_component_share": 0.6328653219913303
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 140951.0,
+        "largest_weak_component_share": 0.005356471397861668
+      }
+    },
+    {
+      "name": "Wiki-Vote",
+      "summary_path": "D:\\Projects_Python\\discrete-math-MM-2025-2026\\results\\Wiki-Vote\\summary.json",
+      "directed": true,
+      "nodes": 7115,
+      "edges": 103689,
+      "density": 0.0020485375110809584,
+      "weak_count": 24,
+      "largest_weak_share": 0.9931131412508785,
+      "strong_count": 5816,
+      "largest_strong_share": 0.18271257905832747,
+      "min_degree": 1,
+      "max_degree": 1065,
+      "mean_degree": 28.32382290934645,
+      "triangles": 608389,
+      "average_clustering": 0.1408978458930873,
+      "global_clustering": 0.12547914899233995,
+      "largest_weak_average_clustering": 0.14187491841626323,
+      "double_sweep_diameter": 7,
+      "random_pairs_p90": 4.0,
+      "random_pairs_diameter": 5.0,
+      "random_pairs_mean": 3.23,
+      "snowball_p90": 3.0,
+      "snowball_diameter": 3.0,
+      "snowball_mean": 2.124,
+      "random_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 3557.0,
+        "largest_weak_component_share": 0.8001124543154343
+      },
+      "targeted_attack_last": {
+        "removed_percent": 50.0,
+        "remaining_nodes": 3557.0,
+        "largest_weak_component_share": 0.0008434073657576609
+      }
+    }
+  ],
+  "rankings": {
+    "by_nodes": [
+      {
+        "dataset": "vk",
+        "value": 3215720
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "value": 1134890
+      },
+      {
+        "dataset": "web-Google",
+        "value": 875713
+      },
+      {
+        "dataset": "ca-coauthors-dblp",
+        "value": 540486
+      },
+      {
+        "dataset": "web-NotreDame",
+        "value": 325729
+      },
+      {
+        "dataset": "web-Stanford",
+        "value": 281903
+      },
+      {
+        "dataset": "Email-EuAll",
+        "value": 265009
+      },
+      {
+        "dataset": "musae_git_edges",
+        "value": 37700
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "value": 18771
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "value": 7115
+      },
+      {
+        "dataset": "CA-GrQc",
+        "value": 5241
+      },
+      {
+        "dataset": "soc-wiki-Vote",
+        "value": 889
+      }
+    ],
+    "by_density": [
+      {
+        "dataset": "soc-wiki-Vote",
+        "value": 0.003691261565277313
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "value": 0.0020485375110809584
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "value": 0.0011242247964822463
+      },
+      {
+        "dataset": "CA-GrQc",
+        "value": 0.0010548071503165733
+      },
+      {
+        "dataset": "musae_git_edges",
+        "value": 0.0004066878203117068
+      },
+      {
+        "dataset": "ca-coauthors-dblp",
+        "value": 0.00010437827055765996
+      },
+      {
+        "dataset": "web-Stanford",
+        "value": 2.9099352356114118e-05
+      },
+      {
+        "dataset": "web-NotreDame",
+        "value": 1.3851951745822905e-05
+      },
+      {
+        "dataset": "Email-EuAll",
+        "value": 1.0379711479564903e-05
+      },
+      {
+        "dataset": "web-Google",
+        "value": 6.656960291514363e-06
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "value": 4.639260713241579e-06
+      },
+      {
+        "dataset": "vk",
+        "value": 3.368099681514005e-06
+      }
+    ],
+    "by_average_clustering": [
+      {
+        "dataset": "ca-coauthors-dblp",
+        "value": 0.8018773521297451
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "value": 0.6306268351850292
+      },
+      {
+        "dataset": "web-Stanford",
+        "value": 0.5976304608027568
+      },
+      {
+        "dataset": "CA-GrQc",
+        "value": 0.5297368673030525
+      },
+      {
+        "dataset": "web-Google",
+        "value": 0.5142961475355061
+      },
+      {
+        "dataset": "web-NotreDame",
+        "value": 0.23462432071966585
+      },
+      {
+        "dataset": "musae_git_edges",
+        "value": 0.1675370448010758
+      },
+      {
+        "dataset": "soc-wiki-Vote",
+        "value": 0.15284694735014295
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "value": 0.1408978458930873
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "value": 0.08080227776190227
+      },
+      {
+        "dataset": "Email-EuAll",
+        "value": 0.06713685363906052
+      },
+      {
+        "dataset": "vk",
+        "value": 0.04938048748183835
+      }
+    ],
+    "by_double_sweep_diameter": [
+      {
+        "dataset": "web-Stanford",
+        "value": 164
+      },
+      {
+        "dataset": "web-NotreDame",
+        "value": 46
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "value": 24
+      },
+      {
+        "dataset": "web-Google",
+        "value": 24
+      },
+      {
+        "dataset": "ca-coauthors-dblp",
+        "value": 23
+      },
+      {
+        "dataset": "vk",
+        "value": 19
+      },
+      {
+        "dataset": "CA-GrQc",
+        "value": 15
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "value": 14
+      },
+      {
+        "dataset": "Email-EuAll",
+        "value": 14
+      },
+      {
+        "dataset": "soc-wiki-Vote",
+        "value": 13
+      },
+      {
+        "dataset": "musae_git_edges",
+        "value": 11
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "value": 7
+      }
+    ],
+    "by_random_attack_resilience": [
+      {
+        "dataset": "ca-coauthors-dblp",
+        "remaining_share": 0.9295633929463483,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "musae_git_edges",
+        "remaining_share": 0.8841909814323607,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "remaining_share": 0.8490143846563666,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "soc-wiki-Vote",
+        "remaining_share": 0.8134831460674158,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "vk",
+        "remaining_share": 0.8047945716666874,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "remaining_share": 0.8001124543154343,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-Google",
+        "remaining_share": 0.7192941987909295,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-Stanford",
+        "remaining_share": 0.6328653219913303,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "remaining_share": 0.5941897452616554,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "CA-GrQc",
+        "remaining_share": 0.49446776039679513,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-NotreDame",
+        "remaining_share": 0.45154575875725295,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "Email-EuAll",
+        "remaining_share": 0.4350779215878646,
+        "removed_percent": 50.0
+      }
+    ],
+    "by_targeted_attack_resilience": [
+      {
+        "dataset": "ca-coauthors-dblp",
+        "remaining_share": 0.7494440189015071,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "soc-wiki-Vote",
+        "remaining_share": 0.01348314606741573,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "CA-AstroPh",
+        "remaining_share": 0.0075652637187000535,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-Stanford",
+        "remaining_share": 0.005356471397861668,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "CA-GrQc",
+        "remaining_share": 0.002289202594429607,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "Wiki-Vote",
+        "remaining_share": 0.0008434073657576609,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "musae_git_edges",
+        "remaining_share": 0.000689655172413793,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-NotreDame",
+        "remaining_share": 0.00016578147545513155,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "web-Google",
+        "remaining_share": 7.536707189790274e-05,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "Email-EuAll",
+        "remaining_share": 1.5093770046413342e-05,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "vk",
+        "remaining_share": 1.4304728023584144e-05,
+        "removed_percent": 50.0
+      },
+      {
+        "dataset": "com-youtube.ungraph",
+        "remaining_share": 1.7622853316180423e-06,
+        "removed_percent": 50.0
+      }
+    ]
+  },
+  "observations": [
+    "Largest network by node count: vk (3215720 nodes).",
+    "Highest density: soc-wiki-Vote (0.003691); this indicates a larger share of possible local ties.",
+    "Highest average clustering coefficient: ca-coauthors-dblp (0.8019).",
+    "Largest double-sweep diameter estimate: web-Stanford (164).",
+    "Most fragmented network by weak component count: vk (24337 components).",
+    "Under random node removal, ca-coauthors-dblp keeps the largest weak component best (0.9296 after removing 50% of nodes).",
+    "Under targeted removal by highest degree, com-youtube.ungraph is damaged the most (largest weak component share 0.0000)."
+  ]
+}
