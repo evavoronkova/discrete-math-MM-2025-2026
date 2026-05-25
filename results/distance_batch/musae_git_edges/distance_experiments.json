@@ -1,0 +1,1589 @@
+{
+  "dataset_nodes_in_component": 37700,
+  "algorithms": [
+    "basic",
+    "lca"
+  ],
+  "strategies": [
+    "random",
+    "highest_degree"
+  ],
+  "landmark_counts": [
+    8,
+    16
+  ],
+  "pair_count": 30,
+  "experiments": [
+    {
+      "algorithm": "basic",
+      "landmark_count": 8,
+      "landmark_strategy": "random",
+      "build_time_seconds": 10.324093900009757,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.13333333333333333,
+      "mean_absolute_error": 1.6666666666666667,
+      "max_absolute_error": 3,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 4.966666666666667,
+      "exact_total_time_seconds": 21.460319399891887,
+      "estimate_total_time_seconds": 0.0015515999402850866,
+      "speedup_vs_exact": 13831.090632775371,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 6,
+          "absolute_error": 3
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 5,
+          "absolute_error": 3
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 6,
+          "absolute_error": 3
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 16,
+      "landmark_strategy": "random",
+      "build_time_seconds": 10.100681000010809,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.26666666666666666,
+      "mean_absolute_error": 1.2666666666666666,
+      "max_absolute_error": 3,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 4.566666666666666,
+      "exact_total_time_seconds": 7.1196849000116345,
+      "estimate_total_time_seconds": 0.0009354999638162553,
+      "speedup_vs_exact": 7610.566729439271,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 6,
+          "absolute_error": 3
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 5,
+          "absolute_error": 3
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 8,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 2.7614231999905314,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.8,
+      "mean_absolute_error": 0.2,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.5,
+      "exact_total_time_seconds": 7.139108399947872,
+      "estimate_total_time_seconds": 0.0005794999597128481,
+      "speedup_vs_exact": 12319.42863893454,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 3,
+          "absolute_error": 1
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 16,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 5.287360299989814,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.8333333333333334,
+      "mean_absolute_error": 0.16666666666666666,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.466666666666667,
+      "exact_total_time_seconds": 6.204030499910004,
+      "estimate_total_time_seconds": 0.0010074000165332109,
+      "speedup_vs_exact": 6158.457810294742,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 3,
+          "absolute_error": 1
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 8,
+      "landmark_strategy": "random",
+      "build_time_seconds": 2.2620501999917906,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.6333333333333333,
+      "mean_absolute_error": 0.36666666666666664,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.6666666666666665,
+      "exact_total_time_seconds": 5.493287200079067,
+      "estimate_total_time_seconds": 0.0029258998984005302,
+      "speedup_vs_exact": 1877.4692883656144,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 16,
+      "landmark_strategy": "random",
+      "build_time_seconds": 4.416255499992985,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.8,
+      "mean_absolute_error": 0.2,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.5,
+      "exact_total_time_seconds": 5.529536900081439,
+      "estimate_total_time_seconds": 0.0050549000152386725,
+      "speedup_vs_exact": 1093.8963942732616,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 8,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 2.2544279000139795,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.8333333333333334,
+      "mean_absolute_error": 0.16666666666666666,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.466666666666667,
+      "exact_total_time_seconds": 5.575348799990024,
+      "estimate_total_time_seconds": 0.0027908999181818217,
+      "speedup_vs_exact": 1997.6885461454233,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 16,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 4.598261099978117,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.8666666666666667,
+      "mean_absolute_error": 0.13333333333333333,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 3.3,
+      "mean_estimated_distance": 3.433333333333333,
+      "exact_total_time_seconds": 5.595795800065389,
+      "estimate_total_time_seconds": 0.005042699922341853,
+      "speedup_vs_exact": 1109.6824887939545,
+      "sample_results": [
+        {
+          "source": "35642",
+          "target": "14388",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20526",
+          "target": "10428",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "20247",
+          "target": "19812",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "4656",
+          "target": "12545",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19560",
+          "target": "22226",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "754",
+          "target": "6601",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "27520",
+          "target": "21269",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "29826",
+          "target": "20189",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "33721",
+          "target": "1760",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "22818",
+          "target": "34599",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "23310",
+          "target": "34747",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "20149",
+          "target": "20208",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "6657",
+          "target": "3916",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "19606",
+          "target": "21509",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "12042",
+          "target": "2161",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "271",
+          "target": "17448",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "13919",
+          "target": "9453",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "18308",
+          "target": "8081",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "7351",
+          "target": "14576",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "35174",
+          "target": "14497",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        }
+      ]
+    }
+  ],
+  "best_accuracy": {
+    "algorithm": "lca",
+    "landmark_count": 16,
+    "landmark_strategy": "highest_degree",
+    "build_time_seconds": 4.598261099978117,
+    "evaluated_pairs": 30,
+    "exact_match_ratio": 0.8666666666666667,
+    "mean_absolute_error": 0.13333333333333333,
+    "max_absolute_error": 1,
+    "mean_exact_distance": 3.3,
+    "mean_estimated_distance": 3.433333333333333,
+    "exact_total_time_seconds": 5.595795800065389,
+    "estimate_total_time_seconds": 0.005042699922341853,
+    "speedup_vs_exact": 1109.6824887939545,
+    "sample_results": [
+      {
+        "source": "35642",
+        "target": "14388",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "20526",
+        "target": "10428",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "20247",
+        "target": "19812",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "4656",
+        "target": "12545",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "19560",
+        "target": "22226",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "754",
+        "target": "6601",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "27520",
+        "target": "21269",
+        "exact_distance": 2,
+        "estimated_distance": 2,
+        "absolute_error": 0
+      },
+      {
+        "source": "29826",
+        "target": "20189",
+        "exact_distance": 2,
+        "estimated_distance": 2,
+        "absolute_error": 0
+      },
+      {
+        "source": "33721",
+        "target": "1760",
+        "exact_distance": 3,
+        "estimated_distance": 4,
+        "absolute_error": 1
+      },
+      {
+        "source": "22818",
+        "target": "34599",
+        "exact_distance": 2,
+        "estimated_distance": 2,
+        "absolute_error": 0
+      },
+      {
+        "source": "23310",
+        "target": "34747",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "20149",
+        "target": "20208",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "6657",
+        "target": "3916",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "19606",
+        "target": "21509",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "12042",
+        "target": "2161",
+        "exact_distance": 3,
+        "estimated_distance": 4,
+        "absolute_error": 1
+      },
+      {
+        "source": "271",
+        "target": "17448",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "13919",
+        "target": "9453",
+        "exact_distance": 2,
+        "estimated_distance": 2,
+        "absolute_error": 0
+      },
+      {
+        "source": "18308",
+        "target": "8081",
+        "exact_distance": 3,
+        "estimated_distance": 4,
+        "absolute_error": 1
+      },
+      {
+        "source": "7351",
+        "target": "14576",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "35174",
+        "target": "14497",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      }
+    ]
+  },
+  "best_speed": {
+    "algorithm": "basic",
+    "landmark_count": 8,
+    "landmark_strategy": "random",
+    "build_time_seconds": 10.324093900009757,
+    "evaluated_pairs": 30,
+    "exact_match_ratio": 0.13333333333333333,
+    "mean_absolute_error": 1.6666666666666667,
+    "max_absolute_error": 3,
+    "mean_exact_distance": 3.3,
+    "mean_estimated_distance": 4.966666666666667,
+    "exact_total_time_seconds": 21.460319399891887,
+    "estimate_total_time_seconds": 0.0015515999402850866,
+    "speedup_vs_exact": 13831.090632775371,
+    "sample_results": [
+      {
+        "source": "35642",
+        "target": "14388",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "20526",
+        "target": "10428",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "20247",
+        "target": "19812",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "4656",
+        "target": "12545",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "19560",
+        "target": "22226",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "754",
+        "target": "6601",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "27520",
+        "target": "21269",
+        "exact_distance": 2,
+        "estimated_distance": 4,
+        "absolute_error": 2
+      },
+      {
+        "source": "29826",
+        "target": "20189",
+        "exact_distance": 2,
+        "estimated_distance": 4,
+        "absolute_error": 2
+      },
+      {
+        "source": "33721",
+        "target": "1760",
+        "exact_distance": 3,
+        "estimated_distance": 6,
+        "absolute_error": 3
+      },
+      {
+        "source": "22818",
+        "target": "34599",
+        "exact_distance": 2,
+        "estimated_distance": 4,
+        "absolute_error": 2
+      },
+      {
+        "source": "23310",
+        "target": "34747",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "20149",
+        "target": "20208",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "6657",
+        "target": "3916",
+        "exact_distance": 4,
+        "estimated_distance": 6,
+        "absolute_error": 2
+      },
+      {
+        "source": "19606",
+        "target": "21509",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "12042",
+        "target": "2161",
+        "exact_distance": 3,
+        "estimated_distance": 5,
+        "absolute_error": 2
+      },
+      {
+        "source": "271",
+        "target": "17448",
+        "exact_distance": 4,
+        "estimated_distance": 6,
+        "absolute_error": 2
+      },
+      {
+        "source": "13919",
+        "target": "9453",
+        "exact_distance": 2,
+        "estimated_distance": 5,
+        "absolute_error": 3
+      },
+      {
+        "source": "18308",
+        "target": "8081",
+        "exact_distance": 3,
+        "estimated_distance": 6,
+        "absolute_error": 3
+      },
+      {
+        "source": "7351",
+        "target": "14576",
+        "exact_distance": 3,
+        "estimated_distance": 4,
+        "absolute_error": 1
+      },
+      {
+        "source": "35174",
+        "target": "14497",
+        "exact_distance": 5,
+        "estimated_distance": 6,
+        "absolute_error": 1
+      }
+    ]
+  },
+  "dataset": "musae_git_edges"
+}

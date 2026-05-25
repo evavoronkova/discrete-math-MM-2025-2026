@@ -176,7 +176,7 @@ class LandmarkIndex:
                 best = estimate
         return best
 
-    def estimate_bfs(self, source: str, target: str) -> int | None:
+    def estimate_lca(self, source: str, target: str) -> int | None:
         best: int | None = None
         for landmark in self.landmarks:
             tree = self.trees[landmark]
@@ -192,10 +192,10 @@ class LandmarkIndex:
     def estimate(self, source: str, target: str) -> int | None:
         if self.algorithm == "basic":
             return self.estimate_basic(source, target)
-        if self.algorithm == "bfs":
+        if self.algorithm == "lca":
             basic_estimate = self.estimate_basic(source, target)
-            bfs_estimate = self.estimate_bfs(source, target)
-            candidates = [value for value in (basic_estimate, bfs_estimate) if value is not None]
+            lca_estimate = self.estimate_lca(source, target)
+            candidates = [value for value in (basic_estimate, lca_estimate) if value is not None]
             return min(candidates) if candidates else None
         raise ValueError(f"Unknown algorithm: {self.algorithm}")
 
@@ -402,6 +402,6 @@ def build_distance_markdown(report: dict[str, Any]) -> str:
         )
     lines.append("")
     lines.append("- `basic` is usually faster at query time, but can overestimate distances.")
-    lines.append("- `bfs` also uses landmark BFS-tree paths and is often more accurate.")
+    lines.append("- `lca` uses landmark shortest-path trees and LCA queries, and is often more accurate.")
     lines.append("- More landmarks usually improve accuracy, but increase preprocessing time.")
     return "\n".join(lines) + "\n"

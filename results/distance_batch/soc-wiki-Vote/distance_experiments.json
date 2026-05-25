@@ -1,0 +1,1589 @@
+{
+  "dataset_nodes_in_component": 889,
+  "algorithms": [
+    "basic",
+    "lca"
+  ],
+  "strategies": [
+    "random",
+    "highest_degree"
+  ],
+  "landmark_counts": [
+    8,
+    16
+  ],
+  "pair_count": 30,
+  "experiments": [
+    {
+      "algorithm": "basic",
+      "landmark_count": 8,
+      "landmark_strategy": "random",
+      "build_time_seconds": 0.014584400021703914,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.23333333333333334,
+      "mean_absolute_error": 1.2,
+      "max_absolute_error": 3,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 5.633333333333334,
+      "exact_total_time_seconds": 0.027907300071092322,
+      "estimate_total_time_seconds": 9.159994078800082e-05,
+      "speedup_vs_exact": 304.66504487902523,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 8,
+          "absolute_error": 3
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 6,
+          "absolute_error": 3
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 7,
+          "absolute_error": 1
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 7,
+          "absolute_error": 2
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 16,
+      "landmark_strategy": "random",
+      "build_time_seconds": 0.028152300015790388,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.4666666666666667,
+      "mean_absolute_error": 0.7,
+      "max_absolute_error": 2,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 5.133333333333334,
+      "exact_total_time_seconds": 0.027761300036218017,
+      "estimate_total_time_seconds": 0.00015619999612681568,
+      "speedup_vs_exact": 177.729197980768,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 4,
+          "absolute_error": 2
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 6,
+          "absolute_error": 2
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 8,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 0.013751499995123595,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.9,
+      "mean_absolute_error": 0.16666666666666666,
+      "max_absolute_error": 2,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.6,
+      "exact_total_time_seconds": 0.030209399963496253,
+      "estimate_total_time_seconds": 0.00010310017387382686,
+      "speedup_vs_exact": 293.01017474971735,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "basic",
+      "landmark_count": 16,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 0.0282436000125017,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.9,
+      "mean_absolute_error": 0.13333333333333333,
+      "max_absolute_error": 2,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.566666666666666,
+      "exact_total_time_seconds": 0.03151349994004704,
+      "estimate_total_time_seconds": 0.00023910004529170692,
+      "speedup_vs_exact": 131.80047666490373,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 5,
+          "absolute_error": 2
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 8,
+      "landmark_strategy": "random",
+      "build_time_seconds": 0.013773699989542365,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.7333333333333333,
+      "mean_absolute_error": 0.26666666666666666,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.7,
+      "exact_total_time_seconds": 0.0289862000499852,
+      "estimate_total_time_seconds": 0.0007730999204795808,
+      "speedup_vs_exact": 37.49347177788358,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 5,
+          "absolute_error": 1
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 6,
+          "absolute_error": 1
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 16,
+      "landmark_strategy": "random",
+      "build_time_seconds": 0.026815999997779727,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.9666666666666667,
+      "mean_absolute_error": 0.03333333333333333,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.466666666666667,
+      "exact_total_time_seconds": 0.02790640006423928,
+      "estimate_total_time_seconds": 0.0012612999125849456,
+      "speedup_vs_exact": 22.125110598832176,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 8,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 0.015757500019390136,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.9333333333333333,
+      "mean_absolute_error": 0.1,
+      "max_absolute_error": 2,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.533333333333333,
+      "exact_total_time_seconds": 0.034555899939732626,
+      "estimate_total_time_seconds": 0.0009475999686401337,
+      "speedup_vs_exact": 36.46675926902208,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    },
+    {
+      "algorithm": "lca",
+      "landmark_count": 16,
+      "landmark_strategy": "highest_degree",
+      "build_time_seconds": 0.02736389997880906,
+      "evaluated_pairs": 30,
+      "exact_match_ratio": 0.9666666666666667,
+      "mean_absolute_error": 0.03333333333333333,
+      "max_absolute_error": 1,
+      "mean_exact_distance": 4.433333333333334,
+      "mean_estimated_distance": 4.466666666666667,
+      "exact_total_time_seconds": 0.028758699947502464,
+      "estimate_total_time_seconds": 0.0013613000337500125,
+      "speedup_vs_exact": 21.125908495190473,
+      "sample_results": [
+        {
+          "source": "629",
+          "target": "504",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "571",
+          "target": "872",
+          "exact_distance": 3,
+          "estimated_distance": 4,
+          "absolute_error": 1
+        },
+        {
+          "source": "197",
+          "target": "393",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "34",
+          "target": "652",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "240",
+          "target": "135",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "113",
+          "target": "719",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        },
+        {
+          "source": "77",
+          "target": "376",
+          "exact_distance": 6,
+          "estimated_distance": 6,
+          "absolute_error": 0
+        },
+        {
+          "source": "130",
+          "target": "745",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "721",
+          "target": "632",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "37",
+          "target": "663",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "557",
+          "target": "216",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "843",
+          "target": "303",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "278",
+          "target": "817",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "657",
+          "target": "334",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "362",
+          "target": "77",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "672",
+          "target": "834",
+          "exact_distance": 2,
+          "estimated_distance": 2,
+          "absolute_error": 0
+        },
+        {
+          "source": "743",
+          "target": "206",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "599",
+          "target": "192",
+          "exact_distance": 5,
+          "estimated_distance": 5,
+          "absolute_error": 0
+        },
+        {
+          "source": "424",
+          "target": "798",
+          "exact_distance": 4,
+          "estimated_distance": 4,
+          "absolute_error": 0
+        },
+        {
+          "source": "582",
+          "target": "415",
+          "exact_distance": 3,
+          "estimated_distance": 3,
+          "absolute_error": 0
+        }
+      ]
+    }
+  ],
+  "best_accuracy": {
+    "algorithm": "lca",
+    "landmark_count": 16,
+    "landmark_strategy": "random",
+    "build_time_seconds": 0.026815999997779727,
+    "evaluated_pairs": 30,
+    "exact_match_ratio": 0.9666666666666667,
+    "mean_absolute_error": 0.03333333333333333,
+    "max_absolute_error": 1,
+    "mean_exact_distance": 4.433333333333334,
+    "mean_estimated_distance": 4.466666666666667,
+    "exact_total_time_seconds": 0.02790640006423928,
+    "estimate_total_time_seconds": 0.0012612999125849456,
+    "speedup_vs_exact": 22.125110598832176,
+    "sample_results": [
+      {
+        "source": "629",
+        "target": "504",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "571",
+        "target": "872",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "197",
+        "target": "393",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "34",
+        "target": "652",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "240",
+        "target": "135",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "113",
+        "target": "719",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "77",
+        "target": "376",
+        "exact_distance": 6,
+        "estimated_distance": 6,
+        "absolute_error": 0
+      },
+      {
+        "source": "130",
+        "target": "745",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "721",
+        "target": "632",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "37",
+        "target": "663",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "557",
+        "target": "216",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "843",
+        "target": "303",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "278",
+        "target": "817",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "657",
+        "target": "334",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "362",
+        "target": "77",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "672",
+        "target": "834",
+        "exact_distance": 2,
+        "estimated_distance": 2,
+        "absolute_error": 0
+      },
+      {
+        "source": "743",
+        "target": "206",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "599",
+        "target": "192",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "424",
+        "target": "798",
+        "exact_distance": 4,
+        "estimated_distance": 4,
+        "absolute_error": 0
+      },
+      {
+        "source": "582",
+        "target": "415",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      }
+    ]
+  },
+  "best_speed": {
+    "algorithm": "basic",
+    "landmark_count": 8,
+    "landmark_strategy": "random",
+    "build_time_seconds": 0.014584400021703914,
+    "evaluated_pairs": 30,
+    "exact_match_ratio": 0.23333333333333334,
+    "mean_absolute_error": 1.2,
+    "max_absolute_error": 3,
+    "mean_exact_distance": 4.433333333333334,
+    "mean_estimated_distance": 5.633333333333334,
+    "exact_total_time_seconds": 0.027907300071092322,
+    "estimate_total_time_seconds": 9.159994078800082e-05,
+    "speedup_vs_exact": 304.66504487902523,
+    "sample_results": [
+      {
+        "source": "629",
+        "target": "504",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "571",
+        "target": "872",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "197",
+        "target": "393",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      },
+      {
+        "source": "34",
+        "target": "652",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "240",
+        "target": "135",
+        "exact_distance": 5,
+        "estimated_distance": 8,
+        "absolute_error": 3
+      },
+      {
+        "source": "113",
+        "target": "719",
+        "exact_distance": 3,
+        "estimated_distance": 6,
+        "absolute_error": 3
+      },
+      {
+        "source": "77",
+        "target": "376",
+        "exact_distance": 6,
+        "estimated_distance": 7,
+        "absolute_error": 1
+      },
+      {
+        "source": "130",
+        "target": "745",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "721",
+        "target": "632",
+        "exact_distance": 5,
+        "estimated_distance": 5,
+        "absolute_error": 0
+      },
+      {
+        "source": "37",
+        "target": "663",
+        "exact_distance": 4,
+        "estimated_distance": 6,
+        "absolute_error": 2
+      },
+      {
+        "source": "557",
+        "target": "216",
+        "exact_distance": 4,
+        "estimated_distance": 5,
+        "absolute_error": 1
+      },
+      {
+        "source": "843",
+        "target": "303",
+        "exact_distance": 4,
+        "estimated_distance": 5,
+        "absolute_error": 1
+      },
+      {
+        "source": "278",
+        "target": "817",
+        "exact_distance": 5,
+        "estimated_distance": 6,
+        "absolute_error": 1
+      },
+      {
+        "source": "657",
+        "target": "334",
+        "exact_distance": 4,
+        "estimated_distance": 5,
+        "absolute_error": 1
+      },
+      {
+        "source": "362",
+        "target": "77",
+        "exact_distance": 4,
+        "estimated_distance": 5,
+        "absolute_error": 1
+      },
+      {
+        "source": "672",
+        "target": "834",
+        "exact_distance": 2,
+        "estimated_distance": 4,
+        "absolute_error": 2
+      },
+      {
+        "source": "743",
+        "target": "206",
+        "exact_distance": 5,
+        "estimated_distance": 6,
+        "absolute_error": 1
+      },
+      {
+        "source": "599",
+        "target": "192",
+        "exact_distance": 5,
+        "estimated_distance": 7,
+        "absolute_error": 2
+      },
+      {
+        "source": "424",
+        "target": "798",
+        "exact_distance": 4,
+        "estimated_distance": 6,
+        "absolute_error": 2
+      },
+      {
+        "source": "582",
+        "target": "415",
+        "exact_distance": 3,
+        "estimated_distance": 3,
+        "absolute_error": 0
+      }
+    ]
+  },
+  "dataset": "soc-wiki-Vote"
+}

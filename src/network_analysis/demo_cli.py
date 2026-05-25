@@ -38,7 +38,7 @@ def build_parser() -> argparse.ArgumentParser:
     pair_parser = subparsers.add_parser("distance", help="Оценить расстояние между двумя вершинами.")
     pair_parser.add_argument("--source", required=True, help="Вершина-источник.")
     pair_parser.add_argument("--target", required=True, help="Вершина-приемник.")
-    pair_parser.add_argument("--algorithm", default="bfs", choices=["basic", "bfs"], help="Алгоритм оценки.")
+    pair_parser.add_argument("--algorithm", default="lca", choices=["basic", "lca"], help="Алгоритм оценки.")
     pair_parser.add_argument("--landmarks", type=int, default=16, help="Количество landmarks.")
     pair_parser.add_argument("--strategy", default="highest_degree", choices=["random", "highest_degree", "coverage"])
     pair_parser.add_argument("--seed", type=int, default=42)

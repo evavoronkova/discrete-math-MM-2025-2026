@@ -19,7 +19,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--auto-directed", action="store_true", help="Определять ориентированность по имени файла.")
     parser.add_argument("--delimiter", default=None, help="Разделитель для edge list.")
     parser.add_argument("--format", default="auto", choices=["auto", "edge_list", "size_header_edge_list", "csv", "mtx"], help="Формат входного файла.")
-    parser.add_argument("--algorithm", default="both", choices=["basic", "bfs", "both"], help="Какой алгоритм тестировать.")
+    parser.add_argument("--algorithm", default="both", choices=["basic", "lca", "both"], help="Какой алгоритм тестировать.")
     parser.add_argument(
         "--strategies",
         default="random,highest_degree,coverage",
@@ -55,7 +55,7 @@ def main() -> int:
     )
 
     if args.source is not None and args.target is not None:
-        algorithm = "bfs" if args.algorithm == "both" else args.algorithm
+        algorithm = "lca" if args.algorithm == "both" else args.algorithm
         index = build_landmark_index(
             graph=graph,
             landmark_count=args.query_landmarks,
@@ -67,7 +67,7 @@ def main() -> int:
         print(json.dumps(result, indent=2, ensure_ascii=False))
         return 0
 
-    algorithms = ["basic", "bfs"] if args.algorithm == "both" else [args.algorithm]
+    algorithms = ["basic", "lca"] if args.algorithm == "both" else [args.algorithm]
     strategies = [item.strip() for item in args.strategies.split(",") if item.strip()]
     landmark_counts = [int(item.strip()) for item in args.landmark_counts.split(",") if item.strip()]
 

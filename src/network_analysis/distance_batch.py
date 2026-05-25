@@ -114,7 +114,7 @@ def build_distance_batch_summary(dataset_results: list[dict[str, Any]]) -> dict[
             f"speedup = {(best_speed['speedup_vs_exact'] or 0.0):.2f}x."
         )
     observations.append("`basic` is usually faster at query time, but can overestimate distances.")
-    observations.append("`bfs` often improves accuracy because it also uses landmark BFS-tree structure.")
+    observations.append("`lca` often improves accuracy because it uses landmark shortest-path trees and LCA queries.")
     observations.append("More landmarks usually improve accuracy, but increase preprocessing time.")
 
     return {
