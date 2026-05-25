@@ -5,8 +5,10 @@ import matplotlib.pyplot as plt
 from src.graph_utils import bfs_distances, get_weakly_connected_components
 
 
-def calc_basic_stats(graph, is_directed=False):
-    V = len(graph)
+def calc_basic_stats(graph, is_directed=False, all_nodes=None):
+    # Если передали all_nodes (для орграфов), берем его размер. Иначе - размер словаря.
+    V = len(all_nodes) if all_nodes is not None else len(graph)
+
     total_edges = sum(len(neighbors) for neighbors in graph.values())
     E = total_edges if is_directed else total_edges // 2
 

@@ -7,18 +7,20 @@ from src.metrics import *
 from src.landmarks import LandmarkEstimator
 
 
-def run_full_analysis(graph, rev_graph, is_directed):
+def run_full_analysis(graph, rev_graph, all_nodes, is_directed):
     print("\n[Вычисление базовых характеристик...]")
-    V, E, density = calc_basic_stats(graph, is_directed)
+    # Передаем all_nodes
+    V, E, density = calc_basic_stats(graph, is_directed, all_nodes)
     print(f"Вершин (V): {V}, Рёбер (E): {E}, Плотность: {density:.6f}")
 
-    wcc = get_weakly_connected_components(graph)
+    # Передаем rev_graph и all_nodes для правильного поиска WCC в орграфе
+    wcc = get_weakly_connected_components(graph, rev_graph, all_nodes)
     max_wcc = max(wcc, key=len) if wcc else set()
     print(f"Компонент слабой связности: {len(wcc)}")
-    print(f"Доля вершин в крупнейшей WCC: {len(max_wcc) / V:.2%}")
+    print(f"Доля вершин в крупнейшей WCC: {len(max_wcc) / V:.2%}") # Теперь будет < 100%
 
     if is_directed and rev_graph:
-        scc = get_strongly_connected_components(graph, rev_graph)
+        scc = get_strongly_connected_components(graph, rev_graph, all_nodes)
         max_scc_len = max(len(c) for c in scc) if scc else 0
         print(f"Компонент сильной связности: {len(scc)}")
         print(f"Доля вершин в крупнейшей SCC: {max_scc_len / V:.2%}")
@@ -60,7 +62,7 @@ def main():
         if not os.path.exists(path):
             print("Файл не найден!")
             return
-        graph, rev_graph = load_graph(path, delimiter=None, is_directed=is_directed)
+        graph, rev_graph, all_nodes = load_graph(path, delimiter=None, is_directed=is_directed)
 
     while True:
         print("\n МЕНЮ УПРАВЛЕНИЯ:")
@@ -70,7 +72,7 @@ def main():
         choice = input("Выберите действие: ").strip()
 
         if choice == "1":
-            run_full_analysis(graph, rev_graph, is_directed)
+            run_full_analysis(graph, rev_graph, all_nodes, is_directed)
         elif choice == "2":
             u = int(input("Введите вершину U: "))
             v = int(input("Введите вершину V: "))
