@@ -64,7 +64,11 @@ class GraphAnalyzer(private val graph: Graph) {
         val n = graph.vertexCount
         val deg = IntArray(n) { graph.degree(it) }
 
-        val order = (0 until n).sortedWith(compareBy({ deg[it] }, { it }))
+        val degInComp = if (vertSet == null) deg else IntArray(n) { v ->
+            if (v in vertSet) graph.neighbors(v).count { it in vertSet } else 0
+        }
+
+        val order = (0 until n).sortedWith(compareBy({ degInComp[it] }, { it }))
         val rank = IntArray(n)
         for ((idx, v) in order.withIndex()) rank[v] = idx
 
@@ -74,11 +78,12 @@ class GraphAnalyzer(private val graph: Graph) {
 
         for (v in order) {
             if (vertSet != null && v !in vertSet) continue
-            val k = deg[v]
+            val k = degInComp[v]
             if (k < 2) continue
             connectedTriples += k.toLong() * (k - 1) / 2
 
             for (u in graph.neighbors(v)) {
+                if (vertSet != null && u !in vertSet) continue
                 if (rank[u] > rank[v]) mark[u] = true
             }
 
@@ -102,7 +107,7 @@ class GraphAnalyzer(private val graph: Graph) {
         var totalLocalC = 0.0
         for (v in 0 until n) {
             if (vertSet != null && v !in vertSet) continue
-            val k = deg[v]
+            val k = degInComp[v]
             if (k >= 2) {
                 totalLocalC += (2.0 * triangleCount[v]) / (k.toDouble() * (k - 1))
             }
