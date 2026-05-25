@@ -10,4 +10,5 @@ app/build/
 .DS_Store
 Thumbs.db
 
-*.log
+*.logscripts/results/*
+datasets/
