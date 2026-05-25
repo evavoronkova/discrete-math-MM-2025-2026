@@ -29,8 +29,6 @@ class DistanceEstimatorTester(
         var exactMatches = 0
         var validQueries = 0
 
-        estimator.preprocess()
-
         for ((u, v) in pairs) {
             if (u == v) continue
 

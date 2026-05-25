@@ -13,12 +13,14 @@ class LandmarksBasic(
     private val landmarkDistances: MutableList<IntArray> = mutableListOf()
 
     override fun preprocess() {
-        val selected = selectLandmarks()
-        landmarks.addAll(selected)
-
-        for (landmark in landmarks) {
-            val bfsResult = BFS.run(graph, landmark)
-            landmarkDistances.add(bfsResult.distances)
+        if (landmarkSelection == LandmarkSelection.COVERAGE) {
+            preprocessCoverage()
+        } else {
+            val selected = selectLandmarks()
+            landmarks.addAll(selected)
+            for (landmark in landmarks) {
+                landmarkDistances.add(BFS.run(graph, landmark).distances)
+            }
         }
     }
 
@@ -59,11 +61,46 @@ class LandmarksBasic(
     }
 
     private fun selectHighDegreeLandmarks(): List<Int> {
-        val allVertices = (0 until graph.vertexCount).toList()
-        return allVertices.sortedByDescending { graph.degree(it) }.take(numLandmarks)
+        return (0 until graph.vertexCount)
+            .sortedByDescending { graph.degree(it) }
+            .take(numLandmarks)
     }
 
     private fun selectCoverageLandmarks(): List<Int> {
-        return selectRandomLandmarks() 
+        return selectRandomLandmarks()
+    }
+
+    private fun preprocessCoverage() {
+        val n = graph.vertexCount
+        val minDist = IntArray(n) { Int.MAX_VALUE }
+
+        val first = (0 until n).maxByOrNull { graph.degree(it) } ?: 0
+        landmarks.add(first)
+        val firstBfs = BFS.run(graph, first)
+        landmarkDistances.add(firstBfs.distances)
+        for (v in 0 until n) {
+            if (firstBfs.distances[v] != -1) minDist[v] = firstBfs.distances[v]
+        }
+
+        while (landmarks.size < numLandmarks) {
+            var best = -1
+            var bestDist = -1
+            for (v in 0 until n) {
+                if (v in landmarks) continue
+                if (minDist[v] > bestDist) {
+                    bestDist = minDist[v]
+                    best = v
+                }
+            }
+            if (best == -1) break
+            landmarks.add(best)
+            val bfs = BFS.run(graph, best)
+            landmarkDistances.add(bfs.distances)
+            for (v in 0 until n) {
+                if (bfs.distances[v] != -1 && bfs.distances[v] < minDist[v]) {
+                    minDist[v] = bfs.distances[v]
+                }
+            }
+        }
     }
 }
