@@ -1,5 +1,7 @@
 package benchmark
 
+import java.util.Locale
+
 data class DistanceEstimatorQuality(
     val avgError: Double,
     val maxError: Int,
@@ -12,10 +14,10 @@ data class DistanceEstimatorQuality(
         return """
             --- Result tests ---
             Total requests: $totalQueries
-            Exact matches: $exactMatches (${String.format("%.2f", exactMatchRate * 100)}%)
-            Average error (edges): ${String.format("%.3f", avgError)}
+            Exact matches: $exactMatches (${String.format(Locale.US, "%.2f", exactMatchRate * 100)}%)
+            Average error (edges): ${String.format(Locale.US, "%.3f", avgError)}
             Maximum error (edges): $maxError
-            Average relative error: ${String.format("%.2f", avgRelativeError * 100)}%
+            Average relative error: ${String.format(Locale.US, "%.2f", avgRelativeError * 100)}%
             -------------------------------
         """.trimIndent()
     }

@@ -14,6 +14,7 @@ import landmarks.LandmarksLCA
 import utils.Statistics
 import utils.Timer
 import utils.Visualization
+import java.util.Locale
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {
@@ -149,7 +150,7 @@ private fun runPart2DistanceEstimation(
 
 private fun runEstimator(graph: Graph, estimator: DistanceEstimator, label: String) {
     val preprocessTime = Timer.measure { estimator.preprocess() }
-    println("  Preprocess time: ${"%.2f".format(preprocessTime / 1_000_000.0)} ms")
+    println("  Preprocess time: ${String.format(Locale.US, "%.2f", preprocessTime / 1_000_000.0)} ms")
 
     val tester = DistanceEstimatorTester(graph, estimator)
     val numTestPairs = 200
@@ -157,7 +158,7 @@ private fun runEstimator(graph: Graph, estimator: DistanceEstimator, label: Stri
         val quality = tester.test(numTestPairs)
         println("  Quality: $quality")
     }
-    println("  Query time ($numTestPairs pairs): ${"%.2f".format(queryTime / 1_000_000.0)} ms")
+    println("  Query time ($numTestPairs pairs): ${String.format(Locale.US, "%.2f", queryTime / 1_000_000.0)} ms")
 }
 
 private fun compareDistanceAlgorithms(graph: Graph, numLandmarks: Int) {
@@ -182,7 +183,7 @@ private fun compareDistanceAlgorithms(graph: Graph, numLandmarks: Int) {
             val tester = DistanceEstimatorTester(graph, estimator)
             val quality = tester.test(200)
 
-            println("%-18s | %-12s | %-10.3f | %-10d | %-7.1f%% | %-8.1f".format(
+            println(String.format(Locale.US, "%-18s | %-12s | %-10.3f | %-10d | %-7.1f%% | %-8.1f",
                 algoNames[algoIdx],
                 strategy.name,
                 quality.avgError,

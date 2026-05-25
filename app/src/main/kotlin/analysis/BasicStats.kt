@@ -1,5 +1,7 @@
 package analysis
 
+import java.util.Locale
+
 data class BasicStats(
     val vertexCount: Int,
     val edgeCount: Int,
@@ -13,12 +15,12 @@ data class BasicStats(
         val sb = StringBuilder()
         sb.appendLine("Vertices: $vertexCount")
         sb.appendLine("Edges: $edgeCount")
-        sb.appendLine("Density: ${"%.8f".format(density)}")
+        sb.appendLine("Density: ${String.format(Locale.US, "%.8f", density)}")
         sb.appendLine("Weak components: $weakComponents")
-        sb.appendLine("Largest weak component fraction: ${"%.4f".format(weakLargestFraction)}")
+        sb.appendLine("Largest weak component fraction: ${String.format(Locale.US, "%.4f", weakLargestFraction)}")
         if (strongComponents != null) {
             sb.appendLine("Strong components: $strongComponents")
-            sb.appendLine("Largest strong component fraction: ${"%.4f".format(strongLargestFraction)}")
+            sb.appendLine("Largest strong component fraction: ${String.format(Locale.US, "%.4f", strongLargestFraction)}")
         }
         return sb.toString()
     }
