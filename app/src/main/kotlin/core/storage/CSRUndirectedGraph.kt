@@ -6,61 +6,65 @@ class CSRUndirectedGraph(
     private val prevVertNumbers: IntArray,
     private val offs: IntArray,
     private val neighs: IntArray
-): MutableVertexGraph{
+) : MutableVertexGraph {
     val previousVertexNumbers = prevVertNumbers.copyOf()
 
     val offsets = offs.copyOf()
 
-    val neighbors = neighs.copyOf()
+    val neighborArray = neighs.copyOf()
 
     override val vertexCount = offsets.size - 1
 
-    override val edgeCount = neighbors.size / 2
+    override val edgeCount = neighborArray.size / 2
 
-    val deleted: BooleanArray = BooleanArray(vertexCount){ false }
+    val deleted: BooleanArray = BooleanArray(vertexCount) { false }
 
-    override fun neighbors(vertex: Int): Set<Int> {
-        if(vertex !in 0 until vertexCount){
+    override fun neighbors(vertex: Int): Sequence<Int> {
+        if (vertex !in 0 until vertexCount) {
             throw IndexOutOfBoundsException()
         }
-        if(isDeleted(vertex)){
+        if (isDeleted(vertex)) {
             throw IllegalStateException("Vertex is deleted")
         }
-        return neighbors.sliceArray(offsets[vertex] until offsets[vertex + 1]).toSet()
+        val start = offsets[vertex]
+        val end = offsets[vertex + 1]
+        return (start until end).asSequence().map { neighs[it] }
     }
 
     override fun degree(vertex: Int): Int {
-        if(vertex !in 0 until vertexCount){
+        if (vertex !in 0 until vertexCount) {
             throw IndexOutOfBoundsException()
         }
-        if(isDeleted(vertex)){
+        if (isDeleted(vertex)) {
             throw IllegalStateException("Vertex is deleted")
         }
         return offsets[vertex + 1] - offsets[vertex]
     }
 
-    override fun density(): Double = if(vertexCount <= 1) 0.0
-            else 2 * edgeCount.toDouble() / (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
+    override fun density(): Double = if (vertexCount <= 1) 0.0
+    else 2 * edgeCount.toDouble() / (vertexCount.toDouble() * (vertexCount.toDouble() - 1))
 
     override fun hasEdge(from: Int, to: Int): Boolean {
-        if(from !in 0 until vertexCount || to !in 0 until vertexCount){
+        if (from !in 0 until vertexCount || to !in 0 until vertexCount) {
             throw IndexOutOfBoundsException()
         }
-        if(isDeleted(from) || isDeleted(to)){
+        if (isDeleted(from) || isDeleted(to)) {
             throw IllegalStateException("Vertex is deleted")
         }
 
-        val vertexWithFewerNeighbors = if(offsets[from + 1] - offsets[from]
-            < offsets[to + 1] - offsets[to]) from else to
-        val vertexWithMoreNeighbors = if(vertexWithFewerNeighbors == from) to else from
-        return (offsets[vertexWithFewerNeighbors] until offsets[vertexWithFewerNeighbors + 1]).any{ neighbors[it] == vertexWithMoreNeighbors }
+        val vertexWithFewerNeighbors = if (offsets[from + 1] - offsets[from]
+            < offsets[to + 1] - offsets[to]
+        ) from else to
+        val vertexWithMoreNeighbors =
+            if (vertexWithFewerNeighbors == from) to else from
+        return (offsets[vertexWithFewerNeighbors] until offsets[vertexWithFewerNeighbors + 1]).any { neighs[it] == vertexWithMoreNeighbors }
     }
 
-    override fun vertices(): IntArray = previousVertexNumbers.copyOf()
+    override fun vertices(): Sequence<Int> = previousVertexNumbers.asSequence()
 
-    override fun markDeleted(vertices: Collection<Int>){
-        for (vertex in vertices){
-            if (vertex !in 0 until vertexCount){
+    override fun markDeleted(vertices: Collection<Int>) {
+        for (vertex in vertices) {
+            if (vertex !in 0 until vertexCount) {
                 throw IndexOutOfBoundsException()
             }
             deleted[vertex] = true
@@ -69,12 +73,12 @@ class CSRUndirectedGraph(
 
     override fun clearDeleted() = deleted.fill(false)
 
-    override fun isDeleted(vertex: Int): Boolean{
-        if (vertex !in 0 until vertexCount){
+    override fun isDeleted(vertex: Int): Boolean {
+        if (vertex !in 0 until vertexCount) {
             throw IndexOutOfBoundsException()
         }
         return deleted[vertex]
     }
 
-    override fun activeVertexCount(): Int = deleted.count{ !it }
+    override fun activeVertexCount(): Int = deleted.count { !it }
 }

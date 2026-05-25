@@ -10,11 +10,7 @@ class GraphAnalyzer(private val graph: Graph) {
     fun computeBasicStats(isDirected: Boolean = false): BasicStats {
         val n = graph.vertexCount
         val edgeCount = graph.edgeCount
-        val density = if (isDirected) {
-            if (n <= 1) 0.0 else edgeCount.toDouble() / (n.toDouble() * (n - 1))
-        } else {
-            graph.density()
-        }
+        val density = graph.density()
 
         val wcc = ConnectedComponents.weaklyConnected(graph)
         val weakComponents = wcc.numComponents
@@ -179,13 +175,13 @@ class GraphAnalyzer(private val graph: Graph) {
         if (sample.size < 2) return Pair(0, 0)
 
         val distances = mutableListOf<Int>()
-        val sources = sample.shuffled().take(500.coerceAtMost(sample.size))
+        val bfsSourceCount = minOf(targetSize, sample.size)
 
-        for (i in sources.indices) {
-            val u = sources[i]
+        for (i in sample.indices.take(bfsSourceCount)) {
+            val u = sample[i]
             val bfs = BFS.run(graph, u)
-            for (j in i + 1 until sources.size) {
-                val v = sources[j]
+            for (j in i + 1 until sample.size) {
+                val v = sample[j]
                 val d = bfs.distances[v]
                 if (d != -1) distances.add(d)
             }
@@ -238,32 +234,5 @@ class GraphAnalyzer(private val graph: Graph) {
         }
 
         return sample
-    }
-
-    private fun bfsWithin(graph: Graph, start: Int, active: Set<Int>): core.algorithms.BFSResult {
-        val n = graph.vertexCount
-        val distances = IntArray(n) { -1 }
-        val parents = IntArray(n) { -1 }
-        val queue = IntArray(n)
-        var head = 0
-        var tail = 0
-
-        queue[tail++] = start
-        distances[start] = 0
-        parents[start] = start
-
-        while (head < tail) {
-            val cur = queue[head++]
-            val curDist = distances[cur]
-            for (nb in graph.neighbors(cur)) {
-                if (nb in active && distances[nb] == -1) {
-                    distances[nb] = curDist + 1
-                    parents[nb] = cur
-                    queue[tail++] = nb
-                }
-            }
-        }
-
-        return core.algorithms.BFSResult(distances, parents)
     }
 }
