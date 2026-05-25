@@ -18,13 +18,13 @@ class GraphLoader {
             arrayOf(
                 "bash",
                 "-c",
-                "awk '{if(\$1!=\$2) print (\$1<\$2 ? \$1\" \"\$2 : \$2\" \"\$1)}' \"$fileFrom\" | sort -u > \"$preprocessedFile\""
+                "tr -d '\\r' < \"$fileFrom\" | awk '{if(\$1!=\$2) print (\$1<\$2 ? \$1\" \"\$2 : \$2\" \"\$1)}' | sort -u > \"$preprocessedFile\""
             )
         }else{
             arrayOf(
                 "bash",
                 "-c",
-                "awk '{if(\$1!=\$2) print(\$1\" \"\$2)}' \"$fileFrom\" | sort -u > \"$preprocessedFile\""
+                "tr -d '\\r' < \"$fileFrom\" | awk '{if(\$1!=\$2) print(\$1\" \"\$2)}' | sort -u > \"$preprocessedFile\""
             )
         }
 
