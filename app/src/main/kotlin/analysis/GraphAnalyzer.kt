@@ -181,7 +181,7 @@ class GraphAnalyzer(private val graph: Graph) {
         val sample = buildSnowballSample(component, targetSize)
         if (sample.size < 2) return Pair(0, 0)
 
-        val bfsSourceCount = minOf(targetSize, sample.size)
+        val bfsSourceCount = minOf(targetSize, 200, sample.size)
         val sources = sample.take(bfsSourceCount)
         val distances = mutableListOf<Int>()
 

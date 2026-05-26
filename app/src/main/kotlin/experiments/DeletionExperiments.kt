@@ -36,7 +36,8 @@ class DeletionExperiments(private val graph: Graph, private val mutableGraph: Mu
 
     fun highDegreeDeletion(percentages: List<Int>): List<DeletionExperimentResult> {
         val n = graph.vertexCount
-        val sortedByDegree = (0 until n).sortedByDescending { graph.degree(it) }
+        val degree = IntArray(n) { graph.degree(it) }
+        val sortedByDegree = (0 until n).sortedByDescending { degree[it] }
         val results = mutableListOf<DeletionExperimentResult>()
 
         for (pct in percentages) {

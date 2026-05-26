@@ -28,6 +28,7 @@ fun main(args: Array<String>) {
         println("  --part2                  Run Part 2 distance estimation")
         println("  --compare-landmarks      Compare all landmark strategies")
         println("  --skip-part1             Skip Part 1 analysis (use for 2nd pass with different K)")
+        println("  --skip-clustering        Skip clustering computation (faster for large graphs)")
         return
     }
 
@@ -39,6 +40,7 @@ fun main(args: Array<String>) {
     val runPart2 = args.any { it == "--part2" }
     val compareLandmarks = args.any { it == "--compare-landmarks" }
     val skipPart1 = args.any { it == "--skip-part1" }
+    val skipClustering = args.any { it == "--skip-clustering" }
     val landmarkStrategy = argEnum(args, "--landmark-strategy=", LandmarkSelection.RANDOM)
 
     val loader = GraphLoader()
@@ -51,7 +53,7 @@ fun main(args: Array<String>) {
     println("Loaded graph: ${graph.vertexCount} vertices, ${graph.edgeCount} edges")
 
     if (!skipPart1) {
-        runPart1Analysis(graph, isDirected, numPairs, snowballSize)
+        runPart1Analysis(graph, isDirected, numPairs, snowballSize, skipClustering)
         runPartBExperiments(graph)
     }
 
@@ -76,7 +78,7 @@ private fun argEnum(args: Array<String>, prefix: String, default: LandmarkSelect
     }
 }
 
-private fun runPart1Analysis(graph: Graph, isDirected: Boolean, numPairs: Int, snowballSize: Int) {
+private fun runPart1Analysis(graph: Graph, isDirected: Boolean, numPairs: Int, snowballSize: Int, skipClustering: Boolean = false) {
     println("\n" + "=".repeat(60))
     println("PART 1: NETWORK STRUCTURE ANALYSIS")
     println("=".repeat(60))
@@ -94,13 +96,18 @@ private fun runPart1Analysis(graph: Graph, isDirected: Boolean, numPairs: Int, s
     val diamStats = analyzer.estimateDiameter(largestComp, numPairs, snowballSize)
     println(diamStats)
 
-    println("\n--- A.3 Clustering statistics (whole graph) ---")
-    val clustering = analyzer.computeClusteringStats()
-    println(clustering)
+    if (skipClustering) {
+        println("\n--- A.3 Clustering statistics --- SKIPPED (--skip-clustering)")
+        println("--- A.4 Clustering statistics --- SKIPPED")
+    } else {
+        println("\n--- A.3 Clustering statistics (whole graph) ---")
+        val clustering = analyzer.computeClusteringStats()
+        println(clustering)
 
-    println("\n--- A.4 Clustering statistics (largest WCC) ---")
-    val wccClustering = analyzer.computeClusteringStatsInComponent(largestComp)
-    println(wccClustering)
+        println("\n--- A.4 Clustering statistics (largest WCC) ---")
+        val wccClustering = analyzer.computeClusteringStatsInComponent(largestComp)
+        println(wccClustering)
+    }
 
     println("\n--- A.5 Degree statistics ---")
     val degrees = analyzer.computeDegreeStats()
