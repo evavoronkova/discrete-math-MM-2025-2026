@@ -1,9 +1,11 @@
 package analysis
 
 import core.algorithms.BFS
+import core.algorithms.BFSResult
 import core.algorithms.Component
 import core.algorithms.ConnectedComponents
 import core.model.Graph
+import utils.Parallel
 
 class GraphAnalyzer(private val graph: Graph) {
 
@@ -154,50 +156,50 @@ class GraphAnalyzer(private val graph: Graph) {
         val verts = component.vertices
         if (verts.size < 2) return Pair(0, 0)
 
-        val sources = verts.shuffled().take(numPairs.coerceAtMost(verts.size))
+        val n = numPairs.coerceAtMost(verts.size)
+        val sources = verts.shuffled().take(n)
         val distances = mutableListOf<Int>()
 
-        for (i in sources.indices) {
-            val u = sources[i]
-            val bfs = BFS.run(graph, u)
-            for (j in i + 1 until sources.size) {
-                val v = sources[j]
-                val d = bfs.distances[v]
-                if (d != -1) distances.add(d)
+        sources.chunked(50).forEach { batch ->
+            val results = Parallel.map(batch) { BFS.run(graph, it) }
+            for (i in batch.indices) {
+                val dists = results[i].distances
+                val baseIdx = sources.indexOf(batch[i])
+                for (j in baseIdx + 1 until n) {
+                    val d = dists[sources[j]]
+                    if (d != -1) distances.add(d)
+                }
             }
         }
 
         if (distances.isEmpty()) return Pair(0, 0)
         distances.sort()
-        val diam = distances.max()
-        val p90Idx = (0.9 * (distances.size - 1)).toInt()
-        val p90 = distances[p90Idx.coerceIn(0, distances.size - 1)]
-        return Pair(diam, p90)
+        return Pair(distances.max(), distances[((distances.size - 1) * 0.9).toInt().coerceIn(0, distances.size - 1)])
     }
 
     private fun snowballEstimate(component: Component, targetSize: Int): Pair<Int, Int> {
         val sample = buildSnowballSample(component, targetSize)
         if (sample.size < 2) return Pair(0, 0)
 
-        val distances = mutableListOf<Int>()
         val bfsSourceCount = minOf(targetSize, sample.size)
+        val sources = sample.take(bfsSourceCount)
+        val distances = mutableListOf<Int>()
 
-        for (i in sample.indices.take(bfsSourceCount)) {
-            val u = sample[i]
-            val bfs = BFS.run(graph, u)
-            for (j in i + 1 until sample.size) {
-                val v = sample[j]
-                val d = bfs.distances[v]
-                if (d != -1) distances.add(d)
+        sources.chunked(50).forEach { batch ->
+            val results = Parallel.map(batch) { BFS.run(graph, it) }
+            for (i in batch.indices) {
+                val dists = results[i].distances
+                val baseIdx = sample.indexOf(batch[i])
+                for (j in baseIdx + 1 until sample.size) {
+                    val d = dists[sample[j]]
+                    if (d != -1) distances.add(d)
+                }
             }
         }
 
         if (distances.isEmpty()) return Pair(0, 0)
         distances.sort()
-        val diam = distances.max()
-        val p90Idx = (0.9 * (distances.size - 1)).toInt()
-        val p90 = distances[p90Idx.coerceIn(0, distances.size - 1)]
-        return Pair(diam, p90)
+        return Pair(distances.max(), distances[((distances.size - 1) * 0.9).toInt().coerceIn(0, distances.size - 1)])
     }
 
     private fun buildSnowballSample(component: Component, targetSize: Int): List<Int> {

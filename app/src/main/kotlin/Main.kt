@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
         println("  --landmark-strategy=S    Strategy: RANDOM, HIGH_DEGREE, COVERAGE (default: RANDOM)")
         println("  --part2                  Run Part 2 distance estimation")
         println("  --compare-landmarks      Compare all landmark strategies")
+        println("  --skip-part1             Skip Part 1 analysis (use for 2nd pass with different K)")
         return
     }
 
@@ -37,6 +38,7 @@ fun main(args: Array<String>) {
     val numLandmarks = argInt(args, "--landmarks=", 10)
     val runPart2 = args.any { it == "--part2" }
     val compareLandmarks = args.any { it == "--compare-landmarks" }
+    val skipPart1 = args.any { it == "--skip-part1" }
     val landmarkStrategy = argEnum(args, "--landmark-strategy=", LandmarkSelection.RANDOM)
 
     val loader = GraphLoader()
@@ -48,9 +50,10 @@ fun main(args: Array<String>) {
 
     println("Loaded graph: ${graph.vertexCount} vertices, ${graph.edgeCount} edges")
 
-    runPart1Analysis(graph, isDirected, numPairs, snowballSize)
-
-    runPartBExperiments(graph)
+    if (!skipPart1) {
+        runPart1Analysis(graph, isDirected, numPairs, snowballSize)
+        runPartBExperiments(graph)
+    }
 
     if (runPart2 || compareLandmarks) {
         runPart2DistanceEstimation(graph, numLandmarks, landmarkStrategy, compareLandmarks)

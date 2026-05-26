@@ -3,7 +3,7 @@ package landmarks
 import core.model.Graph
 import core.algorithms.BFS
 import kotlin.math.ln
-import kotlin.math.ceil
+import utils.Parallel
 
 class LandmarksLCA(
     private val graph: Graph,
@@ -28,11 +28,13 @@ class LandmarksLCA(
             else -> {
                 val selected = selectLandmarks()
                 landmarks.addAll(selected)
-                for (landmark in landmarks) {
-                    val (depths, parents) = buildShortestPathTree(landmark)
-                    sptDepths.add(depths)
-                    sptParents.add(parents)
-                    upTables.add(buildBinaryLifting(parents, depths))
+                val up = upTables // trigger lazy logN
+                val results = Parallel.map(landmarks) { lm ->
+                    val (depths, parents) = buildShortestPathTree(lm)
+                    Triple(depths, parents, buildBinaryLifting(parents, depths))
+                }
+                for ((d, p, u) in results) {
+                    sptDepths.add(d); sptParents.add(p); upTables.add(u)
                 }
             }
         }

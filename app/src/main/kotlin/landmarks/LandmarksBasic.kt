@@ -2,6 +2,7 @@ package landmarks
 
 import core.model.Graph
 import core.algorithms.BFS
+import utils.Parallel
 
 class LandmarksBasic(
     private val graph: Graph,
@@ -18,9 +19,7 @@ class LandmarksBasic(
         } else {
             val selected = selectLandmarks()
             landmarks.addAll(selected)
-            for (landmark in landmarks) {
-                landmarkDistances.add(BFS.run(graph, landmark).distances)
-            }
+            landmarkDistances.addAll(Parallel.map(landmarks) { BFS.run(graph, it).distances })
         }
     }
 
