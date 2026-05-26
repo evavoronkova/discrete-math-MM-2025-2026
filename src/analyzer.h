@@ -1,0 +1,127 @@
+#ifndef ANALYZERS_H
+#define ANALYZERS_H
+
+#include <cmath>
+#include <unordered_map>
+#include <vector>
+#include <set>
+
+#include "general.h"
+#include "summarizer/summarizer.h"
+
+class graph_analyzer {
+public:
+    graph& g;
+    explicit graph_analyzer(graph& graph) : g(graph) {}
+
+    double get_density() const;
+
+    vector<set<int>> get_CCs();
+    vector<set<int>> get_SCCs();
+
+    size_t get_amount_of_CC();
+    size_t get_amount_of_SCC();
+
+    double get_fraction_of_vertexes_in_max_CC();
+    double get_fraction_of_vertexes_in_max_SCC();
+
+    double get_local_clustering_coefficient(int v);
+    double get_global_clustering_coefficient() const;
+    double get_average_clustering_coefficient();
+
+    size_t get_amount_of_triangles() const;
+
+    size_t get_amount_of_opened_triplets() const;
+    size_t get_amount_of_opened_triplets(int v) const;
+
+    size_t get_amount_of_closed_triplets() const;
+    size_t get_amount_of_closed_triplets(int v) const;
+
+    size_t get_degree(int v) const;
+    size_t get_min_degree() const;
+    size_t get_max_degree() const;
+    double get_average_degree() const;
+
+    double get_probability_that_random_vertex_has_some_degree(size_t degree);
+    double get_probability_that_random_vertex_has_less_than_some_degree(size_t degree);
+    json get_probabilities_that_random_vertex_has_less_than_some_degree();
+
+    double get_probability_that_random_vertex_has_some_degree_log_log(size_t log2_degree);
+
+    json get_probabilities_that_random_vertex_has_less_than_some_degree_log_log();
+
+    void remove_vertex(int v);
+    json get_sizes_of_max_CC_after_delete_x_percentage_vertexes();
+    json get_sizes_of_max_CC_after_delete_x_percentage_vertexes_of_max_degrees();
+
+    size_t estimate_diameter_of_max_CC_from_double_sweep();
+    size_t estimate_diameter_of_max_CC_from_sample(int sample_size = 1000);
+    size_t estimate_90th_percentile_of_max_CC_from_sample(int sample_size = 1000);
+    size_t estimate_diameter_of_max_CC_from_snowball(int target_size = 1000);
+    size_t estimate_90th_percentile_of_max_CC_from_snowball(int target_size = 1000);
+
+    double get_average_clustering_coefficient_max_CC();
+
+    void landmarks_precompute_random(int k);
+    void landmarks_precompute_highest_degrees(int k);
+    void landmarks_precompute_best_coverage(int k);
+    void landmarks_basic_precompute();
+    void landmarks_bfs_precompute();
+
+    size_t landmarks_basic(int s, int t);
+
+    size_t landmarks_bfs(int s, int t);
+    vector<int> landmarks_get_shortest_path(int s, int t) const;
+
+private:
+    // Connected components
+    unordered_map<int, int> CC_comp_id;
+    graph rg; // reversed graph
+    void CC_undirected_bfs(int v);
+    void CC_directed_bfs(int v);
+
+    // Strongly connected components
+    unordered_map<int, bool> SCC_visited;
+    vector<int> SCC_order;
+    set<int> SCC_component;
+    void SCC_dfs1(int v);
+    void SCC_dfs2(int v);
+
+    // Double sweep / BFS
+    pair<int, int> find_farthest_vertex_by_bfs(int v);
+    unordered_map<int, int> get_distances_from(int v);
+
+    // Landmark-based fast distance estimation
+
+    // Global clustering
+    size_t get_amount_of_closed_triplets(const unordered_set<int>& neighbourhood) const;
+
+    // Degree distribution
+    unordered_map<size_t, size_t> degrees_counter;
+    vector<pair<size_t, int>> degrees_vector;
+    void init_degree_counters_cache();
+
+    // Max CC handling
+    set<int> get_max_CC();
+
+    // Snowball
+    set<int> build_snowball_sample(int target_size);
+
+    unordered_map<int, int> get_distances_in_subset(int v, const set<int>& allowed);
+    vector<int> pairwise_distances_in_component(const vector<int>& sample);
+    vector<int> pairwise_distances_in_subset(const set<int>& subset);
+
+    // Landmarks-basic
+    map<pair<int, int>, size_t> precomputed_vertexes;
+
+    vector<int> landmarks;
+    void landmarks_basic_bfs(int s);
+    // unordered_map<int, int> landmarks_visited;
+
+    // Landmarks-BFS
+    map<pair<int, int>, int> shortest_path_tree; // < to_vertex, pair<from_vertex, distance> >
+    void landmarks_bfs_bfs(int landmark);
+    vector<int> landmarks_bfs_get_shortest_precomputed_path(int landmark, int t);
+};
+
+#endif // ANALYZERS_H
