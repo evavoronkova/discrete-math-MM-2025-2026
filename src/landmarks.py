@@ -4,7 +4,7 @@ import random
 from array import array
 from collections import deque
 from heapq import nlargest
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 from src.graph import Graph
 
@@ -29,7 +29,7 @@ class _GraphIndex:
         self.node_to_idx = {node: i for i, node in enumerate(self.nodes)}
         self.idx_to_node = self.nodes
 
-        offsets = array("i", [0]) * (self.n + 1)
+        offsets = array("i", [0] * (self.n + 1))
         adj = array("i")
         for u_idx, u in enumerate(self.nodes):
             for v in graph.neighbors(u):
@@ -43,8 +43,8 @@ class _GraphIndex:
         # если вызывающий код тоже отпустит свою ссылку (del graph)
 
     def bfs(self, source_idx: int, need_parent: bool = False, need_farthest: bool = False):
-        dist = bytearray([_UNREACHABLE]) * self.n
-        parent = array("i", [-1]) * self.n if need_parent else None
+        dist = bytearray([_UNREACHABLE] * self.n)
+        parent = array("i", [-1] * self.n) if need_parent else None
 
         offsets = self.neighbor_offsets
         adj = self.neighbor_adj
@@ -144,10 +144,11 @@ class ShortestPathTree:
     Дерево кратчайших путей от одного ориентира.
     """
 
-    __slots__ = ("_index", "root", "root_idx", "dist", "parent")
+    __slots__ = ("_index", "root", "root_idx", "dist", "parent", "graph_ref")
 
     def __init__(self, graph: Graph, root: int, _index: _GraphIndex):
         self._index = _index
+        self.graph_ref = graph
         self.root = root
         self.root_idx = _index.node_to_idx[root]
 
@@ -205,8 +206,8 @@ class ShortestPathTree:
         return u
 
     def distance_sc(self, u: int, v: int) -> float:
-        iu = self._index.node_to_idx.get(u)
-        iv = self._index.node_to_idx.get(v)
+        iu: Optional[int] = self._index.node_to_idx.get(u)
+        iv: Optional[int] = self._index.node_to_idx.get(v)
         if iu is None or iv is None:
             return float("inf")
         if iu == iv:
@@ -215,8 +216,35 @@ class ShortestPathTree:
         w = self.lca(iu, iv)
         if w == -1:
             return float("inf")
+        best: int = self.dist[iu] + self.dist[iv] - 2 * self.dist[w]
+        # собираем все вершины на путях от u и v до LCA
+        path_u: List[int] = []
+        path_v: List[int] = []
 
-        return float(self.dist[iu] + self.dist[iv] - 2 * self.dist[w])
+        cur = iu
+        while cur != w:
+            path_u.append(cur)
+            cur = self.parent[cur]
+        path_u.append(w)
+
+        cur = iv
+        while cur != w:
+            path_v.append(cur)
+            cur = self.parent[cur]
+        path_v.append(w)
+
+        for x in path_u:
+            for y in path_v:
+                if x == y:
+                    continue
+                node_x = self._index.idx_to_node[x]
+                node_y = self._index.idx_to_node[y]
+                if self.graph_ref.has_edge(node_x, node_y):
+                    cand = (self.dist[iu] - self.dist[x]) + 1 + (self.dist[iv] - self.dist[y])
+                    if cand < best:
+                        best = cand
+
+        return float(best) if best != float("inf") else -1.0
 
 
 class LandmarksSC:
