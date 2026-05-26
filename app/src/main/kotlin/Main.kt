@@ -27,6 +27,7 @@ fun main(args: Array<String>) {
         println("  --landmark-strategy=S    Strategy: RANDOM, HIGH_DEGREE, COVERAGE (default: RANDOM)")
         println("  --part2                  Run Part 2 distance estimation")
         println("  --compare-landmarks      Compare all landmark strategies")
+        println("  --algorithm=A            Restrict to: basic, lca (default: both)")
         println("  --skip-part1             Skip Part 1 analysis (use for 2nd pass with different K)")
         println("  --skip-clustering        Skip clustering computation (faster for large graphs)")
         return
@@ -41,6 +42,7 @@ fun main(args: Array<String>) {
     val compareLandmarks = args.any { it == "--compare-landmarks" }
     val skipPart1 = args.any { it == "--skip-part1" }
     val skipClustering = args.any { it == "--skip-clustering" }
+    val algorithmFilter = argStr(args, "--algorithm=")
     val landmarkStrategy = argEnum(args, "--landmark-strategy=", LandmarkSelection.RANDOM)
 
     val loader = GraphLoader()
@@ -58,7 +60,7 @@ fun main(args: Array<String>) {
     }
 
     if (runPart2 || compareLandmarks) {
-        runPart2DistanceEstimation(graph, numLandmarks, landmarkStrategy, compareLandmarks)
+        runPart2DistanceEstimation(graph, numLandmarks, landmarkStrategy, compareLandmarks, algorithmFilter)
     }
 
     println("\nDone.")
@@ -76,6 +78,11 @@ private fun argEnum(args: Array<String>, prefix: String, default: LandmarkSelect
     } catch (e: IllegalArgumentException) {
         default
     }
+}
+
+private fun argStr(args: Array<String>, prefix: String): String? {
+    val arg = args.firstOrNull { it.startsWith(prefix) } ?: return null
+    return arg.removePrefix(prefix).takeIf { it.isNotEmpty() }
 }
 
 private fun runPart1Analysis(graph: Graph, isDirected: Boolean, numPairs: Int, snowballSize: Int, skipClustering: Boolean = false) {
@@ -141,14 +148,15 @@ private fun runPart2DistanceEstimation(
     graph: Graph,
     numLandmarks: Int,
     strategy: LandmarkSelection,
-    compareAll: Boolean
+    compareAll: Boolean,
+    algorithmFilter: String?
 ) {
     println("\n" + "=".repeat(60))
     println("PART 2: DISTANCE ESTIMATION (LANDMARKS)")
     println("=".repeat(60))
 
     if (compareAll) {
-        compareDistanceAlgorithms(graph, numLandmarks)
+        compareDistanceAlgorithms(graph, numLandmarks, algorithmFilter)
     } else {
         println("\n--- Landmarks-Basic ($strategy, landmarks=$numLandmarks) ---")
         runEstimator(graph, LandmarksBasic(graph, numLandmarks, strategy), "Basic")
@@ -171,13 +179,21 @@ private fun runEstimator(graph: Graph, estimator: DistanceEstimator, label: Stri
     println("  Query time ($numTestPairs pairs): ${String.format(Locale.US, "%.2f", queryTime / 1_000_000.0)} ms")
 }
 
-private fun compareDistanceAlgorithms(graph: Graph, numLandmarks: Int) {
+private fun compareDistanceAlgorithms(graph: Graph, numLandmarks: Int, algorithmFilter: String?) {
     val strategies = LandmarkSelection.values()
-    val algorithms = listOf<(LandmarkSelection) -> DistanceEstimator>(
+    val allAlgos = listOf<(LandmarkSelection) -> DistanceEstimator>(
         { s -> LandmarksBasic(graph, numLandmarks, s) },
         { s -> LandmarksLCA(graph, numLandmarks, s) }
     )
-    val algoNames = listOf("Landmarks-Basic", "Landmarks-LCA")
+    val allNames = listOf("Landmarks-Basic", "Landmarks-LCA")
+
+    val indices = when (algorithmFilter?.lowercase()) {
+        "basic" -> listOf(0)
+        "lca" -> listOf(1)
+        else -> listOf(0, 1)
+    }
+    val algorithms = indices.map { allAlgos[it] }
+    val algoNames = indices.map { allNames[it] }
 
     println("\n--- Landmark Strategy Comparison ---")
     println("%-18s | %-12s | %-10s | %-10s | %-8s | %-8s".format(
