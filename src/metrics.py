@@ -148,7 +148,7 @@ def calc_clustering_and_triangles(graph):
     return global_cc_formula, avg_cc, actual_triangles
 
 
-def simulate_network_attack(graph, x_percent):
+def simulate_network_attack(graph, x_percent, all_nodes=None):
     """Пункт B. Симуляция уязвимости сети (Случайное удаление vs Удаление хабов)"""
     nodes = list(graph.keys())
     num_to_remove = int(len(nodes) * (x_percent / 100))
@@ -161,7 +161,8 @@ def simulate_network_attack(graph, x_percent):
         graph_random[u] = graph[u] - random_remove
     comps_rand = get_weakly_connected_components(graph_random)
     max_rand_len = max([len(c) for c in comps_rand]) if comps_rand else 0
-    share_random = max_rand_len / len(graph_random) if graph_random else 0
+    total_remaining = len(all_nodes) - num_to_remove if all_nodes else len(graph_random)
+    share_random = max_rand_len / total_remaining if total_remaining > 0 else 0
 
     # 2. Удаление хабов
     sorted_by_degree = sorted(graph.keys(), key=lambda n: len(graph[n]), reverse=True)
@@ -172,6 +173,7 @@ def simulate_network_attack(graph, x_percent):
         graph_hubs[u] = graph[u] - hub_remove
     comps_hubs = get_weakly_connected_components(graph_hubs)
     max_hubs_len = max([len(c) for c in comps_hubs]) if comps_hubs else 0
-    share_hubs = max_hubs_len / len(graph_hubs) if graph_hubs else 0
+    total_remaining_hubs = len(all_nodes) - num_to_remove if all_nodes else len(graph_hubs)
+    share_hubs = max_hubs_len / total_remaining_hubs if total_remaining_hubs > 0 else 0
 
     return share_random, share_hubs

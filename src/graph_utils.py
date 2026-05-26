@@ -32,10 +32,9 @@ def load_graph(filepath, delimiter=None, is_directed=False):
                         all_nodes.add(v)
 
                         graph[u].add(v)
+                        graph[v].add(u)
                         if is_directed:
-                            rev_graph[v].add(u)
-                        else:
-                            graph[v].add(u)
+                            rev_graph[v].add(u)  # Обратный граф нужен только для сильной связности
                 except ValueError:
                     continue
 

@@ -40,7 +40,7 @@ def run_full_analysis(graph, rev_graph, all_nodes, is_directed):
 
     print("\n[Симуляция удаления х% узлов (Пункт 1.В)]")
     for x in [10, 30]:
-        sh_r, sh_h = simulate_network_attack(graph, x)
+        sh_r, sh_h = simulate_network_attack(graph, x, all_nodes)
         print(f" Удаление {x}%: Случайное = {sh_r:.2%}, Хабы = {sh_h:.2%}")
 
 
