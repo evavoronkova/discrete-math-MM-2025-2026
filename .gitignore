@@ -4,3 +4,4 @@ __pycache__/
 data/*.txt
 data/*.csv
 data/*.edges
+data/*.mtx
