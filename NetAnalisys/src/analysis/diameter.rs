@@ -49,6 +49,7 @@ fn bfs_distances_internal(graph: &Graph, start: u32, allowed_mask: Option<&[bool
 
 fn spawn_blocking_diameter_logged<T, F>(
     perf_log: &Arc<Mutex<std::fs::File>>,
+    file_name: &str,
     label: &'static str,
     job: F,
 ) -> tokio::task::JoinHandle<T>
@@ -57,11 +58,12 @@ where
     T: Send + 'static,
 {
     let log = Arc::clone(perf_log);
+    let fname = file_name.to_string();
     task::spawn_blocking(move || {
         let start = Instant::now();
         let result = job();
         let mut file = log.lock().unwrap();
-        let _ = writeln!(file, "{label}\t{elapsed:.6?}", elapsed = start.elapsed());
+        let _ = writeln!(file, "{}\t{}\t{:.6?}", fname, label, start.elapsed());
         result
     })
 }
@@ -69,6 +71,7 @@ where
 pub async fn count_diameters(
     graph: Arc<Graph>,
     component: Option<Arc<HashSet<u32>>>,
+    file_name: String,
     perf_log: Arc<Mutex<std::fs::File>>,
 ) -> Vec<usize> {
     let graph_1 = Arc::clone(&graph);
@@ -85,15 +88,24 @@ pub async fn count_diameters(
 
     let (diameter_on_double_bfs, diameter_on_random, diameter_on_snowball_sampling) =
         tokio::try_join!(
-            spawn_blocking_diameter_logged(&log_1, "approximate_diameter", move || {
-                approximate_diameter(&graph_1, component_1.as_deref())
-            }),
-            spawn_blocking_diameter_logged(&log_2, "random_like_diameter", move || {
-                random_like_diameter_calculate(&graph_2, component_2.as_deref(), 500)
-            }),
-            spawn_blocking_diameter_logged(&log_3, "snowball_sampling", move || {
-                snowball_sampling(&graph_3, component_3.as_deref(), 1000)
-            }),
+            spawn_blocking_diameter_logged(
+                &log_1,
+                &file_name,
+                "Compute approximate diameter (double BFS)",
+                move || { approximate_diameter(&graph_1, component_1.as_deref()) }
+            ),
+            spawn_blocking_diameter_logged(
+                &log_2,
+                &file_name,
+                "Compute diameter (random sampling, 500 iterations)",
+                move || { random_like_diameter_calculate(&graph_2, component_2.as_deref(), 500) }
+            ),
+            spawn_blocking_diameter_logged(
+                &log_3,
+                &file_name,
+                "Compute diameter (snowball sampling, 1000 seeds)",
+                move || { snowball_sampling(&graph_3, component_3.as_deref(), 1000) }
+            ),
         )
         .unwrap();
 

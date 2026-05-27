@@ -1,5 +1,5 @@
-use crate::graph::traversal::bfs_internal;
 use crate::graph::Graph;
+use crate::graph::traversal::bfs_internal;
 use crate::landmarks::LandmarkStrategy;
 use crate::parser::directed_or_undirected::DirectedOrUndirected;
 use rand::Rng;

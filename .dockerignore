@@ -1,0 +1,23 @@
+# Git
+.git/
+.gitignore
+
+# Rust build artefacts
+**/target/
+
+# IDE / editor artefacts
+.vscode/
+.codex/
+
+# Python (in src/)
+__pycache__/
+*.pyc
+
+# Docs / PDFs (not needed at build time)
+*.pdf
+*.txt
+*.md
+*.png
+
+# Logs
+*.log
